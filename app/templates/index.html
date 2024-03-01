@@ -12,20 +12,21 @@
 </head>
 <body>
 
-<header class="header">
+<header>
 	<nav class="header-items">
 		<ul>
-			<li><a href="" onclick="goHome()">Accueil</a></li>
-			<li><a href="" onclick="goGame()">Pong</a></li>
+			<li><a href="/">Home</a></li>
+			<li><a href="/login">Login</a></li>
 		</ul>
 	</nav>
 </header>
 
-<content>
-
-	<!-- Le script de la page actuelle ? -->
-
-</content>
+<div class="content">
+	{% block content %}
+		<!-- Le script de la page actuelle ? -->
+		<h1>Welcome to our Transcendence !</h1>
+	{% endblock %}
+</div>
 
 </body>
 </html>

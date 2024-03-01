@@ -1,0 +1,19 @@
+
+{% extends "index.html" %}
+
+{% block content %}
+<div class="login-container">
+    <h2>Connexion</h2>
+    <iframe name="login" style="display:none;"></iframe>
+    <form id="loginForm" action="" method="post" target="login">
+        <label for="username">Nom d'utilisateur :</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Mot de passe : </label>
+        <input type="password" id="password" name="password" required>
+        <label><a href="/signup">Click here to signup !</a></label>
+        <button type="button" onclick="submitForm()">Se connecter</button>
+    </form>
+    
+</div>
+{% endblock %}
