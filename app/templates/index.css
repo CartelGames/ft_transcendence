@@ -1,0 +1,41 @@
+h1{
+    font-size: 2em;
+    text-align:center;
+    font-family: "Kode Mono", monospace;
+    font-optical-sizing: auto;
+    font-weight: <weight>;
+    font-style: normal;
+    background:rgba(0,0,0,.2);
+    margin-left:30%;
+    margin-right:30%; 
+}
+
+body{
+    background-color: black;
+    color:white;
+    margin:0;
+}
+
+.background{
+    background-image: url(img/background.jpg);
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+li{
+    display: inline-block;
+}
+li:hover{
+    background: rgba(255, 0, 0, .5);
+}
+
+.logo{
+    width: 500px;
+    padding: 45%;
+}
+
+aside{
+    margin-left: 20%;
+    margin-right: 20%;
+    padding-top: 10%;
+}
