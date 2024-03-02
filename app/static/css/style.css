@@ -1,5 +1,5 @@
 body {
-	background-color: rgb(33, 32, 32);
+	background-color: rgb(41, 39, 39);
 }
 
 a {
@@ -8,7 +8,7 @@ a {
 }
 
 h1 {
-	color: #fff;
+	color: #ffffff;
 	text-align: center;
 }
 
@@ -116,4 +116,10 @@ button {
 
 button:hover {
 	background-color: #45a049;
+}
+
+canvas {
+	position: fixed;
+	top: 0;
+	left: 0;
 }

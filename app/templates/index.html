@@ -6,27 +6,29 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
-	<script src="{% static 'js/script.js' %}" defer></script>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/style.css' %}" />
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
-
-<header>
-	<nav class="header-items">
-		<ul>
-			<li><a href="/">Home</a></li>
-			<li><a href="/login">Login</a></li>
-		</ul>
-	</nav>
-</header>
+	
+	<header>
+		<nav class="header-items">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/login">Login</a></li>
+			</ul>
+		</nav>
+	</header>
 
 <div class="content">
-	{% block content %}
+	{% block content %}	
+	<canvas id="MyCanvas"></canvas>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+	<script type="module" src="{% static 'js/script.js' %}"></script>
+
 		<!-- Le script de la page actuelle ? -->
 		<h1>Welcome to our Transcendence !</h1>
 	{% endblock %}
 </div>
-
 </body>
 </html>
