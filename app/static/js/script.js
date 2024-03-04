@@ -3,9 +3,9 @@ const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHei
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#MyCanvas'),
 });
-
+const canvas = document.getElementById("MyCanvas");
 renderer.setPixelRatio( window.devicePixelRatio);
-renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setSize(canvas.width, canvas.height, false);
 camera.position.z = 30;
 
 //the big pink floating thingy
@@ -23,7 +23,7 @@ const lightHelper = new THREE.PointLightHelper(pointLight);
 const gridHelper = new THREE.GridHelper(200, 50);
 //scene.add(lightHelper, gridHelper); //pour voir les lumieres et le grid
 
-
+alert("VOUS ETES LE 10000000eme visiteur!");
 
 //Pour pouvoir bouger la cam avec les keys ou la souris (la souris c'est pour un effet cool)
 const cameraInitialPosition = new THREE.Vector3(0, 0, 30);
@@ -88,6 +88,15 @@ const imageUrl = document.getElementById('image-url').value;
 const backgroundTexture = new THREE.TextureLoader().load(imageUrl);
 scene.background = backgroundTexture;
 
+
+window.onresize = function () {
+
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+};
 //pour l'effet quand on scroll
 function moveCamera() {
     const t = document.body.getBoundingClientRect().top;
