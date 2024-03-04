@@ -1,0 +1,77 @@
+
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	<script src="{% static 'js/script.js' %}" defer></script>
+	<title>Transcendence Pong 42</title>
+</head>
+<body>
+
+<header>
+	<nav class="header-items">
+		<ul>
+			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
+			<li><a href="#login" onclick="showDiv('login')">Login</a></li>
+		</ul>
+	</nav>
+</header>
+
+<div class="content">
+	<!-- index -->
+	<div id="index" class="block">
+		<h1>Welcome to our Transcendence !</h1>
+	</div>
+
+	<!-- login -->
+	<div id="login" class="block">
+		<div class="form-container">
+			<h2>Connexion</h2>
+			<iframe name="login" style="display:none;"></iframe>
+			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="login">
+				{% csrf_token %}
+				<label for="username">Nom d'utilisateur :</label>
+				<input type="text" id="username" name="username" required>
+				<label for="password">Mot de passe : </label>
+				<input type="password" id="password" name="password" required>
+				<label><a href="#signup" onclick="showDiv('signup')">Click here to signup !</a></label>
+				<!-- <button type="submit">Se connecter</button> -->
+				<div class="butt"><button type="submit" onclick="sendForm('loginForm', event)">Se connecter</button></div>
+				<!-- <button onclick="sendForm('loginForm', event)">Se connecter</button> -->
+				<div id="error-form" class="error-form"></div>
+			</form>
+		</div>
+	</div>
+
+	<!-- signin -->
+	<div id="signup" class="block">
+		<div class="form-container">
+			<h2>Inscription</h2>
+			<iframe name="signup" style="display:none;"></iframe>
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="signup">
+				{% csrf_token %}
+				<label for="signup-username">Nom d'utilisateur :</label>
+				<input type="text" id="signup-username" name="username" required>
+				<label for="signup-pseudo">Pseudonyme :</label>
+				<input type="text" id="signup-pseudo" name="pseudo" required>
+				<label for="signup-email">Adresse email :</label>
+				<input type="email" id="signup-email" name="email" required>
+				<label for="signup-pass">Mot de passe : </label>
+				<input type="password" id="signup-pass" name="password1" required>
+				<label for="signup-pass-repeat">Répéter le mot de passe : </label>
+				<input type="password" id="signup-pass-repeat" name="password2" required>
+				<div class="butt"><button type="submit" onclick="sendForm('signupForm', event)">S'inscrire</button></div>
+				<div id="error-form" class="error-form"></div>
+			</form>
+		</div>
+	</div>
+</div>
+
+</body>
+</html>
