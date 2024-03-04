@@ -6,7 +6,7 @@ h1{
     font-weight: <weight>;
     font-style: normal;
     background:rgba(0,0,0,.2);
-    margin-left:30%;
+    margin-left:25%;
     margin-right:30%; 
 }
 
@@ -24,6 +24,9 @@ body{
 
 li{
     display: inline-block;
+    margin-top: 10px;
+    font-size: 15;
+    font-weight: strong;
 }
 li:hover{
     background: rgba(255, 0, 0, .5);
@@ -31,11 +34,43 @@ li:hover{
 
 .logo{
     width: 500px;
-    padding: 45%;
+    padding: 42%;
 }
 
 aside{
     margin-left: 20%;
     margin-right: 20%;
     padding-top: 10%;
+}
+
+nav{
+    display:flex;
+    flex-direction: row;
+    flex-wrap:wrap;
+}
+
+ul{
+    background-image: url(img/fond_neon.jpg);
+    background-attachment: fixed;
+    color:rgb(255, 0, 179);
+    border: 6px;
+    border-color: rgb(43, 70, 226);
+    border-style: double;
+    border-radius: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 10px;
+    margin-right: 20%;
+    margin-left: 10px;
+    font-family: "Kode Mono", monospace;
+    font-optical-sizing: auto;
+    font-weight: <weight>;
+    font-style: normal;
+    position:fixed;
+    right: 10;
+    top: 10;
+}
+
+.game{
+    margin-left:25%;
 }
