@@ -53,19 +53,19 @@
 		<div class="form-container">
 			<h2>Inscription</h2>
 			<iframe name="signup" style="display:none;"></iframe>
-			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post" target="signup">
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="signup">
 				{% csrf_token %}
 				<label for="signup-username">Nom d'utilisateur :</label>
-				<input type="text" id="signup-username" name="signup-username" required>
+				<input type="text" id="signup-username" name="username" required>
 				<label for="signup-pseudo">Pseudonyme :</label>
-				<input type="text" id="signup-pseudo" name="signup-pseudo" required>
+				<input type="text" id="signup-pseudo" name="pseudo" required>
 				<label for="signup-email">Adresse email :</label>
-				<input type="email" id="signup-email" name="signup-email" required>
+				<input type="email" id="signup-email" name="email" required>
 				<label for="signup-pass">Mot de passe : </label>
-				<input type="password" id="signup-pass" name="signup-pass" required>
+				<input type="password" id="signup-pass" name="password1" required>
 				<label for="signup-pass-repeat">Répéter le mot de passe : </label>
-				<input type="password" id="signup-pass-repeat" name="signup-pass-repeat" required>
+				<input type="password" id="signup-pass-repeat" name="password2" required>
 				<div class="butt"><button type="submit" onclick="sendForm('signupForm', event)">S'inscrire</button></div>
 				<div id="error-form" class="error-form"></div>
 			</form>

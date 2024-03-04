@@ -25,15 +25,23 @@ function sendForm(id, event) {
     var formData = new FormData(form);
     var xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
-    xhr.setRequestHeader('Content-Type', 'multipart/form-data');
     xhr.onload = function () {
         if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
+            var errorForm = form.querySelector('.error-form');
             if (response.success) {
-            // si loginForm go index ?
+                if (errorForm)
+                    errorForm.innerHTML = response.errors;
+                if (response.goto) {
+                    setTimeout(function () {
+                        window.location.href = response.goto;
+                        if (errorForm)
+                            errorForm.innerHTML = "";
+                    }, 3000);
+                }
             } else {
-                document.getElementById('error-form').innerHTML = response.errors;
-                console.log(response.errors);
+                if (errorForm)
+                    errorForm.innerHTML = response.errors;
             }
         }
     };

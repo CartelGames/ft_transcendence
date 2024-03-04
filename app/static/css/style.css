@@ -21,6 +21,11 @@ h1 {
 	font-weight: 500;
 	color: rgb(136, 12, 12);
 	font-size: 16px;
+	text-align: center;
+}
+
+.error-form p {
+	color: rgb(12, 136, 53) !important;
 }
 
 /* header */

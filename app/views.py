@@ -8,8 +8,6 @@ from django.contrib.auth import authenticate, login
 def index(request):
     if request.method == 'POST':
         if request.POST.get('type') == 'login':
-            print('Avant l\'instanciation du formulaire')
-            print(request.POST)
             form = LoginForm(data=request.POST)
             if form.is_valid():
                 print('Formulaire valide')
@@ -19,16 +17,11 @@ def index(request):
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return JsonResponse({'success': True})
+                    return JsonResponse({'success': True, 'errors': "<p>You are now log in !</p>", 'goto': '#index'})
                 else:
-                    form.add_error(None, 'Nom d\'utilisateur ou mot de passe incorrect.')
-                    errors = '\n'.join([error for error in form.non_field_errors()])
-                    return JsonResponse({'success': False, 'errors': errors})
+                    return JsonResponse({'success': False, 'errors': "You are already log in !"})
             else:
-                print('erreur : ', request.POST)
-                print('erreur car : ', form.errors)
-                errors = '\n'.join([error for error in form.non_field_errors()])
-                return JsonResponse({'success': False, 'errors': errors})
+                return JsonResponse({'success': False, 'errors': "Username or password incorrect."})
         elif request.POST.get('type') == 'signup':
             print(request.POST)
             form = SignupForm(data=request.POST)
@@ -40,11 +33,10 @@ def index(request):
                 password = form.cleaned_data['password1']
                 user = UserProfil.objects.create_user(username=username, email=email, password=password)
                 login(request, user)
+                return JsonResponse({'success': True, 'errors': 'You are now registered !', 'goto': '#login'})
             else:
-                print('erreur : ', request.POST)
-                print('erreur car : ', form.errors)
-                errors = '\n'.join([error for error in form.non_field_errors()])
-                return JsonResponse({'success': False, 'errors': form.errors})
+                errors = '<br>'.join([error for field, errors in form.errors.items() for error in errors])
+                return JsonResponse({'success': False, 'errors': errors})
         else:
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
 

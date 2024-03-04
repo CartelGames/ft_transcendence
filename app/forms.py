@@ -5,15 +5,6 @@ from .models import UserProfil
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label='Username', widget=forms.TextInput(attrs={'class': 'input'}))
     password = forms.CharField(label='Password', widget=forms.PasswordInput(attrs={'class': 'input'}))
-
-    def __init__(self, *args, **kwargs):
-        print('Données du formulaire à la création :', args, kwargs)
-        super().__init__(*args, **kwargs)
-
-    def clean(self):
-        cleaned_data = super().clean()
-        print('Données nettoyées du formulaire :', cleaned_data)
-        return cleaned_data
     
 class SignupForm(UserCreationForm):
     username = forms.CharField(label='Username', widget=forms.TextInput(attrs={'class': 'input'}))
