@@ -76,7 +76,8 @@ header .header-items ul li a::after {
 }
 
 /* login */
-.login-container {
+.form-container {
+	position: relative;
 	background-color: #ffffff;
 	max-width: 400px;
 	margin: 0 auto;
@@ -87,7 +88,7 @@ header .header-items ul li a::after {
 	margin-top: 150px;
 }
 
-.login-container h2 {
+.form-container h2 {
 	text-align: center;
 	padding-bottom: 30px;
 }
@@ -115,14 +116,21 @@ input {
 	box-sizing: border-box;
 }
 
+.butt  {
+	margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 button {
-	background-color: #4caf50;
-	color: white;
-	padding: 10px 15px;
-	border: none;
-	border-radius: 3px;
-	cursor: pointer;
-	font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 button:hover {
