@@ -53,8 +53,8 @@
 		<div class="form-container">
 			<h2>Inscription</h2>
 			<iframe name="signup" style="display:none;"></iframe>
-			<form id="signupForm" action="" method="post" target="signup">
-				<input type="hidden" name="type" value="signin">
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post" target="signup">
+				<input type="hidden" name="type" value="signup">
 				{% csrf_token %}
 				<label for="signup-username">Nom d'utilisateur :</label>
 				<input type="text" id="signup-username" name="signup-username" required>

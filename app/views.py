@@ -26,9 +26,10 @@ def index(request):
                     return JsonResponse({'success': False, 'errors': errors})
             else:
                 print('erreur : ', request.POST)
+                print('erreur car : ', form.errors)
                 errors = '\n'.join([error for error in form.non_field_errors()])
                 return JsonResponse({'success': False, 'errors': errors})
-        elif request.POST.get('type') == 'signin':
+        elif request.POST.get('type') == 'signup':
             print(request.POST)
             form = SignupForm(data=request.POST)
             if form.is_valid():
@@ -41,8 +42,9 @@ def index(request):
                 login(request, user)
             else:
                 print('erreur : ', request.POST)
+                print('erreur car : ', form.errors)
                 errors = '\n'.join([error for error in form.non_field_errors()])
-                return JsonResponse({'success': False, 'errors': errors})
+                return JsonResponse({'success': False, 'errors': form.errors})
         else:
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
 

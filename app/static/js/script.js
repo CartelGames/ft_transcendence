@@ -25,6 +25,7 @@ function sendForm(id, event) {
     var formData = new FormData(form);
     var xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
+    xhr.setRequestHeader('Content-Type', 'multipart/form-data');
     xhr.onload = function () {
         if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
