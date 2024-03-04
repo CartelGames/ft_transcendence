@@ -1,8 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .forms import LoginForm, SignupForm
 from .models import UserProfil
 from django.http import JsonResponse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 # Create your views here.
 
 def index(request):
@@ -37,9 +37,11 @@ def index(request):
             else:
                 errors = '<br>'.join([error for field, errors in form.errors.items() for error in errors])
                 return JsonResponse({'success': False, 'errors': errors})
+        elif request.POST.get('type') == 'logout':
+                logout(request)
+                return JsonResponse({'success': True, 'errors': 'You will be redirected in few seconds..', 'goto': '#index'})
         else:
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
-
     else:
         form = LoginForm()
 

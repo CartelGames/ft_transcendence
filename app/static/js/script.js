@@ -35,9 +35,10 @@ function sendForm(id, event) {
                 if (response.goto) {
                     setTimeout(function () {
                         window.location.href = response.goto;
+                        location.reload(true);
                         if (errorForm)
                             errorForm.innerHTML = "";
-                    }, 3000);
+                    }, 2000);
                 }
             } else {
                 if (errorForm)

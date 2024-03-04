@@ -16,12 +16,3 @@ class SignupForm(UserCreationForm):
     class Meta:
         model = UserProfil
         fields = ['username', 'pseudo', 'email', 'password1', 'password2']
-
-    def __init__(self, *args, **kwargs):
-        print('Données du formulaire à la création :', args, kwargs)
-        super().__init__(*args, **kwargs)
-    
-    def clean(self):
-        cleaned_data = super().clean()
-        print('Données nettoyées du formulaire :', cleaned_data)
-        return cleaned_data

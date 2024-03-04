@@ -141,3 +141,18 @@ button {
 button:hover {
 	background-color: #45a049;
 }
+
+button2 {
+    background-color: #af4c4c;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button2:hover {
+	background-color: #a04545;
+}
+

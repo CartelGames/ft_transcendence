@@ -16,7 +16,11 @@
 	<nav class="header-items">
 		<ul>
 			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
+			{% if user.is_authenticated %}
+			<li><a href="#profil" onclick="showDiv('profil')">Mon profil</a></li>
+			{% else %}
 			<li><a href="#login" onclick="showDiv('login')">Login</a></li>
+			{% endif %}
 		</ul>
 	</nav>
 </header>
@@ -30,6 +34,9 @@
 	<!-- login -->
 	<div id="login" class="block">
 		<div class="form-container">
+			{% if user.is_authenticated %}
+			<h2>You are already logged in !</h2>
+			{% else %}
 			<h2>Connexion</h2>
 			<iframe name="login" style="display:none;"></iframe>
 			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
@@ -45,12 +52,16 @@
 				<!-- <button onclick="sendForm('loginForm', event)">Se connecter</button> -->
 				<div id="error-form" class="error-form"></div>
 			</form>
+			{% endif %}
 		</div>
 	</div>
 
 	<!-- signin -->
 	<div id="signup" class="block">
 		<div class="form-container">
+			{% if user.is_authenticated %}
+			<h2>You are already logged in !</h2>
+			{% else %}
 			<h2>Inscription</h2>
 			<iframe name="signup" style="display:none;"></iframe>
 			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
@@ -67,6 +78,20 @@
 				<label for="signup-pass-repeat">Répéter le mot de passe : </label>
 				<input type="password" id="signup-pass-repeat" name="password2" required>
 				<div class="butt"><button type="submit" onclick="sendForm('signupForm', event)">S'inscrire</button></div>
+				<div id="error-form" class="error-form"></div>
+			</form>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- profil -->
+	<div id="profil" class="block">
+		<div class="form-container">
+			<h2>Mon profil</h2>
+			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="logout">
+				{% csrf_token %}
+				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
 				<div id="error-form" class="error-form"></div>
 			</form>
 		</div>
