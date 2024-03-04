@@ -33,7 +33,7 @@ def index(request):
                 password = form.cleaned_data['password1']
                 user = UserProfil.objects.create_user(username=username, email=email, password=password)
                 login(request, user)
-                return JsonResponse({'success': True, 'errors': 'You are now registered !', 'goto': '#login'})
+                return JsonResponse({'success': True, 'errors': '<p>You are now registered !</p>', 'goto': '#login'})
             else:
                 errors = '<br>'.join([error for field, errors in form.errors.items() for error in errors])
                 return JsonResponse({'success': False, 'errors': errors})
