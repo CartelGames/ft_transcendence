@@ -9,12 +9,19 @@ services:
       - POSTGRES_DB=postgres
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
+  adminer:
+    image: adminer
+    ports:
+      - "8080:8080"
+    restart: always
+
   web:
     build: .
-    command: python manage.py runserver 0.0.0.0:8080
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/code
     ports:
-      - "8080:8080"
+      - "8000:8000"
     depends_on:
       - db

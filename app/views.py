@@ -31,7 +31,7 @@ def index(request):
                 pseudo = form.cleaned_data['pseudo']
                 email = form.cleaned_data['email']
                 password = form.cleaned_data['password1']
-                user = UserProfil.objects.create_user(username=username, email=email, password=password)
+                user = UserProfil.objects.create_user(username=username, pseudo=pseudo, email=email, password=password)
                 login(request, user)
                 return JsonResponse({'success': True, 'errors': '<p>You are now registered !</p>', 'goto': '#login'})
             else:
@@ -42,7 +42,11 @@ def index(request):
                 return JsonResponse({'success': True, 'errors': 'You will be redirected in few seconds..', 'goto': '#index'})
         else:
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
+    elif request.method == 'GET':
+        if request.GET.get('data') == 'profil':
+            return JsonResponse({'success': True, 'username': request.user.username, 'email': request.user.email, 'img': request.user.profil_img.url})
+        else:
+            form = LoginForm()
     else:
         form = LoginForm()
-
     return render(request, 'index.html', {'form': form})

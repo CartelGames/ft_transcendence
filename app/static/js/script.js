@@ -14,6 +14,7 @@ function showDiv(divId) {
 			var stateObj = { divId: divId };
 			var url = window.location.href.split('#')[0] + '#' + divId;
 			history.pushState(stateObj, null, url);
+            checkURL();
 		}
 		else
 			upHist = false;
@@ -48,6 +49,27 @@ function sendForm(id, event) {
     };
     xhr.send(formData);
     event.preventDefault();
+}
+
+function loadProfileData() {
+    $.ajax({
+        type: 'GET',
+        data: { data: 'profil' },
+        success: function (data) {
+            $('#username').text('Username: ' + data.username);
+            $('#email').text('Email: ' + data.email);
+            $('#img').attr('src', data.img);
+            console.log('User: ' + data.username + ' Email: ' + data.email + ' IMG: ' + data.img);
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des données du profil.');
+        }
+    });
+}
+
+function checkURL() {
+    if (window.location.hash === "#profil")
+        loadProfileData();
 }
 
 window.addEventListener('hashchange', function () {
