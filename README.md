@@ -1,5 +1,8 @@
 # ft_transcendence
 
+Update 05/03/24 : -Rajout d'adminer / Backend avec login setup / Debut de Front
+
+# How to:
 Il faut ```git clone``` puis lancer la commande :
 ``` docker compose up --build ```
 
