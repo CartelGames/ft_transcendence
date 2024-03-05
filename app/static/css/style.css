@@ -12,6 +12,22 @@ h1 {
 	text-align: center;
 }
 
+.block {
+	display: none;
+}
+
+.error-form {
+	margin-top: 20px;
+	font-weight: 500;
+	color: rgb(136, 12, 12);
+	font-size: 16px;
+	text-align: center;
+}
+
+.error-form p {
+	color: rgb(12, 136, 53) !important;
+}
+
 /* header */
 header {
 	position: fixed;
@@ -65,7 +81,8 @@ header .header-items ul li a::after {
 }
 
 /* login */
-.login-container {
+.form-container {
+	position: relative;
 	background-color: #ffffff;
 	max-width: 400px;
 	margin: 0 auto;
@@ -76,7 +93,7 @@ header .header-items ul li a::after {
 	margin-top: 150px;
 }
 
-.login-container h2 {
+.form-container h2 {
 	text-align: center;
 	padding-bottom: 30px;
 }
@@ -104,16 +121,41 @@ input {
 	box-sizing: border-box;
 }
 
+.butt  {
+	margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 button {
-	background-color: #4caf50;
-	color: white;
-	padding: 10px 15px;
-	border: none;
-	border-radius: 3px;
-	cursor: pointer;
-	font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 button:hover {
 	background-color: #45a049;
+}
+
+button2 {
+    background-color: #af4c4c;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button2:hover {
+	background-color: #a04545;
+}
+
+.profil img {
+	max-width: 150px;
 }
