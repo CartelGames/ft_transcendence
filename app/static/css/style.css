@@ -12,22 +12,6 @@ h1 {
 	text-align: center;
 }
 
-.block {
-	display: none;
-}
-
-.error-form {
-	margin-top: 20px;
-	font-weight: 500;
-	color: rgb(136, 12, 12);
-	font-size: 16px;
-	text-align: center;
-}
-
-.error-form p {
-	color: rgb(12, 136, 53) !important;
-}
-
 /* header */
 header {
 	position: fixed;
@@ -81,8 +65,7 @@ header .header-items ul li a::after {
 }
 
 /* login */
-.form-container {
-	position: relative;
+.login-container {
 	background-color: #ffffff;
 	max-width: 400px;
 	margin: 0 auto;
@@ -93,7 +76,7 @@ header .header-items ul li a::after {
 	margin-top: 150px;
 }
 
-.form-container h2 {
+.login-container h2 {
 	text-align: center;
 	padding-bottom: 30px;
 }
@@ -121,21 +104,14 @@ input {
 	box-sizing: border-box;
 }
 
-.butt  {
-	margin-top: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 button {
-    background-color: #4caf50;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 16px;
+	background-color: #4caf50;
+	color: white;
+	padding: 10px 15px;
+	border: none;
+	border-radius: 3px;
+	cursor: pointer;
+	font-size: 16px;
 }
 
 button:hover {

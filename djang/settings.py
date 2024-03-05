@@ -25,7 +25,8 @@ SECRET_KEY = 'django-insecure-(v!v*p&ci0025(nl+heca_tstmaijit_*((c_vk_17=jna#q#j
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['0.0.0.0', 'localhost', 'localhost:8080']
+ALLOWED_HOSTS = ['0.0.0.0']
+
 # Application definition
 
 
@@ -50,8 +51,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'djang.urls'
-
-X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 TEMPLATES = [
     {
