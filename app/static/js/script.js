@@ -41,6 +41,8 @@ function sendForm(id, event) {
                             errorForm.innerHTML = "";
                     }, 2000);
                 }
+                if (window.location.hash === "#profil")
+                    loadProfileData();
             } else {
                 if (errorForm)
                     errorForm.innerHTML = response.errors;
@@ -83,4 +85,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var defaultDivId = location.hash.slice(1) || 'index';
 	console.log("First call : " + defaultDivId);
     showDiv(defaultDivId);
+});
+
+document.getElementById('profil-img').addEventListener('change', function (event) {
+    sendForm('profilImg', event)
 });

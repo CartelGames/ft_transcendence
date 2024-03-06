@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import LoginForm, SignupForm
+from .forms import LoginForm, SignupForm, ProfilImgForm
 from .models import UserProfil
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
@@ -40,6 +40,15 @@ def index(request):
         elif request.POST.get('type') == 'logout':
                 logout(request)
                 return JsonResponse({'success': True, 'errors': 'You will be redirected in few seconds..', 'goto': '#index'})
+        elif request.POST.get('type') == 'profilImg':
+            form = ProfilImgForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+                return JsonResponse({'success': True, 'errors': ''})
+            else:
+                print('error', form.errors)
+                errors = '<br>'.join([error for field, errors in form.errors.items() for error in errors])
+                return JsonResponse({'success': False, 'errors': errors})
         else:
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
     elif request.method == 'GET':
