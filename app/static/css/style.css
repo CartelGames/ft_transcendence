@@ -12,8 +12,26 @@ h1 {
 	text-align: center;
 }
 
+.game {
+	display: flex !important;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	justify-content: center;
+	align-items: center;
+}
+
 .block {
-	display: none;
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	justify-content: center;
+	align-items: center;
 }
 
 .error-form {
@@ -180,4 +198,13 @@ button2:hover {
 .overlay:hover {
     opacity: 1;
     z-index: 1;
+}
+
+canvas {
+	display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+	width: 75% !important;
+	height: 75% !important;
 }
