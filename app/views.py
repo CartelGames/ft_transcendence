@@ -17,7 +17,7 @@ def index(request):
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
                     login(request, user)
-                    return JsonResponse({'success': True, 'errors': "<p>You are now log in !</p>", 'goto': '#index'})
+                    return JsonResponse({'success': True, 'errors': "<p>You are now logged in !</p>", 'goto': '#index'})
                 else:
                     return JsonResponse({'success': False, 'errors': "You are already log in !"})
             else:
@@ -33,13 +33,14 @@ def index(request):
                 password = form.cleaned_data['password1']
                 user = UserProfil.objects.create_user(username=username, pseudo=pseudo, email=email, password=password)
                 login(request, user)
-                return JsonResponse({'success': True, 'errors': '<p>You are now registered !</p>', 'goto': '#login'})
+                return JsonResponse({'success': True, 'errors': '<p>You are now registered !</p>', 'goto': '#index'})
             else:
                 errors = '<br>'.join([error for field, errors in form.errors.items() for error in errors])
                 return JsonResponse({'success': False, 'errors': errors})
         elif request.POST.get('type') == 'logout':
-                logout(request)
-                return JsonResponse({'success': True, 'errors': 'You will be redirected in few seconds..', 'goto': '#index'})
+                if request.user is not None:
+                    logout(request)
+                    return JsonResponse({'success': True, 'errors': 'You will be redirected in few seconds..', 'goto': '#index'})
         elif request.POST.get('type') == 'profilImg':
             form = ProfilImgForm(request.POST, request.FILES, instance=request.user)
             if form.is_valid():
@@ -53,7 +54,11 @@ def index(request):
             return JsonResponse({'success': False, 'errors': 'An error occured with the type of post.'})
     elif request.method == 'GET':
         if request.GET.get('data') == 'profil':
-            return JsonResponse({'success': True, 'username': request.user.username, 'email': request.user.email, 'img': request.user.profil_img.url})
+            if request.user is not None:
+                return JsonResponse({'success': True, 'username': request.user.username, 'email': request.user.email, 'img': request.user.profil_img.url})
+            else:
+                return JsonResponse({'success': True, 'username': '', 'email': '', 'img': ''})
+
         else:
             form = LoginForm()
     else:
