@@ -156,6 +156,28 @@ button2:hover {
 	background-color: #a04545;
 }
 
-.profil img {
+.profil-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.img-profil {
+	position: relative;
 	max-width: 150px;
+}
+
+.overlay {
+	position: absolute;
+    transition: opacity 0.3s;
+	max-width: 150px;
+    content: url('img/plus.png');
+    opacity: 0;
+    z-index: 1;
+}
+
+.overlay:hover {
+    opacity: 1;
+    z-index: 1;
 }

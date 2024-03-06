@@ -18,7 +18,7 @@
 		<ul>
 			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
 			{% if user.is_authenticated %}
-			<li><a href="#profil" onclick="showDiv('profil')">Mon profil</a></li>
+			<li><a href="#profil" onclick="showDiv('profil')">My profil</a></li>
 			{% else %}
 			<li><a href="#login" onclick="showDiv('login')">Login</a></li>
 			{% endif %}
@@ -88,8 +88,17 @@
 	<!-- profil -->
 	<div id="profil" class="block profil">
 		<div class="form-container">
-			<h2>Mon profil</h2>
-			<img id="img"/>
+			<h2>My profil</h2>
+			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="profilImg">
+				{% csrf_token %}
+				<label for="profil-img" class="profil-img">
+					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
+					<img class="overlay">
+				</label>
+				<input type="file" id="profil-img" name="profil_img" style="display: none;" accept="image/*">
+				<div id="error-form" class="error-form"></div>
+			</form>
 			<p id="username"></p>
    			<p id="email"></p>
 			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
