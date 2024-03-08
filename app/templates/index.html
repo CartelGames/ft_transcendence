@@ -18,6 +18,26 @@
 		<ul>
 			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
 			{% if user.is_authenticated %}
+			<script>
+				const socket = new WebSocket('ws://localhost:8000/ws/chat/');
+
+				socket.onerror = function(event) {
+					console.error('WebSocket Error:', event);
+				};
+
+				socket.onopen = (event) => {
+					console.log('WebSocket connection opened:', event);
+				};
+
+				socket.onmessage = (event) => {
+					const message = JSON.parse(event.data);
+					console.log('WebSocket message received:', message);
+				};
+
+				socket.onclose = (event) => {
+					console.log('WebSocket connection closed:', event);
+				};
+			</script>
 			<li><a href="#profil" onclick="showDiv('profil')">My profile</a></li>
 			{% else %}
 			<li><a href="#login" onclick="showDiv('login')">Login</a></li>
