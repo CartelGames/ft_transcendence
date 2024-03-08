@@ -205,6 +205,6 @@ canvas {
     align-items: center;
     justify-content: center;
     position: relative;
-	width: 75% ;
-	height: 75% ;
+	width: 75% !important;
+	height: 75% !important;
 }
