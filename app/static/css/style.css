@@ -1,5 +1,7 @@
 body {
 	background-color: rgb(33, 32, 32);
+	margin: 0;
+	padding: 0;
 }
 
 a {
@@ -12,37 +14,88 @@ h1 {
 	text-align: center;
 }
 
+.game {
+	display: flex !important;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	justify-content: center;
+	align-items: center;
+}
+
+.block {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	justify-content: center;
+	align-items: center;
+}
+
+.error-form {
+	margin-top: 20px;
+	font-weight: 500;
+	color: rgb(136, 12, 12);
+	font-size: 16px;
+	text-align: center;
+}
+
+.error-form p {
+	color: rgb(12, 136, 53) !important;
+}
+
 /* header */
 header {
-	position: fixed;
+	background-color: #000120;
+	position: relative;
 	top: 0;
 	left: 0;
 	width: 100%;
 	z-index: 3;
 	display: flex;
-	justify-content: center;
 	align-items: center;
 	text-transform: uppercase;
 	font-weight: 600;
-	height: 70px;
-	margin-bottom: 1000px;
+	/* height: 7rem; */
+	margin-bottom: 3rem;
+	padding: 0;
 }
 
-.content {
-	margin-top: 100px;
+nav {
+	width: 100%;
+	height: 100%;
+}
+.header-logo
+{
+	position: relative;
+	top: 0;
+	width: 7rem;
+	height: 6.3rem;
+	padding: 0;
+	margin: 0;
 }
 
 .header-items ul {
 	display: flex;
-	color: #fff;
+	justify-content: space-around;
+	align-items: center;
+	height: 100%;
+	color: #4DFBE4;
 	list-style: none;
+	margin: 0;
 }
 
 .header-items ul li {
 	text-decoration: none;
 	position: relative;
 	margin-right: 20px;
-	padding-bottom: 2px;
+	font-family: 'Honk', sans-serif;
+	font-weight: 200;
+	font-size: 3em;
 }
 
 header .header-items ul li a::after {
@@ -52,20 +105,26 @@ header .header-items ul li a::after {
 	left: 0;
 	width: 100%;
 	height: 1px;
-	background: #fff;
+	background: #4DFBE4;
 	transform: scaleX(0);
 	transition: transform 0.6s cubic-bezier(0.19, 1, 0.22, 1);
 	transform-origin: right center;
+	font-size: 4em;
 }
 
 .header-items ul li a:hover::after {
-	transform: scaleX(1);
+	transform: scale(1);
 	transform-origin: left center;
 	transition-duration: 0.4s;
 }
 
+.content {
+	display: block;
+}
+
 /* login */
-.login-container {
+.form-container {
+	position: relative;
 	background-color: #ffffff;
 	max-width: 400px;
 	margin: 0 auto;
@@ -76,7 +135,7 @@ header .header-items ul li a::after {
 	margin-top: 150px;
 }
 
-.login-container h2 {
+.form-container h2 {
 	text-align: center;
 	padding-bottom: 30px;
 }
@@ -104,16 +163,73 @@ input {
 	box-sizing: border-box;
 }
 
+.butt  {
+	margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 button {
-	background-color: #4caf50;
-	color: white;
-	padding: 10px 15px;
-	border: none;
-	border-radius: 3px;
-	cursor: pointer;
-	font-size: 16px;
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 button:hover {
 	background-color: #45a049;
 }
+
+button2 {
+    background-color: #af4c4c;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button2:hover {
+	background-color: #a04545;
+}
+
+.profil-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.img-profil {
+	position: relative;
+	max-width: 150px;
+}
+
+.overlay {
+	position: absolute;
+    transition: opacity 0.3s;
+	max-width: 150px;
+    content: url('img/plus.png');
+    opacity: 0;
+    z-index: 1;
+}
+
+.overlay:hover {
+    opacity: 1;
+    z-index: 1;
+}
+
+canvas {
+	display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+	width: 75% !important;
+	height: 75% !important;
+}
+
