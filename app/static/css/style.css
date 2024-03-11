@@ -208,3 +208,131 @@ canvas {
 	width: 75% !important;
 	height: 75% !important;
 }
+
+#chat {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 30vh;
+    max-height: 10vh;
+    color: #fff;
+    cursor: pointer;
+    overflow: hidden;
+    transition: max-height 0.4s;
+}
+
+#chat-toggle {
+    padding: 5px;
+    text-align: center;
+    background-color: #2980b9;
+}
+
+#chat.chat-open {
+	height: 30vh;
+    max-height: 30vh;
+	background-color: #ffffff; 
+
+}
+
+#chat-content {
+    display: none;
+}
+
+#chat-content p,
+#chat-content label {
+	font-weight: 600;
+	margin-top: 20px;
+	text-align: center;
+	color: #000000;
+}
+
+#chat-content input {
+	margin-bottom: 0px;
+}
+
+#chat-content .butt {
+    margin-top: 5px;
+}
+
+#chat-content .butt.friend {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+}
+#chat.chat-open #chat-content {
+    display: block;
+}
+
+#chat-content .clickable-row {
+    margin-bottom: 5px;
+	font-size: 20px;
+}
+
+.chat-box {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 20vh;
+    max-height: 10vh;
+    color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+	transition: max-height 0.4s;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border-left: solid #000000;
+	border-right: solid #000000;
+	border-top: solid #000000;
+	border-width: 2px;
+}
+
+.chat-box-toggle {
+	border-bottom: solid #000000;
+	border-width: 2px;
+    padding: 5px;
+    text-align: center;
+    background-color: #2980b9;
+}
+
+
+.chat-box-toggle span {
+	position: absolute;
+    top: 0;
+    right: 0;
+	margin-right: 5px;
+	color:#f14949;
+	font-weight: 700;
+	font-size: 35px;
+}
+
+.chat-box.chat-box-open {
+    height: 30vh;
+    max-height: 30vh;
+    background-color: #ffffff; 
+}
+
+.chat-box-content {
+    display: none;
+}
+
+.chat-box.chat-box-open .chat-box-content {
+    display: block;
+}
+
+.chat-box-content p,
+.chat-box-content label {
+	font-weight: 500;
+	margin-top: 18px;
+	text-align: left;
+	color: #000000;
+}
+
+.chat-box-content input {
+	position: absolute;
+    bottom: 0;
+	left: 0;
+	margin-bottom: 1px;
+}
+
+

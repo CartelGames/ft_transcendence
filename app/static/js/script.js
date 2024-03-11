@@ -1,4 +1,5 @@
 var upHist = false;
+let chatCounter = 0;
 
 function showDiv(divId) {
     var divs = document.querySelectorAll('.block');
@@ -59,12 +60,101 @@ function loadProfileData() {
         data: { data: 'profil' },
         success: function (data) {
             $('#username').text('Username: ' + data.username);
+            $('#pseudo').text('Pseudo: ' + data.pseudo);
             $('#email').text('Email: ' + data.email);
             $('#img').attr('src', data.img);
             console.log('User: ' + data.username + ' Email: ' + data.email + ' IMG: ' + data.img);
         },
         error: function (error) {
             console.log('Erreur lors de la récupération des données du profil.');
+        }
+    });
+}
+
+function openChat(pseudo) {
+
+    if (chatCounter >= 5) {
+        alert("You have already 5 chat box !");
+        return;
+    }
+
+    var chatDiv = document.createElement('div');
+    chatDiv.id = 'chat-box-' + chatCounter;
+    chatDiv.id = pseudo;
+    chatDiv.className = 'chat-box';
+    chatDiv.style.left = 20 * chatCounter + 'vh';
+    var toggleDiv = document.createElement('div');
+    toggleDiv.className = 'chat-box-toggle';
+
+    var closeIcon = document.createElement('span');
+    closeIcon.className = 'close-icon';
+    closeIcon.innerHTML = '&times;';
+    toggleDiv.appendChild(closeIcon);
+
+    var titleP = document.createElement('p');
+    titleP.textContent = pseudo;
+    toggleDiv.appendChild(titleP);
+    chatDiv.appendChild(toggleDiv);
+
+    var contentDiv = document.createElement('div');
+    contentDiv.id = 'chat-box-content';
+    contentDiv.className = 'chat-box-content';
+    var chatP = document.createElement('p');
+    chatP.textContent = pseudo;
+    contentDiv.appendChild(chatP);
+
+    var formHTML = `
+        <form id="sendChatForm" enctype="multipart/form-data" action="/" method="post">
+        <input type="hidden" name="type" value="sendChat">
+        <input type="hidden" name="id_to" value="${pseudo}">
+        <input type="hidden" name="csrfmiddlewaretoken" value="1Ik7Oh5kJz90s5WqixrDpvYqPgVCQeEghVIMUg4CKVu8XGozMm2rH82txqrGNtRG">
+        <input type="text" id="content" name="content" required>
+        <div id="error-form" class="error-form"></div>
+        </form>
+        `;
+    // <div class="butt"><button type="submit" onclick="sendForm('sendChatForm', event)">Send</button></div>
+    contentDiv.innerHTML = formHTML;
+    chatDiv.appendChild(contentDiv);
+
+    toggleDiv.addEventListener('click', function () {
+        chatDiv.classList.toggle('chat-box-open');
+    });
+    closeIcon.addEventListener('click', function (event) {
+        event.stopPropagation();
+        var parent = chatDiv.parentElement;
+        parent.removeChild(chatDiv);
+        chatCounter--;
+        var chatBoxes = document.getElementsByClassName('chat-box');
+        for (var i = 0; i < chatBoxes.length; i++) {
+            chatBoxes[i].style.left = 20 * i + 'vh';
+        }
+    });
+    document.body.appendChild(chatDiv);
+    chatCounter++;
+}
+
+function loadFriends() {
+    $.ajax({
+        type: 'GET',
+        data: { data: 'friends' },
+        success: function (data) {
+            if (data.success) {
+                var friendsList = data.friends;
+                var friendsContainer = $('#friends');
+                friendsContainer.empty();
+                friendsList.forEach(function (friend) {
+                    var clickableRow = $('<div class="clickable-row" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
+                    clickableRow.click(function () {
+                        console.log('Pseudo cliqué : ' + friend.pseudo);
+                        openChat(friend.pseudo);
+                        fetchMessages();
+                    });
+                    friendsContainer.append(clickableRow);
+                });
+            }
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des amis.');
         }
     });
 }
@@ -87,7 +177,75 @@ document.addEventListener('DOMContentLoaded', function () {
     showDiv(defaultDivId);
 });
 
+document.addEventListener('DOMContentLoaded', function () {
+    var chat = document.getElementById('chat');
+    var chatToggle = document.getElementById('chat-toggle');
+    if (chat && chatToggle) {
+        chatToggle.addEventListener('click', function () {
+            chat.classList.toggle('chat-open');
+        });
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    var chat = document.getElementById('chat-box');
+    var chatToggle = document.getElementById('chat-box-toggle');
+    if (chat && chatToggle) {
+        chatToggle.addEventListener('click', function () {
+            chat.classList.toggle('chat-box-open');
+        });
+    }
+});
+
 document.getElementById('profil-img').addEventListener('change', function (event) {
     sendForm('profilImg', event)
 });
 
+function fetchMessages() {
+    $.ajax({
+        type: 'GET',
+        data: { data: 'chat' },
+        success: function (data) {
+            var messages = data.messages;
+            console.log('test')
+            messages.forEach(function (message) {
+                // Créez un nouvel élément p avec le contenu du message
+                var id = message.pseudo_from === message.me ? message.pseudo_to : message.pseudo_from;
+                var chatDiv = document.getElementById(id);
+                if (!chatDiv)
+                    return;
+                var chatBoxContent = chatDiv.querySelector('#chat-box-content');
+                console.log(id)
+                if (!chatBoxContent)
+                    return;
+                var messageElement = document.createElement('p');
+                
+                var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_to + ' : </b>';
+                messageElement.innerHTML = from + message.content;
+                console.log(messageElement)
+
+                chatBoxContent.appendChild(messageElement);
+            });
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des amis.');
+        }
+    });
+}
+// setInterval(fetchMessages, 10000);
+fetchMessages();
+
+function displayDiv(hide, show) {
+    var hideDiv = document.getElementById(hide);
+    if (hideDiv)
+        hideDiv.style.display = 'none';
+    
+    var showDiv = document.getElementById(show);
+    if (showDiv)
+        showDiv.style.display = 'block';
+}
+
+
+window.onload = function() {
+    loadFriends();
+};
