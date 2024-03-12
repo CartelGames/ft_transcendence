@@ -12,6 +12,10 @@ h1 {
 	text-align: center;
 }
 
+.hide {
+	display: none !important;
+}
+
 .game {
 	display: flex !important;
 	flex-direction: column;
@@ -318,7 +322,13 @@ canvas {
 
 .chat-box.chat-box-open .chat-box-content {
     display: block;
+    overflow-y: auto;
+	overflow-x: hidden;
+    max-height: 65%;
+    max-width: 100%;
+    white-space: normal;
 }
+
 
 .chat-box-content p,
 .chat-box-content label {

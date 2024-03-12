@@ -4,8 +4,12 @@ from django.contrib.auth.models import AnonymousUser
 from .models import UserProfil, Message
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
+from django.middleware import csrf
+from django.views.decorators.csrf import csrf_exempt
 # Create your views here.
 
+
+@csrf_exempt
 def index(request):
     if request.method == 'POST':
         if request.POST.get('type') == 'login':
@@ -67,9 +71,9 @@ def index(request):
                     'username': request.user.username,
                     'email': request.user.email,
                 }
-                return JsonResponse({'success': True, 'message': {'content': new_message.content, 'timestamp': new_message.timestamp}, 'sender_info': sender_info})
+                return JsonResponse({'success': True, 'errors': ''})
             else:
-                return JsonResponse({'success': False, 'errors': 'Invalid request parameters'})
+                return JsonResponse({'success': False, 'errors': 'Error'})
         elif request.POST.get('type') == 'addFriend':
             if isinstance(request.user, AnonymousUser):
                 return JsonResponse({'success': False})
@@ -90,6 +94,8 @@ def index(request):
                 return JsonResponse({'success': True, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url})
             else:
                 return JsonResponse({'success': True, 'username': '', 'email': '', 'img': ''})
+        elif request.GET.get('data') == 'csrftoken':
+            return JsonResponse({'csrftoken': csrf.get_token(request)})
         elif request.GET.get('data') == 'chat':
             if isinstance(request.user, AnonymousUser):
                 return JsonResponse({'success': False})

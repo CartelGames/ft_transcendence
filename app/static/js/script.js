@@ -32,6 +32,10 @@ function sendForm(id, event) {
             var response = JSON.parse(xhr.responseText);
             var errorForm = form.querySelector('.error-form');
             if (response.success) {
+                if (formData.get('type') == 'sendChat') {
+                    fetchMessages();
+                    return;
+                }
                 if (errorForm)
                     errorForm.innerHTML = response.errors;
                 if (response.goto) {
@@ -71,6 +75,16 @@ function loadProfileData() {
     });
 }
 
+function clearInput(button) {
+    var form = button.closest('form');
+    if (form) {
+        var inputField = form.querySelector('input[name="content"]');
+        if (inputField) {
+            inputField.value = '';
+        }
+    }
+}
+
 function openChat(pseudo) {
 
     if (chatCounter >= 5) {
@@ -107,17 +121,19 @@ function openChat(pseudo) {
         <form id="sendChatForm" enctype="multipart/form-data" action="/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
-        <input type="hidden" name="csrfmiddlewaretoken" value="1Ik7Oh5kJz90s5WqixrDpvYqPgVCQeEghVIMUg4CKVu8XGozMm2rH82txqrGNtRG">
+        <input type="hidden" name="csrfmiddlewaretoken" value="">
         <input type="text" id="content" name="content" required>
+        <div class="hide"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
-        `;
+    `;
     // <div class="butt"><button type="submit" onclick="sendForm('sendChatForm', event)">Send</button></div>
     contentDiv.innerHTML = formHTML;
     chatDiv.appendChild(contentDiv);
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
+        contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     closeIcon.addEventListener('click', function (event) {
         event.stopPropagation();
@@ -187,16 +203,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    var chat = document.getElementById('chat-box');
-    var chatToggle = document.getElementById('chat-box-toggle');
-    if (chat && chatToggle) {
-        chatToggle.addEventListener('click', function () {
-            chat.classList.toggle('chat-box-open');
-        });
-    }
-});
-
 document.getElementById('profil-img').addEventListener('change', function (event) {
     sendForm('profilImg', event)
 });
@@ -207,24 +213,31 @@ function fetchMessages() {
         data: { data: 'chat' },
         success: function (data) {
             var messages = data.messages;
-            console.log('test')
-            messages.forEach(function (message) {
-                // Créez un nouvel élément p avec le contenu du message
-                var id = message.pseudo_from === message.me ? message.pseudo_to : message.pseudo_from;
-                var chatDiv = document.getElementById(id);
-                if (!chatDiv)
-                    return;
-                var chatBoxContent = chatDiv.querySelector('#chat-box-content');
-                console.log(id)
-                if (!chatBoxContent)
-                    return;
-                var messageElement = document.createElement('p');
-                
-                var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_to + ' : </b>';
-                messageElement.innerHTML = from + message.content;
-                console.log(messageElement)
+ 
+            var chatBoxContents = document.querySelectorAll('.chat-box-content');
+            chatBoxContents.forEach(function (chatBoxContent) {
+                // Supprimez les éléments <p> existants
+                var paragraphs = chatBoxContent.querySelectorAll('p');
+                paragraphs.forEach(function (paragraph) {
+                    paragraph.remove();
+                });
+                messages.forEach(function (message) {
+                    // Créez un nouvel élément p avec le contenu du message
+                    var id = message.pseudo_from === message.me ? message.pseudo_to : message.pseudo_from;
+                    var chatDiv = document.getElementById(id);
+                    if (!chatDiv)
+                        return;
+                    var chatBoxContent = chatDiv.querySelector('.chat-box-content');
+                    if (!chatBoxContent)
+                        return;
+                    var messageElement = document.createElement('p');
+                    
+                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_to + ' : </b>';
+                    messageElement.innerHTML = from + message.content;
 
-                chatBoxContent.appendChild(messageElement);
+                    chatBoxContent.appendChild(messageElement);
+                    chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
+                });
             });
         },
         error: function (error) {
@@ -232,7 +245,7 @@ function fetchMessages() {
         }
     });
 }
-// setInterval(fetchMessages, 10000);
+// setInterval(fetchMessages, 3000);
 fetchMessages();
 
 function displayDiv(hide, show) {
