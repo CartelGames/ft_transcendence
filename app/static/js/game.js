@@ -1,4 +1,11 @@
-import { FontLoader, TextGeometry } from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+import { FontLoader, TextGeometry} from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
+// import { OrbitControls } from '/three/addons/controls/OrbitControls.js';
+// import { GLTFLoader } from '/three/addons/loaders/GLTFLoader.js';
+// import { EffectComposer } from '/three/addons/postprocessing/EffectComposer.js';
+// import { RenderPass } from '/three/addons/postprocessing/RenderPass.js';
+// import { UnrealBloomPass } from '/three/addons/postprocessing/UnrealBloomPass.js';
+// import { OutputPass } from '/three/addons/postprocessing/OutputPass.js';
+// import Stats from '/three/addons/libs/stats.module.js';
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
