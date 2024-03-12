@@ -1,11 +1,12 @@
-import { FontLoader, TextGeometry} from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js';
-// import { OrbitControls } from '/three/addons/controls/OrbitControls.js';
-// import { GLTFLoader } from '/three/addons/loaders/GLTFLoader.js';
-// import { EffectComposer } from '/three/addons/postprocessing/EffectComposer.js';
-// import { RenderPass } from '/three/addons/postprocessing/RenderPass.js';
-// import { UnrealBloomPass } from '/three/addons/postprocessing/UnrealBloomPass.js';
-// import { OutputPass } from '/three/addons/postprocessing/OutputPass.js';
-// import Stats from '/three/addons/libs/stats.module.js';
+import * as THREE from 'three';
+import { FontLoader } from 'three/addons/loaders/FontLoader.js'
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
@@ -19,6 +20,29 @@ camHelper.update();
 camera.position.z =30;
 
 
+
+let mixer, composer, clock;
+const params = {
+  threshold: 0,
+  strength: 1,
+  radius: 0,
+  exposure: 1
+};
+ 
+const ball = new THREE.Group();
+clock = new THREE.Clock();
+new GLTFLoader().load( '/static/models/gltf/PrimaryIonDrive.glb', function ( gltf ) {
+
+  const model = gltf.scene;
+
+  ball.add( model );
+
+  mixer = new THREE.AnimationMixer( model );
+  const clip = gltf.animations[ 0 ];
+  mixer.clipAction( clip.optimize() ).play();
+
+} );
+scene.add(ball);
 // const lineSegment = camHelper.children[0]; // get the first LineSegment object in the helper
 // console.log("linesegmentstart", lineSegment.start);
 // const size = lineSegment.start.distanceTo(lineSegment.end);
@@ -35,12 +59,10 @@ const geometry = new THREE.BoxGeometry( 1, boardHeight, 1 );
 const background = new THREE.PlaneGeometry(200, 200);
 const backgroundMaterial = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide});
 const back = new THREE.Mesh(background, backgroundMaterial);
-const ballHelp = new THREE.SphereGeometry(1, 32, 16);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
 const playerOne = new THREE.Mesh( geometry, material ); 
 const playerTwo = new THREE.Mesh( geometry, material );
-const ball = new THREE.Mesh( ballHelp, material);
-scene.add( playerOne , playerTwo, ball, back);
+scene.add( playerOne , playerTwo, back);
 const canvasBounds = {
   left: -((canvas.width/2) * mConvert) * (camera.position.z * 9.3),
   right: ((canvas.width/2) * mConvert)* (camera.position.z * 9.3),
@@ -58,9 +80,8 @@ score[0]=0;
 score[1]=0;
 
 //on met de la lumiere
+renderer.toneMapping = THREE.ReinhardToneMapping;
 const pointLight = new THREE.PointLight(0xff00ff);
-pointLight.position.set(50,0,20);
-const ambientLight = new THREE.AmbientLight();
 scene.add(pointLight);
 
 // const lightHelper = new THREE.PointLightHelper(pointLight);
@@ -70,7 +91,17 @@ scene.add(pointLight);
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
 
+//BALL MODEL
 
+const bloomPass = new UnrealBloomPass( new THREE.Vector2( canvas.width, canvas.height ), 1.5, 0.4, 0.85 );
+bloomPass.threshold = params.threshold;
+bloomPass.strength = params.strength;
+bloomPass.radius = params.radius;
+
+const renderScene = new RenderPass( scene, camera );
+composer = new EffectComposer( renderer );
+composer.addPass( renderScene );
+composer.addPass( bloomPass );
 
 console.log(canvasBounds.left, canvasBounds.right, canvasBounds.top, canvasBounds.bottom);
 // canvas.width
@@ -90,8 +121,8 @@ const keyState = {};
   }
 
   scoring();
-  function update() {
-
+  function updated() {
+    ball.rotateOnAxis(new THREE.Vector3(0,1,0), 0.05);
     ball.position.x += ballSpeed * ballDirection.x;
     ball.position.y += ballSpeed * ballDirection.y;
     const ballX = (ball.position.x * camera.zoom) * Math.tan(camera.fov / 2) * camera.aspect;
@@ -152,17 +183,6 @@ const keyState = {};
       playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
     }
   
-    // if (keyState[37]){
-    //   boardHeight += 0.1;
-    //   playerOne.scale.y = boardHeight /5;
-    //   playerTwo.scale.y = boardHeight/5;
-    // }
-    // if (keyState[39])
-    // {
-    //   boardHeight -= 0.1;
-    //   playerOne.scale.y = boardHeight /5;
-    //   playerTwo.scale.y = boardHeight/5;
-    // }
     pointLight.position.set(ball.position.x,ball.position.y,10);
     if (keyState[87])
       movePong(playerOne, playerOne.position.y + 4);
@@ -183,6 +203,18 @@ const keyState = {};
     });
   }
 
+  function togglePause() {
+    isPaused = !isPaused;
+  
+    if (isPaused) {
+      // Pause the animation loop
+      cancelAnimationFrame(renderer.setAnimationLoop(null));
+    } else {
+      // Resume the animation loop
+      renderer.setAnimationLoop(null);
+    }
+  }
+  
   function scoring(){
     const loader = new FontLoader();
         let font_src = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
@@ -216,7 +248,12 @@ const keyState = {};
 function animate() {
     requestAnimationFrame(animate);
     //console.log("sphere", ball.intersectsObject());
-    update();
+    if (!isPaused){
+      updated();
+    }
+    const delta = clock.getDelta();
+		mixer.update( delta );
+		composer.render();
     renderer.render(scene, camera);
 }
 animate();
