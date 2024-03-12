@@ -6,6 +6,10 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	<script src="{% static 'js/script.js' %}" defer></script>
 	<title>Transcendence Pong 42</title>
@@ -15,18 +19,111 @@
 <header>
 	<nav class="header-items">
 		<ul>
-			<li><a href="/">Home</a></li>
-			<li><a href="/login">Login</a></li>
+			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
+			{% if user.is_authenticated %}
+			<li><a href="#profil" onclick="showDiv('profil')">My profile</a></li>
+			{% else %}
+			<li><a href="#login" onclick="showDiv('login')">Login</a></li>
+			{% endif %}
 		</ul>
 	</nav>
 </header>
 
 <div class="content">
-	{% block content %}
-		<!-- Le script de la page actuelle ? -->
-		<h1>Welcome to our Transcendence !</h1>
-	{% endblock %}
+	<!-- index -->
+	<div id="index" class="block">
+		<div class="game">
+			<h1>Welcome to our Transcendence !</h1>
+			<canvas id="game" class="game"></canvas>
+		</div>
+	</div>
+	
+
+	<!-- login -->
+	<div id="login" class="block">
+		<div class="form-container">
+			{% if user.is_authenticated %}
+			<h2>You are already logged in !</h2>
+			{% else %}
+			<h2>Login</h2>
+			<iframe name="login" style="display:none;"></iframe>
+			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="login">
+				{% csrf_token %}
+				<label for="username">Username :</label>
+				<input type="text" id="username" name="username" required>
+				<label for="password">Password : </label>
+				<input type="password" id="password" name="password" required>
+				<label><a href="#signup" onclick="showDiv('signup')">Click here to signup !</a></label>
+				<!-- <button type="submit">Se connecter</button> -->
+				<div class="butt"><button type="submit" onclick="sendForm('loginForm', event)">Login</button></div>
+				<!-- <button onclick="sendForm('loginForm', event)">Se connecter</button> -->
+				<div id="error-form" class="error-form"></div>
+			</form>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- signin -->
+	<div id="signup" class="block">
+		<div class="form-container">
+			{% if user.is_authenticated %}
+			<h2>You are already logged in !</h2>
+			{% else %}
+			<h2>Signup</h2>
+			<iframe name="signup" style="display:none;"></iframe>
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="signup">
+				{% csrf_token %}
+				<label for="signup-username">Username :</label>
+				<input type="text" id="signup-username" name="username" required>
+				<label for="signup-pseudo">Pseudo :</label>
+				<input type="text" id="signup-pseudo" name="pseudo" required>
+				<label for="signup-email">Email :</label>
+				<input type="email" id="signup-email" name="email" required>
+				<label for="signup-pass">Password : </label>
+				<input type="password" id="signup-pass" name="password1" required>
+				<label for="signup-pass-repeat">Repeat password : </label>
+				<input type="password" id="signup-pass-repeat" name="password2" required>
+				<div class="butt"><button type="submit" onclick="sendForm('signupForm', event)">Signup</button></div>
+				<div id="error-form" class="error-form"></div>
+			</form>
+			{% endif %}
+		</div>
+	</div>
+
+	<!-- profil -->
+	<div id="profil" class="block profil">
+		<div class="form-container">
+			<h2>My profile</h2>
+			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="profilImg">
+				{% csrf_token %}
+				<label for="profil-img" class="profil-img">
+					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
+					<img class="overlay">
+				</label>
+				<input type="file" id="profil-img" name="profil_img" style="display: none;" accept="image/*">
+				<div id="error-form" class="error-form"></div>
+			</form>
+			<p id="username"></p>
+   			<p id="email"></p>
+			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<input type="hidden" name="type" value="logout">
+				{% csrf_token %}
+				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
+				<div id="error-form" class="error-form"></div>
+			</form>
+		</div>
+	</div>
+	
 </div>
 
+	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+		<!-- <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/geometries/TextGeometry.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/FontLoader.js"></script> -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+		<script type="module" src="{% static 'js/game.js' %}"></script>
 </body>
 </html>
