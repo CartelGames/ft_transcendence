@@ -78,12 +78,14 @@ def index(request):
             if isinstance(request.user, AnonymousUser):
                 return JsonResponse({'success': False})
             friend_pseudo = request.POST.get('add-friend-name')
+            if friend_pseudo == request.user.pseudo:
+                return JsonResponse({'success': False, 'errors': 'You can\'t add yourself !'})
             try:
                 friend = get_object_or_404(UserProfil, pseudo=friend_pseudo)
             except Http404 as e:
-                return JsonResponse({'success': False, 'errors': 'This user does not exist'})
+                    return JsonResponse({'success': False, 'errors': 'This user does not exist'})
             if request.user.friends.filter(id=friend.id).exists():
-                return JsonResponse({'success': False, 'errors': 'Already friends'})
+                    return JsonResponse({'success': False, 'errors': 'Already friends'})
             request.user.add_friend(friend)
             return JsonResponse({'success': True, 'errors': '<p>Friend added successfully</p>'})
         else:
@@ -104,7 +106,6 @@ def index(request):
             messages = messages_sent | messages_received
             messages = messages.order_by('timestamp')
             messages_list = [{'content': msg.content, 'timestamp': msg.timestamp, 'me': request.user.pseudo, 'pseudo_from': msg.pseudo_from, 'pseudo_to': msg.pseudo_to} for msg in messages]
-            print(messages_list)
             return JsonResponse({'success': True,  'messages': messages_list})
         elif request.GET.get('data') == 'friends':
             if isinstance(request.user, AnonymousUser):

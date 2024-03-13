@@ -67,7 +67,6 @@ function loadProfileData() {
             $('#pseudo').text('Pseudo: ' + data.pseudo);
             $('#email').text('Email: ' + data.email);
             $('#img').attr('src', data.img);
-            console.log('User: ' + data.username + ' Email: ' + data.email + ' IMG: ' + data.img);
         },
         error: function (error) {
             console.log('Erreur lors de la récupération des données du profil.');
@@ -127,12 +126,12 @@ function openChat(pseudo) {
         <div id="error-form" class="error-form"></div>
         </form>
     `;
-    // <div class="butt"><button type="submit" onclick="sendForm('sendChatForm', event)">Send</button></div>
     contentDiv.innerHTML = formHTML;
     chatDiv.appendChild(contentDiv);
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
+        fetchMessages(); //Delete this later to setInterval
         contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     closeIcon.addEventListener('click', function (event) {
@@ -159,9 +158,16 @@ function loadFriends() {
                 var friendsContainer = $('#friends');
                 friendsContainer.empty();
                 friendsList.forEach(function (friend) {
-                    var clickableRow = $('<div class="clickable-row" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
+                    var clickableRow = $('<div class="friends-list"><div class="clickable-row" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
                     clickableRow.click(function () {
-                        console.log('Pseudo cliqué : ' + friend.pseudo);
+                        var chatDiv = document.getElementById(friend.pseudo);
+                        if (!chatDiv) {
+                            openChat(friend.pseudo);
+                            fetchMessages();
+                        }
+                    });
+                    var clickableRow = $('<div class="clickable-row" data-pseudo="' + friend.pseudo + '"><span class="close-icon">×</span></div>');
+                    clickableRow.click(function () {
                         var chatDiv = document.getElementById(friend.pseudo);
                         if (!chatDiv) {
                             openChat(friend.pseudo);
@@ -224,7 +230,6 @@ function fetchMessages() {
                     paragraph.remove();
                 });
                 messages.forEach(function (message) {
-                    // Créez un nouvel élément p avec le contenu du message
                     var id = message.pseudo_from === message.me ? message.pseudo_to : message.pseudo_from;
                     var chatDiv = document.getElementById(id);
                     if (!chatDiv)
@@ -247,8 +252,6 @@ function fetchMessages() {
         }
     });
 }
-// setInterval(fetchMessages, 3000);
-fetchMessages();
 
 function displayDiv(hide, show) {
     var hideDiv = document.getElementById(hide);
@@ -257,10 +260,12 @@ function displayDiv(hide, show) {
     
     var showDiv = document.getElementById(show);
     if (showDiv)
-        showDiv.style.display = 'block';
+    showDiv.style.display = 'block';
 }
-
 
 window.onload = function() {
     loadFriends();
 };
+
+
+// setInterval(fetchMessages, 1000);
