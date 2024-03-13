@@ -70,11 +70,28 @@ function loadProfileData() {
     });
 }
 
+function loadAllProfileData() {
+    $.ajax({
+        type: 'GET',
+        data: { data: 'stats' },
+        success: function (data) {
+            $('#username').text('Username: ' + data.username);
+            $('#email').text('Email: ' + data.email);
+            $('#img').attr('src', data.img);
+            console.log('User: ' + data.username + ' Email: ' + data.email + ' IMG: ' + data.img);
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des données du profil.');
+        }
+    });
+}
+
 function checkURL() {
     if (window.location.hash === "#profil")
         loadProfileData();
+    if (window.location.hash === "#stats")
+        loadProfileData();
 }
-
 window.addEventListener('hashchange', function () {
 	var divId = location.hash.slice(1) || 'index';
 	upHist = true;
