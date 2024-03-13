@@ -162,8 +162,11 @@ function loadFriends() {
                     var clickableRow = $('<div class="clickable-row" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
                     clickableRow.click(function () {
                         console.log('Pseudo cliqué : ' + friend.pseudo);
-                        openChat(friend.pseudo);
-                        fetchMessages();
+                        var chatDiv = document.getElementById(friend.pseudo);
+                        if (!chatDiv) {
+                            openChat(friend.pseudo);
+                            fetchMessages();
+                        }
                     });
                     friendsContainer.append(clickableRow);
                 });
@@ -216,7 +219,6 @@ function fetchMessages() {
  
             var chatBoxContents = document.querySelectorAll('.chat-box-content');
             chatBoxContents.forEach(function (chatBoxContent) {
-                // Supprimez les éléments <p> existants
                 var paragraphs = chatBoxContent.querySelectorAll('p');
                 paragraphs.forEach(function (paragraph) {
                     paragraph.remove();
