@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js'
+import { TTFLoader } from 'three/addons/loaders/TTFLoader.js'
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
@@ -11,10 +12,14 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 //Initiating scene and camera
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
-const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 100);
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
+
+//FPS counter top left
+const stats = new Stats();
+document.body.appendChild(stats.dom);
 
 let isPaused = false;
 //Setting camera position
@@ -44,9 +49,7 @@ clock = new THREE.Clock();
 new GLTFLoader().load( '/static/models/gltf/ball.glb', function ( gltf ) {
 
   const model = gltf.scene;
-  
   ball.add( model );
-
   scene.add(ball);
 } );
 
@@ -54,16 +57,40 @@ const mConvert = 0.0002645833;
 renderer.setPixelRatio(canvas.width/canvas.height);
 renderer.setSize(canvas.width, canvas.height, false);
 
+const playerOne = new THREE.Group();
+const playerTwo = new THREE.Group();
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
+
+  const model = gltf.scene;
+  model.scale.set(0.02, 0.02, 0.02);
+  model.rotation.set(Math.PI /2, 0,Math.PI /2);
+  
+  playerTwo.add(model);
+
+} );
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
+
+  const model = gltf.scene;
+  model.scale.set(0.02, 0.02, 0.02);
+  model.position.x -= 4;
+  model.rotation.set(Math.PI /2, 0,-Math.PI /2);
+  
+  playerOne.add(model);
+
+} );
+
+const video = document.getElementById('background-video');
+const videoTexture = new THREE.VideoTexture(video);
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
 
 //Setup two players + background
 let boardHeight = 10;
 const geometry = new THREE.BoxGeometry( 1, boardHeight, 1 );
-const background = new THREE.PlaneGeometry(200, 200);
-const backgroundMaterial = new THREE.MeshStandardMaterial( {color: 0xffffff, side: THREE.DoubleSide});
+const background = new THREE.PlaneGeometry(144, 81);
+const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, backgroundMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
-const playerOne = new THREE.Mesh( geometry, material ); 
-const playerTwo = new THREE.Mesh( geometry, material );
 scene.add( playerOne , playerTwo, back);
 const canvasBounds = {
   left: -((canvas.width/2) * mConvert) * (camera.position.z * 9.3),
@@ -81,8 +108,10 @@ playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 let time = 0;
 
 //Light settings
-const pointLight = new THREE.PointLight(0xff00ff);
-scene.add(pointLight);
+const pointLight = new THREE.PointLight(0xffffff);
+const pointLight2 = new THREE.PointLight(0xff00ff);
+pointLight2.position.set(0,0,10);
+scene.add(pointLight, pointLight2);
 
 
 //Event listeners
@@ -93,19 +122,6 @@ window.addEventListener('keydown', function (event) {
     togglePause();
   }
 });
-
-//Trying out light settings
-// const bloomPass = new UnrealBloomPass( new THREE.Vector2( canvas.width, canvas.height ), 1.5, 0.4, 0.85 );
-// bloomPass.threshold = params.threshold;
-// bloomPass.strength = params.strength;
-// bloomPass.radius = params.radius;
-
-// const renderScene = new RenderPass( scene, camera );
-// composer = new EffectComposer( renderer );
-// composer.addPass( renderScene );
-// composer.addPass( bloomPass );
-
-
 
 //Speed and starting direction settings
 let ballSpeed = 0.2;
@@ -136,7 +152,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 10)
+    if (score[1] == 2)
       rWin();
     else
       scoring();
@@ -147,7 +163,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 10)
+    if (score[0] == 2)
       lWin();
     else
       scoring();
@@ -193,7 +209,7 @@ function updated() {
   }
 
   //To make the light follow the ball
-  pointLight.position.set(ball.position.x,ball.position.y,10);
+  pointLight.position.set(ball.position.x,ball.position.y, 10);
 
   //Moves the boards
   if (keyState[87])
@@ -227,79 +243,80 @@ function togglePause() {
   }
 }
 
+const loader = new FontLoader();
 function scoring(){
-  const loader = new FontLoader();
-  let font_src = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
-  loader.load( font_src, function ( font ) {
-    const geometry = new TextGeometry( score[0].toString(), {
-      font: font,
-      size: 5,
-      height: 1,
-    } );
-    const geometry2 = new TextGeometry( score[1].toString(), {
-      font: font,
-      size: 5,
-      height: 1,
-    } );
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const textMesh = new THREE.Mesh(geometry, textMaterial);
-    textMesh.position.set(-12,5, 10, 0);
-    const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-    textMesh2.position.set(7,5, 10, 0);
-    scoreGrp.clear();
-    scoreGrp.add(textMesh, textMesh2);
-    scene.add(scoreGrp);
-  } );
+  const ttfloader = new TTFLoader();
+  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( score[0].toString(), {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( score[1].toString(), {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.position.set(-20, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.position.set(20, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
 }
 
 function rWin(){ 
-  const loader = new FontLoader();
-  let font_src = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
-  loader.load( font_src, function ( font ) {
-    const geometry = new TextGeometry( "LOSE", {
-      font: font,
-      size: 5,
-      height: 1,
-    } );
-    const geometry2 = new TextGeometry( "WIN", {
-      font: font,
-      size: 5,
-      height: 1,
-    } );
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const textMesh = new THREE.Mesh(geometry, textMaterial);
-    textMesh.position.set(-12,5, 10, 0);
-    const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-    textMesh2.position.set(7,5, 10, 0);
-    scoreGrp.clear();
-    scoreGrp.add(textMesh, textMesh2);
-    scene.add(scoreGrp);
-  } );
+  const ttfloader = new TTFLoader();
+  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( "LOSE", {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( "WIN", {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.position.set(-30, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.position.set(10, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
 }
 
 function lWin(){
-  const loader = new FontLoader();
-  let font_src = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
-  loader.load( font_src, function ( font ) {
-    const geometry = new TextGeometry( "WIN", {
-        font: font,
-        size: 5,
+  const ttfloader = new TTFLoader();
+  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( "WIN", {
+        font: cyberfont,
+        size: 3,
         height: 1,
       } );
-    const geometry2 = new TextGeometry( "LOSE", {
-        font: font,
-        size: 5,
+      const geometry2 = new TextGeometry( "LOSE", {
+        font: cyberfont,
+        size: 3,
         height: 1,
-    } );
-    const textMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
-    const textMesh = new THREE.Mesh(geometry, textMaterial);
-    textMesh.position.set(-12,5, 10, 0);
-    const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-    textMesh2.position.set(7,5, 10, 0);
-    scoreGrp.clear();
-    scoreGrp.add(textMesh, textMesh2);
-    scene.add(scoreGrp);
-  } );
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.position.set(-30, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.position.set(10, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
 }
 
 function checkPowerUp(){
@@ -328,7 +345,10 @@ function animate() {
     if (!isPaused){
       updated();
     }
-		//composer.render();
+    videoTexture.needsUpdate = true;
+    //Uncomment to get fps counter
+		stats.update();
     renderer.render(scene, camera);
 }
+video.play();
 animate();
