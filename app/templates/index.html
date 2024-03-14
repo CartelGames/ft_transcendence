@@ -141,6 +141,7 @@
 				<div id="error-form" class="error-form"></div>
 			</form>
 			<p id="username"></p>
+			<p id="pseudo"></p>
    			<p id="email"></p>
 			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="logout">
@@ -150,12 +151,40 @@
 			</form>
 		</div>
 	</div>
+
+
+	{% if user.is_authenticated %}
+	<!-- chat -->
+	<div id="chat" class="">
+		<div id="chat-toggle" class="chat-toggle">
+			<p>Friends list</p>
+		</div>
+		<div id="chat-content" class="chat-content">
+			<div id="friend">
+				<p id="friends"></p>
+				<div class="butt friend"><button type="submit" onclick="displayDiv('friend', 'add-friend')">Add a friend</button></div>
+			</div>
+			<div id="add-friend" style="display: none;">
+				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+					<input type="hidden" name="type" value="addFriend">
+					<input type="hidden" name="test" value="{% csrf_token %}">
+					{% csrf_token %}
+					<label for="add-friend-name">Friend name :</label>
+					<input type="text" id="add-friend-name" name="add-friend-name" required>
+					<div id="error-form" class="error-form"></div>
+					<div class="butt"><button type="submit" onclick="sendForm('addFriendForm', event)">Add</button></div>
+					<div class="butt"><button2 type="submit" onclick="displayDiv('add-friend', 'friend'), loadFriends();">Back</button></div>
+				</form>
+			</div>
+		</div>
+	</div>
+	{% endif %}
 	
 </div>
 
-	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
+	<!-- <input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-		<script type="module" src="{% static 'js/game.js' %}"></script>
+		<script type="module" src="{% static 'js/game.js' %}"></script> -->
 </body>
 </html>
