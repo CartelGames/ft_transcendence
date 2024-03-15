@@ -61,7 +61,7 @@ header {
 	text-transform: uppercase;
 	font-weight: 600;
 	height: 8rem;
-	margin-bottom: 3rem;
+	margin-bottom: 1.5rem;
 	padding: 0;
 }
 
@@ -364,4 +364,49 @@ canvas {
 	margin-bottom: 1px;
 }
 
+.users-list ul {
+	list-style: none;
+	text-decoration: none;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: nowrap;
+	justify-content: space-between;
+	align-items: center;
+	list-style: none;
+	margin: 2rem;
+}
 
+#stats-container {
+	position: relative;
+	font-weight: 200;
+	font-size: 3em;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	min-width: 50rem;
+	list-style: none;
+	margin: 1rem;
+}
+
+#stats-user-container ul li {
+	display: flex;
+	justify-content: center;
+	align-self: center;
+	list-style: none;
+	text-decoration: none;
+	width: 25%;
+	font-family: 'Times New Roman', Times, serif;
+	font-weight: 200;
+	font-size: 1.5 rem;
+}
+
+.users-list ul li img {
+	width: 15rem;
+	max-height: 15rem;
+}
+.users-list {
+	min-width: 50rem;
+	background-color: #2980b9;
+}

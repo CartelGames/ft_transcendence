@@ -50,26 +50,10 @@
 	
 	<!-- stats -->
 	<div id="stats" class="block">
-		<div class="stats-container">
+		<div class="stats-container" id="stats-container">
 			<h2>Stats of players</h2>
-			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
-				<input type="hidden" name="type" value="profilImg">
-				{% csrf_token %}
-				<label for="profil-img" class="profil-img">
-					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
-					<img class="overlay">
-				</label>
-				<input type="file" id="profil-img" name="profil_img" style="display: none;" accept="image/*">
-				<div id="error-form" class="error-form"></div>
-			</form>
-			<p id="username"></p>
-   			<p id="email"></p>
-			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
-				<input type="hidden" name="type" value="logout">
-				{% csrf_token %}
-				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
-				<div id="error-form" class="error-form"></div>
-			</form>
+			<div id="stats-users-container">
+			</div>
 		</div>
 	</div>
 
@@ -182,9 +166,9 @@
 	
 </div>
 
-	<!-- <input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-		<script type="module" src="{% static 'js/game.js' %}"></script> -->
+	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+	<script type="module" src="{% static 'js/game.js' %}"></script>
 </body>
 </html>

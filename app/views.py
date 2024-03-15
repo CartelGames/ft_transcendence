@@ -118,6 +118,10 @@ def index(request):
                 return JsonResponse({'success': True, 'friends': friends_list})
             except UserProfil.DoesNotExist:
                 return JsonResponse({'success': False, 'friends': 'User not found'})
+        elif request.GET.get('data') == 'stats':
+            new_Stats = UserProfil.objects.all()
+            users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+            return JsonResponse({'success': True,  'users': users_list})
         else:
             form = LoginForm()
     else:
