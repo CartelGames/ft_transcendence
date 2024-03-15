@@ -120,9 +120,14 @@
 </div>
 
 	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-		<!-- <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/geometries/TextGeometry.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/jsm/loaders/FontLoader.js"></script> -->
+	<script type="importmap">
+		{
+		  "imports": {
+			"three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+			"three/addons/": "https://unpkg.com/three@0.153.0/examples/jsm/"
+		  }
+		}
+	</script>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 		<script type="module" src="{% static 'js/game.js' %}"></script>
 </body>
