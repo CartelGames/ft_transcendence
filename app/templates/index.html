@@ -13,6 +13,8 @@
 </head>
 <body>
 
+	{% csrf_token %}
+
 <header>
 	<nav class="header-items">
 		<ul>
@@ -46,7 +48,6 @@
 			<iframe name="login" style="display:none;"></iframe>
 			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="login">
-				{% csrf_token %}
 				<label for="username">Username :</label>
 				<input type="text" id="username" name="username" required>
 				<label for="password">Password : </label>
@@ -71,7 +72,6 @@
 			<iframe name="signup" style="display:none;"></iframe>
 			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="signup">
-				{% csrf_token %}
 				<label for="signup-username">Username :</label>
 				<input type="text" id="signup-username" name="username" required>
 				<label for="signup-pseudo">Pseudo :</label>
@@ -95,7 +95,6 @@
 			<h2>My profile</h2>
 			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="profilImg">
-				{% csrf_token %}
 				<label for="profil-img" class="profil-img">
 					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
 					<img class="overlay">
@@ -108,7 +107,6 @@
    			<p id="email"></p>
 			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 				<input type="hidden" name="type" value="logout">
-				{% csrf_token %}
 				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
 				<div id="error-form" class="error-form"></div>
 			</form>
@@ -123,20 +121,28 @@
 			<p>Friends list</p>
 		</div>
 		<div id="chat-content" class="chat-content">
-			<div id="friend">
-				<p id="friends"></p>
-				<div class="butt friend"><button type="submit" onclick="displayDiv('friend', 'add-friend')">Add a friend</button></div>
+			<div id="main-friends">
+				<div id="friend">
+					<a class="list-friends active" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
+					<a class="list-friends" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+					<p id="friends"></p>
+					<div class="butt friend"><button type="submit" onclick="displayDiv('main-friends', 'add-friend')">Add a friend</button></div>
+				</div>
+				<div id="blocked-friends" style="display: none;">
+					<a class="list-friends" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
+					<a class="list-friends active" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+					<p id="blocked-friend"></p>
+				</div>
 			</div>
 			<div id="add-friend" style="display: none;">
 				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
 					<input type="hidden" name="type" value="addFriend">
-					<input type="hidden" name="test" value="{% csrf_token %}">
-					{% csrf_token %}
-					<label for="add-friend-name">Friend name :</label>
-					<input type="text" id="add-friend-name" name="add-friend-name" required>
+					<input type="hidden" name="delete" value="false">
+					<label for="addfriendName">Friend name :</label>
+					<input type="text" id="addfriendName" name="addfriendName" required>
 					<div id="error-form" class="error-form"></div>
 					<div class="butt"><button type="submit" onclick="sendForm('addFriendForm', event)">Add</button></div>
-					<div class="butt"><button2 type="submit" onclick="displayDiv('add-friend', 'friend'), loadFriends();">Back</button></div>
+					<div class="butt"><button2 type="submit" onclick="displayDiv('add-friend', 'main-friends'), loadFriends();">Back</button></div>
 				</form>
 			</div>
 		</div>

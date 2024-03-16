@@ -10,6 +10,7 @@ class UserProfil(AbstractUser):
     is_active = models.BooleanField(default=True)
     mmr = models.IntegerField(null=True, default=0)
     friends = models.ManyToManyField('self', blank=True)
+    blocked_friends = models.ManyToManyField('self', blank=True)
     
     groups = models.ManyToManyField('auth.Group', related_name='user_profiles')
     user_permissions = models.ManyToManyField('auth.Permission', related_name='user_profiles_permissions')
@@ -27,6 +28,24 @@ class UserProfil(AbstractUser):
             friend.friends.remove(self)
             self.save()
             friend.save()
+
+    def switch_blocked_friend(self, friend, block):
+        if block:
+            if friend in self.friends.all():
+                self.friends.remove(friend)
+                friend.friends.remove(self)
+                self.blocked_friends.add(friend)
+                friend.blocked_friends.add(self)
+                self.save()
+                friend.save()
+        else:
+            if friend in self.blocked_friends.all():
+                self.blocked_friends.remove(friend)
+                friend.blocked_friends.remove(self)
+                self.friends.add(friend)
+                friend.friends.add(self)
+                self.save()
+                friend.save()
 
 class Message(models.Model):
     id = models.AutoField(primary_key=True, unique=True)

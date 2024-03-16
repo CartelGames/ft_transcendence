@@ -345,4 +345,32 @@ canvas {
 	margin-bottom: 1px;
 }
 
+.list-friends {
+    display: inline-block;
+    color: #000000;
+	font-size: 24px;
+    width: 49%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.list-friends.active{
+	color: #fff;
+	background-color: #2f97dd;
+}
+
+.friends-list {
+    display: flex;
+	justify-content: center;
+}
+
+.friends-list .name{
+	margin-right: 20px;
+}
+
+.friends-list span {
+	color:#f14949;
+	font-weight: 700;
+	font-size: 25px;
+}
 
