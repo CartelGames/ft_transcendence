@@ -138,7 +138,7 @@ function startGame() {
 startGame();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-
+ 
 function onMouseClick(event) {
   // Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
