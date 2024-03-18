@@ -216,28 +216,31 @@ function printStats(user) {
     var userList = document.createElement('div');
     userList.className = 'users-list';
 
-    var list = document.createElement('ul');
+    var list = document.createElement('tr');
     userList.appendChild(list);
 
-    var attr = document.createElement('li');
+    var attr = document.createElement('td');
     attr.className = 'pseudo';
     attr.textContent = user.pseudo;
     list.appendChild(attr);
-    var attr2 = document.createElement('li');
+    var attr2 = document.createElement('td');
     attr2.className = 'img';
-    var img = document.createElement('img');
+    var img = document.createElement('td');
     img.src = user.img;
     attr2.appendChild(img);
     list.appendChild(attr2);
-    var attr3 = document.createElement('li');
+    var attr3 = document.createElement('td');
     attr3.className = 'nb_game';
     attr3.textContent = user.nb_game;
     list.appendChild(attr3);
-    var attr4 = document.createElement('li');
+    var attr4 = document.createElement('td');
     attr4.className = 'mmr';
     attr4.textContent = user.mmr;
     list.appendChild(attr4);
 
+    userList.addEventListener('click', function () {
+        var url = window.location.href + '#' + user.pseudo;
+    })
     // statCont.innerHTML;
     statCont.appendChild(userList);
 }

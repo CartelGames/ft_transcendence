@@ -364,6 +364,61 @@ canvas {
 	margin-bottom: 1px;
 }
 
+table {
+	table-layout: fixed;
+	width: 100%;
+	border-collapse: collapse;
+	border: 3px solid purple;
+}
+
+thead th:nth-child(1) {
+	width: 30%;
+}
+
+thead th:nth-child(2) {
+	width: 20%;
+}
+
+thead th:nth-child(3) {
+	width: 15%;
+}
+
+thead th:nth-child(4) {
+	width: 35%;
+}
+
+th, td {
+	padding: 20px;
+}
+
+th {
+	letter-spacing: 2px;
+}
+
+td {
+	letter-spacing: 1px;
+}
+
+tbody td {
+	text-align: center;
+}
+
+thead{
+  background: url('../images/neon.jpg');
+  color: white;
+  text-shadow: 1px 1px 1px black;
+}
+
+thead th{
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.1),
+    rgba(0, 0, 0, 0.5)
+  );
+  border: 3px solid purple;
+}
+
+/* 
 .users-list ul {
 	list-style: none;
 	text-decoration: none;
@@ -378,8 +433,9 @@ canvas {
 
 #stats-container {
 	position: relative;
+	font-family: 'Honk', sans-serif;
 	font-weight: 200;
-	font-size: 3em;
+	font-size: 5em;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -398,15 +454,22 @@ canvas {
 	text-decoration: none;
 	width: 25%;
 	font-family: 'Times New Roman', Times, serif;
-	font-weight: 200;
+	font-weight: 800;
 	font-size: 1.5 rem;
 }
 
 .users-list ul li img {
 	width: 15rem;
 	max-height: 15rem;
+	display: flex;
+	margin: 1rem;
 }
+
+.users-list ul li{
+	max-width: 25%;
+}
+
 .users-list {
 	min-width: 50rem;
 	background-color: #2980b9;
-}
+} */
