@@ -66,13 +66,15 @@ def UserProfilImg(request):
 
 def UserSendChat(request):
     if request.method == 'POST' and request.POST.get('type') == 'sendChat':
-        content = request.POST.get('content', None)
         id_to = request.POST.get('id_to', None)
+        content = request.POST.get('content', None)
         if content and id_to:
             try:
                 friend = get_object_or_404(UserProfil, pseudo=id_to)
             except Http404 as e:
                 return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+            if request.user.blocked_friends.filter(id=friend.id).exists():
+                return JsonResponse({'success': False, 'errors': 'This user is blocked !', 'csrf_token': get_token(request)})
             new_message = Message.objects.create(
                 id_from=request.user.id,
                 id_to=friend.id,
