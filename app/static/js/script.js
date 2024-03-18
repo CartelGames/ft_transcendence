@@ -221,11 +221,11 @@ function loadBlockedFriends() {
                     var friendDiv =$('<div class="friends-list"></div>');
                     var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
                     clickableRow.click(function () {
-                        var chatDiv = document.getElementById(friend.pseudo);
-                        if (!chatDiv) {
-                            openChat(friend.pseudo);
-                            getMessages();
-                        }
+                        // var chatDiv = document.getElementById(friend.pseudo);
+                        // if (!chatDiv) {
+                        //     openChat(friend.pseudo);
+                        //     getMessages();
+                        // }
                     });
                     var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
                     BlockRow.click(function (event) {
