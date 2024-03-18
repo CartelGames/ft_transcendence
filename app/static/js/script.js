@@ -91,6 +91,20 @@ function loadProfileData() {
     });
 }
 
+async function getPseudo() {
+    try {
+      const response = await $.ajax({
+        type: 'GET',
+        url: '/getProfil/',
+        headers: { 'X-CSRFToken': token },
+      });
+      token = response.csrf_token;
+      return response.pseudo;
+    } catch (error) {
+      console.log('Erreur lors de la récupération des données du profil.');
+    }
+  }
+
 function clearInput(button) {
     var form = button.closest('form');
     if (form) {

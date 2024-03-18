@@ -39,6 +39,9 @@ const params = {
   exposure: 1
 };
  
+
+const loader = new FontLoader();
+const ttfloader = new TTFLoader();
 const ball = new THREE.Group();
 clock = new THREE.Clock();
 
@@ -138,7 +141,12 @@ function startGame() {
 startGame();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
- 
+const zoneGeometry = new THREE.PlaneGeometry(50, 10);
+const zoneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.0 });
+const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
+zoneMesh.position.y = 2; // Move the plane slightly behind the other objects
+scene.add(zoneMesh);
+
 function onMouseClick(event) {
   // Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -148,12 +156,13 @@ function onMouseClick(event) {
   raycaster.setFromCamera(mouse, camera);
 
   // Get the list of intersecting objects
-  const intersects = raycaster.intersectObjects(menu.children);
+  const intersects = raycaster.intersectObject(zoneMesh);
 
   // Check if the "Start Game" button was clicked
-  if (intersects.length > 0 && intersects[0].object === textMenu) {
+  if (intersects.length > 0 && isPaused) {
     // Start the game
     isPaused = !isPaused;
+    scene.remove(zoneMesh);
     scene.add(ball);
     // Hide the "Start Game" button
     menu.remove(textMenu);
@@ -324,10 +333,34 @@ function togglePause() {
 }
 
 
+async function printPseudo(){
+  const pseudo = await getPseudo();
+  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.position.set(-25, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.position.set(20, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
+}
+//I AM CON, SCOREGRP NOT GOOD, TO FIX LATER
+printPseudo();
 
-const loader = new FontLoader();
 function scoring(){
-  const ttfloader = new TTFLoader();
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( score[0].toString(), {
@@ -352,7 +385,6 @@ function scoring(){
 }
 
 function rWin(){ 
-  const ttfloader = new TTFLoader();
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( "LOSE", {
@@ -379,7 +411,6 @@ function rWin(){
 }
 
 function lWin(){
-  const ttfloader = new TTFLoader();
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( "WIN", {
