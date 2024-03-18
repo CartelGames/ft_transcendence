@@ -12,9 +12,7 @@
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
-
 	{% csrf_token %}
-
 <header>
 	<nav class="header-items">
 		<ul>
@@ -36,7 +34,6 @@
 			<canvas id="game" class="game"></canvas>
 		</div>
 	</div>
-	
 
 	<!-- login -->
 	<div id="login" class="block">
@@ -46,16 +43,14 @@
 			{% else %}
 			<h2>Login</h2>
 			<iframe name="login" style="display:none;"></iframe>
-			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="loginForm" enctype="multipart/form-data" action="{% url 'login' %}" method="post">
 				<input type="hidden" name="type" value="login">
 				<label for="username">Username :</label>
 				<input type="text" id="username" name="username" required>
 				<label for="password">Password : </label>
 				<input type="password" id="password" name="password" required>
 				<label><a href="#signup" onclick="showDiv('signup')">Click here to signup !</a></label>
-				<!-- <button type="submit">Se connecter</button> -->
 				<div class="butt"><button type="submit" onclick="sendForm('loginForm', event)">Login</button></div>
-				<!-- <button onclick="sendForm('loginForm', event)">Se connecter</button> -->
 				<div id="error-form" class="error-form"></div>
 			</form>
 			{% endif %}
@@ -70,7 +65,7 @@
 			{% else %}
 			<h2>Signup</h2>
 			<iframe name="signup" style="display:none;"></iframe>
-			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'signup' %}" method="post">
 				<input type="hidden" name="type" value="signup">
 				<label for="signup-username">Username :</label>
 				<input type="text" id="signup-username" name="username" required>
@@ -93,7 +88,7 @@
 	<div id="profil" class="block profil">
 		<div class="form-container">
 			<h2>My profile</h2>
-			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="profilImg" enctype="multipart/form-data" action="{% url 'profilImg' %}" method="post">
 				<input type="hidden" name="type" value="profilImg">
 				<label for="profil-img" class="profil-img">
 					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
@@ -105,7 +100,7 @@
 			<p id="username"></p>
 			<p id="pseudo"></p>
    			<p id="email"></p>
-			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="profilForm" enctype="multipart/form-data" action="{% url 'logout' %}" method="post">
 				<input type="hidden" name="type" value="logout">
 				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
 				<div id="error-form" class="error-form"></div>
@@ -131,11 +126,12 @@
 				<div id="blocked-friends" style="display: none;">
 					<a class="list-friends" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
 					<a class="list-friends active" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+					<p id="error-block"></p>
 					<p id="blocked-friend"></p>
 				</div>
 			</div>
 			<div id="add-friend" style="display: none;">
-				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'addFriend' %}" method="post">
 					<input type="hidden" name="type" value="addFriend">
 					<input type="hidden" name="delete" value="false">
 					<label for="addfriendName">Friend name :</label>

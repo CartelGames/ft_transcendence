@@ -76,8 +76,8 @@ function sendForm(id, event) {
 function loadProfileData() {
     $.ajax({
         type: 'GET',
+        url: '/getProfil/',
         headers: { 'X-CSRFToken': token },
-        data: { data: 'profil' },
         success: function (data) {
             $('#username').text('Username: ' + data.username);
             $('#pseudo').text('Pseudo: ' + data.pseudo);
@@ -134,7 +134,7 @@ function openChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/" method="post">
+        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="csrfmiddlewaretoken" value="">
@@ -168,8 +168,8 @@ function openChat(pseudo) {
 function loadFriends() {
     $.ajax({
         type: 'GET',
+        url: '/getFriends/',
         headers: { 'X-CSRFToken': token },
-        data: { data: 'friends' },
         success: function (data) {
             if (data.success) {
                 var friendsList = data.friends;
@@ -210,8 +210,8 @@ function loadFriends() {
 function loadBlockedFriends() {
     $.ajax({
         type: 'GET',
+        url: '/getBlockedFriends/',
         headers: { 'X-CSRFToken': token },
-        data: { data: 'blocked_friends' },
         success: function (data) {
             if (data.success) {
                 var friendsList = data.friends;
@@ -245,10 +245,18 @@ function loadBlockedFriends() {
 }
 
 function deleteFriend(pseudo) {
+    var formData = new FormData();
+    formData.append('type', 'addFriend');
+    formData.append('delete', 'true');
+    formData.append('addfriendName', pseudo);
+
     $.ajax({
         type: 'POST',
+        url: '/addFriend/',
         headers: { 'X-CSRFToken': token },
-        data: { type: 'addFriend', delete: 'true', addfriendName: pseudo },
+        processData: false,
+        contentType: false,
+        data: formData,
         success: function (data) {
             if (data.success) {
                 console.log('friend deleted');
@@ -263,15 +271,24 @@ function deleteFriend(pseudo) {
 }
 
 function blockFriend(pseudo, unblock) {
+    var formData = new FormData();
+    formData.append('type', 'blockFriend');
+    formData.append('block', (unblock ? 'false' : 'true'));
+    formData.append('blockFriendName', pseudo);
+
     $.ajax({
         type: 'POST',
+        url: '/blockFriend/',
         headers: { 'X-CSRFToken': token },
-        data: { type: 'blockFriend', block: (unblock ? 'false' : 'true'), blockFriendName: pseudo },
+        processData: false,
+        contentType: false,
+        data: formData,
         success: function (data) {
             if (data.success)
-                console.log(data.errors);
+                $('#error-block').text(data.errors);
             else
-                console.log(data.errors);
+                $('#error-block').text(data.errors);
+            console.log(data.errors)
             loadFriends();
             loadBlockedFriends();
             token = data.csrf_token;
@@ -281,7 +298,6 @@ function blockFriend(pseudo, unblock) {
         }
     });
 }
-
 
 function checkURL() {
     if (window.location.hash === "#profil")
@@ -318,8 +334,8 @@ document.getElementById('profil-img').addEventListener('change', function (event
 function getMessages() {
     $.ajax({
         type: 'GET',
+        url: '/getChat/',
         headers: { 'X-CSRFToken': token },
-        data: { data: 'chat' },
         success: function (data) {
             var messages = data.messages;
  
@@ -339,7 +355,7 @@ function getMessages() {
                         return;
                     var messageElement = document.createElement('p');
                     
-                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_to + ' : </b>';
+                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
                     messageElement.innerHTML = from + message.content;
 
                     chatBoxContent.appendChild(messageElement);
