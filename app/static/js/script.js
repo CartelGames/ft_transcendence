@@ -324,6 +324,7 @@ function loadStats() {
     $.ajax({
         type: 'GET',
         url: '/getStats/',
+        headers: { 'X-CSRFToken': token },
         success: function (data) {
             if (data.success) {
                 var usersList = data.users;
