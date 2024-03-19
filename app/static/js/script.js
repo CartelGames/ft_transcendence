@@ -1,18 +1,5 @@
 var upHist = false;
 let chatCounter = 0;
-var token = getCSRFToken();
-
-function getCSRFToken() {
-    var csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
-
-    if (csrfTokenInput) {
-        var csrfToken = csrfTokenInput.value;
-        return csrfToken;
-    } else {
-        console.error("CSRF Token input not found!");
-        return null;
-    }
-}
 
 function showDiv(divId) {
     var divs = document.querySelectorAll('.block');
@@ -40,14 +27,13 @@ function sendForm(id, event) {
     var formData = new FormData(form);
     var xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
-    xhr.setRequestHeader('X-CSRFToken', token);
     xhr.onload = function () {
         if (xhr.status === 200) {
             var response = JSON.parse(xhr.responseText);
             var errorForm = form.querySelector('.error-form');
             if (response.success) {
                 if (formData.get('type') == 'sendChat') {
-                    getMessages();
+                    fetchMessages();
                     return;
                 }
                 if (errorForm)
@@ -66,7 +52,6 @@ function sendForm(id, event) {
                 if (errorForm)
                     errorForm.innerHTML = response.errors;
             }
-            token = response.csrf_token;
         }
     };
     xhr.send(formData);
@@ -76,34 +61,18 @@ function sendForm(id, event) {
 function loadProfileData() {
     $.ajax({
         type: 'GET',
-        url: '/getProfil/',
-        headers: { 'X-CSRFToken': token },
+        data: { data: 'profil' },
         success: function (data) {
             $('#username').text('Username: ' + data.username);
             $('#pseudo').text('Pseudo: ' + data.pseudo);
             $('#email').text('Email: ' + data.email);
             $('#img').attr('src', data.img);
-            token = data.csrf_token;
         },
         error: function (error) {
             console.log('Erreur lors de la récupération des données du profil.');
         }
     });
 }
-
-async function getPseudo() {
-    try {
-      const response = await $.ajax({
-        type: 'GET',
-        url: '/getProfil/',
-        headers: { 'X-CSRFToken': token },
-      });
-      token = response.csrf_token;
-      return response.pseudo;
-    } catch (error) {
-      console.log('Erreur lors de la récupération des données du profil.');
-    }
-  }
 
 function clearInput(button) {
     var form = button.closest('form');
@@ -148,7 +117,7 @@ function openChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <form id="sendChatForm" enctype="multipart/form-data" action="/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="csrfmiddlewaretoken" value="">
@@ -162,7 +131,7 @@ function openChat(pseudo) {
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
-        getMessages(); //Delete this later to setInterval
+        fetchMessages(); //Delete this later to setInterval
         contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     closeIcon.addEventListener('click', function (event) {
@@ -182,130 +151,32 @@ function openChat(pseudo) {
 function loadFriends() {
     $.ajax({
         type: 'GET',
-        url: '/getFriends/',
-        headers: { 'X-CSRFToken': token },
+        data: { data: 'friends' },
         success: function (data) {
             if (data.success) {
                 var friendsList = data.friends;
                 var friendsContainer = $('#friends');
                 friendsContainer.empty();
                 friendsList.forEach(function (friend) {
-                    var friendDiv =$('<div class="friends-list"></div>');
-                    var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
+                    var clickableRow = $('<div class="friends-list"><div class="clickable-row" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
                     clickableRow.click(function () {
                         var chatDiv = document.getElementById(friend.pseudo);
                         if (!chatDiv) {
                             openChat(friend.pseudo);
-                            getMessages();
+                            fetchMessages();
                         }
                     });
-                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
-                    BlockRow.click(function (event) {
-                        blockFriend(friend.pseudo, false);
-                    });
-                    var deleteRow = $('<div class="clickable-row" title="Delete this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">×</span></div>');
-                    deleteRow.click(function (event) {
-                        deleteFriend(friend.pseudo);
-                    });
-                    friendDiv.append(clickableRow[0]);
-                    friendDiv.append(BlockRow[0]);
-                    friendDiv.append(deleteRow[0]);
-                    friendsContainer.append(friendDiv);
-                });
-            }
-            token = data.csrf_token;
-        },
-        error: function (error) {
-            console.log('Erreur lors de la récupération des amis.');
-        }
-    });
-}
-
-function loadBlockedFriends() {
-    $.ajax({
-        type: 'GET',
-        url: '/getBlockedFriends/',
-        headers: { 'X-CSRFToken': token },
-        success: function (data) {
-            if (data.success) {
-                var friendsList = data.friends;
-                var friendsContainer = $('#blocked-friend');
-                friendsContainer.empty();
-                friendsList.forEach(function (friend) {
-                    var friendDiv =$('<div class="friends-list"></div>');
-                    var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
+                    var clickableRow = $('<div class="clickable-row" data-pseudo="' + friend.pseudo + '"><span class="close-icon">×</span></div>');
                     clickableRow.click(function () {
-                        // var chatDiv = document.getElementById(friend.pseudo);
-                        // if (!chatDiv) {
-                        //     openChat(friend.pseudo);
-                        //     getMessages();
-                        // }
+                        var chatDiv = document.getElementById(friend.pseudo);
+                        if (!chatDiv) {
+                            openChat(friend.pseudo);
+                            fetchMessages();
+                        }
                     });
-                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
-                    BlockRow.click(function (event) {
-                        blockFriend(friend.pseudo, true);
-                    });
-                    friendDiv.append(clickableRow[0]);
-                    friendDiv.append(BlockRow[0]);
-                    friendsContainer.append(friendDiv);
+                    friendsContainer.append(clickableRow);
                 });
             }
-            token = data.csrf_token;
-        },
-        error: function (error) {
-            console.log('Erreur lors de la récupération des amis.');
-        }
-    });
-}
-
-function deleteFriend(pseudo) {
-    var formData = new FormData();
-    formData.append('type', 'addFriend');
-    formData.append('delete', 'true');
-    formData.append('addfriendName', pseudo);
-
-    $.ajax({
-        type: 'POST',
-        url: '/addFriend/',
-        headers: { 'X-CSRFToken': token },
-        processData: false,
-        contentType: false,
-        data: formData,
-        success: function (data) {
-            if (data.success) {
-                console.log('friend deleted');
-            }
-            loadFriends();
-            token = data.csrf_token;
-        },
-        error: function (error) {
-            console.log('Erreur lors de la récupération des amis.');
-        }
-    });
-}
-
-function blockFriend(pseudo, unblock) {
-    var formData = new FormData();
-    formData.append('type', 'blockFriend');
-    formData.append('block', (unblock ? 'false' : 'true'));
-    formData.append('blockFriendName', pseudo);
-
-    $.ajax({
-        type: 'POST',
-        url: '/blockFriend/',
-        headers: { 'X-CSRFToken': token },
-        processData: false,
-        contentType: false,
-        data: formData,
-        success: function (data) {
-            if (data.success)
-                $('#error-block').text(data.errors);
-            else
-                $('#error-block').text(data.errors);
-            console.log(data.errors)
-            loadFriends();
-            loadBlockedFriends();
-            token = data.csrf_token;
         },
         error: function (error) {
             console.log('Erreur lors de la récupération des amis.');
@@ -316,6 +187,62 @@ function blockFriend(pseudo, unblock) {
 function checkURL() {
     if (window.location.hash === "#profil")
         loadProfileData();
+    if (window.location.hash === "#stats")
+        loadStats();
+}
+
+function loadStats() {
+    $.ajax({
+        type: 'GET',
+        data: { data: 'stats' },
+        success: function (data) {
+            if (data.success) {
+                var usersList = data.users;
+                var usersContainer = $('#stats-users-container');
+                usersContainer.empty();
+                usersList.forEach(function (user) {
+                    printStats(user);
+                });
+            }
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des joueurs.');
+        }
+    });
+}
+
+function printStats(user) {
+    var statCont = document.getElementById('stats-users-container');
+    var userList = document.createElement('div');
+    userList.className = 'users-list';
+
+    var list = document.createElement('tr');
+    userList.appendChild(list);
+
+    var attr = document.createElement('td');
+    attr.className = 'pseudo';
+    attr.textContent = user.pseudo;
+    list.appendChild(attr);
+    var attr2 = document.createElement('td');
+    attr2.className = 'img';
+    var img = document.createElement('td');
+    img.src = user.img;
+    attr2.appendChild(img);
+    list.appendChild(attr2);
+    var attr3 = document.createElement('td');
+    attr3.className = 'nb_game';
+    attr3.textContent = user.nb_game;
+    list.appendChild(attr3);
+    var attr4 = document.createElement('td');
+    attr4.className = 'mmr';
+    attr4.textContent = user.mmr;
+    list.appendChild(attr4);
+
+    userList.addEventListener('click', function () {
+        var url = window.location.href + '#' + user.pseudo;
+    })
+    // statCont.innerHTML;
+    statCont.appendChild(userList);
 }
 
 window.addEventListener('hashchange', function () {
@@ -345,11 +272,10 @@ document.getElementById('profil-img').addEventListener('change', function (event
     sendForm('profilImg', event)
 });
 
-function getMessages() {
+function fetchMessages() {
     $.ajax({
         type: 'GET',
-        url: '/getChat/',
-        headers: { 'X-CSRFToken': token },
+        data: { data: 'chat' },
         success: function (data) {
             var messages = data.messages;
  
@@ -369,14 +295,13 @@ function getMessages() {
                         return;
                     var messageElement = document.createElement('p');
                     
-                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
+                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_to + ' : </b>';
                     messageElement.innerHTML = from + message.content;
 
                     chatBoxContent.appendChild(messageElement);
                     chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
                 });
             });
-            token = data.csrf_token;
         },
         error: function (error) {
             console.log('Erreur lors de la récupération des amis.');
@@ -396,8 +321,7 @@ function displayDiv(hide, show) {
 
 window.onload = function() {
     loadFriends();
-    loadBlockedFriends();
 };
 
 
-// setInterval(getMessages, 1000);
+// setInterval(fetchMessages, 1000);
