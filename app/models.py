@@ -9,7 +9,6 @@ class UserProfil(AbstractUser):
     profil_img = models.ImageField(upload_to='profil/', default="base.webp")
     is_active = models.BooleanField(default=True)
     mmr = models.IntegerField(null=True, default=0)
-    nb_games = models.IntegerField(null=True, default=0)
     friends = models.ManyToManyField('self', blank=True)
     blocked_friends = models.ManyToManyField('self', blank=True)
     
@@ -56,13 +55,3 @@ class Message(models.Model):
     pseudo_to = models.CharField(max_length=32, default="")
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
-
-
-# class Stats(models.Model):
-#     id = models.AutoField(primary_key=True, unique=True)
-#     id_player = models.IntegerField(null=False)
-#     pseudo = models.CharField(max_length=32, default="")
-#     profil_img = models.ImageField(upload_to='profil/', default="base.webp")
-#     nb_game = models.IntegerField(null=False)
-#     win_rate = models.IntegerField(null=False)
-#     timestamp = models.DateTimeField(auto_now_add=True)

@@ -17,7 +17,6 @@ urlpatterns = [
     path('getChat/', views.GetChat, name='getChat'),
     path('getFriends/', views.GetFriends, name='getFriends'),
     path('getBlockedFriends/', views.GetBlockedFriends, name='getBlockedFriends'),
-    path('getStats/', views.GetStats, name='getSats'),
 ]
 
 if settings.DEBUG:
