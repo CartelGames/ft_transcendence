@@ -1,4 +1,5 @@
 .env
 data/*
 *.pyc
+__pycache__/
 

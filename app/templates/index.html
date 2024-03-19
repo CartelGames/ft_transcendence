@@ -16,7 +16,7 @@
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
-
+	{% csrf_token %}
 <header>
 	<div class="header-logo">
 		<img src="{% static 'images/cartelgames.jpeg' %}" alt="logo" title="logo du site" width="100%">
@@ -76,17 +76,14 @@
 			{% else %}
 			<h2>Login</h2>
 			<iframe name="login" style="display:none;"></iframe>
-			<form id="loginForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="loginForm" enctype="multipart/form-data" action="{% url 'login' %}" method="post">
 				<input type="hidden" name="type" value="login">
-				{% csrf_token %}
 				<label for="username">Username :</label>
 				<input type="text" id="username" name="username" required>
 				<label for="password">Password : </label>
 				<input type="password" id="password" name="password" required>
 				<label><a href="#signup" onclick="showDiv('signup')">Click here to signup !</a></label>
-				<!-- <button type="submit">Se connecter</button> -->
 				<div class="butt"><button type="submit" onclick="sendForm('loginForm', event)">Login</button></div>
-				<!-- <button onclick="sendForm('loginForm', event)">Se connecter</button> -->
 				<div id="error-form" class="error-form"></div>
 			</form>
 			{% endif %}
@@ -101,9 +98,8 @@
 			{% else %}
 			<h2>Signup</h2>
 			<iframe name="signup" style="display:none;"></iframe>
-			<form id="signupForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="signupForm" enctype="multipart/form-data" action="{% url 'signup' %}" method="post">
 				<input type="hidden" name="type" value="signup">
-				{% csrf_token %}
 				<label for="signup-username">Username :</label>
 				<input type="text" id="signup-username" name="username" required>
 				<label for="signup-pseudo">Pseudo :</label>
@@ -125,9 +121,8 @@
 	<div id="profil" class="block profil">
 		<div class="form-container">
 			<h2>My profile</h2>
-			<form id="profilImg" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="profilImg" enctype="multipart/form-data" action="{% url 'profilImg' %}" method="post">
 				<input type="hidden" name="type" value="profilImg">
-				{% csrf_token %}
 				<label for="profil-img" class="profil-img">
 					<img id="img" src="{{ user.profil_img.url }}" alt="Profil Image" class="img-profil">
 					<img class="overlay">
@@ -138,9 +133,8 @@
 			<p id="username"></p>
 			<p id="pseudo"></p>
    			<p id="email"></p>
-			<form id="profilForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+			<form id="profilForm" enctype="multipart/form-data" action="{% url 'logout' %}" method="post">
 				<input type="hidden" name="type" value="logout">
-				{% csrf_token %}
 				<div class="butt"><button2 type="submit" onclick="sendForm('profilForm', event)">Logout</button></div>
 				<div id="error-form" class="error-form"></div>
 			</form>
@@ -155,20 +149,29 @@
 			<p>Friends list</p>
 		</div>
 		<div id="chat-content" class="chat-content">
-			<div id="friend">
-				<p id="friends"></p>
-				<div class="butt friend"><button type="submit" onclick="displayDiv('friend', 'add-friend')">Add a friend</button></div>
+			<div id="main-friends">
+				<div id="friend">
+					<a class="list-friends active" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
+					<a class="list-friends" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+					<p id="friends"></p>
+					<div class="butt friend"><button type="submit" onclick="displayDiv('main-friends', 'add-friend')">Add a friend</button></div>
+				</div>
+				<div id="blocked-friends" style="display: none;">
+					<a class="list-friends" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
+					<a class="list-friends active" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+					<p id="error-block"></p>
+					<p id="blocked-friend"></p>
+				</div>
 			</div>
 			<div id="add-friend" style="display: none;">
-				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'index' %}" method="post">
+				<form id="addFriendForm" enctype="multipart/form-data" action="{% url 'addFriend' %}" method="post">
 					<input type="hidden" name="type" value="addFriend">
-					<input type="hidden" name="test" value="{% csrf_token %}">
-					{% csrf_token %}
-					<label for="add-friend-name">Friend name :</label>
-					<input type="text" id="add-friend-name" name="add-friend-name" required>
+					<input type="hidden" name="delete" value="false">
+					<label for="addfriendName">Friend name :</label>
+					<input type="text" id="addfriendName" name="addfriendName" required>
 					<div id="error-form" class="error-form"></div>
 					<div class="butt"><button type="submit" onclick="sendForm('addFriendForm', event)">Add</button></div>
-					<div class="butt"><button2 type="submit" onclick="displayDiv('add-friend', 'friend'), loadFriends();">Back</button></div>
+					<div class="butt"><button2 type="submit" onclick="displayDiv('add-friend', 'main-friends'), loadFriends();">Back</button></div>
 				</form>
 			</div>
 		</div>
@@ -178,8 +181,18 @@
 </div>
 
 	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-	<script type="module" src="{% static 'js/game.js' %}"></script>
+	<script type="importmap">
+		{
+		  "imports": {
+			"three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+			"three/addons/": "https://unpkg.com/three@0.153.0/examples/jsm/"
+		  }
+		}
+	</script>
+	<video id="background-video" src="{% static 'models/videos/background_pong.mp4' %}" muted loop style="display: none;"></video>
+	<script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+		<script type="module" src="{% static 'js/game.js' %}"></script>
 </body>
 </html>
