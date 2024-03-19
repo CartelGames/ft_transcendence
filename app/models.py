@@ -8,6 +8,7 @@ class UserProfil(AbstractUser):
     pseudo = models.CharField(max_length=32, unique=True)
     profil_img = models.ImageField(upload_to='profil/', default="base.webp")
     is_active = models.BooleanField(default=True)
+    nb_games = models.IntegerField(null=True, default=0)
     mmr = models.IntegerField(null=True, default=0)
     friends = models.ManyToManyField('self', blank=True)
     blocked_friends = models.ManyToManyField('self', blank=True)

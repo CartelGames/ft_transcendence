@@ -316,6 +316,64 @@ function blockFriend(pseudo, unblock) {
 function checkURL() {
     if (window.location.hash === "#profil")
         loadProfileData();
+    if (window.location.hash === "#stats")
+        loadStats();
+}
+
+function loadStats() {
+    $.ajax({
+        type: 'GET',
+        url: '/getStats/',
+        headers: { 'X-CSRFToken': token },
+        success: function (data) {
+            if (data.success) {
+                var usersList = data.users;
+                var usersContainer = $('#stats-users-container');
+                usersContainer.empty();
+                usersList.forEach(function (user) {
+                    printStats(user);
+                });
+            }
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des joueurs.');
+        }
+    });
+}
+
+function printStats(user) {
+    var statCont = document.getElementById('stats-users-container');
+    var userList = document.createElement('div');
+    userList.className = 'users-list';
+
+    var list = document.createElement('tr');
+    userList.appendChild(list);
+
+    var attr = document.createElement('td');
+    attr.className = 'pseudo';
+    attr.textContent = user.pseudo;
+    list.appendChild(attr);
+    var attr2 = document.createElement('td');
+    attr2.className = 'img';
+    var img = document.createElement('td');
+    img.src = user.img;
+    attr2.appendChild(img);
+    list.appendChild(attr2);
+    var attr3 = document.createElement('td');
+    attr3.className = 'nb_game';
+    attr3.textContent = user.nb_game;
+    list.appendChild(attr3);
+    var attr4 = document.createElement('td');
+    attr4.className = 'mmr';
+    attr4.textContent = user.mmr;
+    list.appendChild(attr4);
+
+    userList.addEventListener('click', function () {
+        var url = window.location.href + '#' + user.pseudo;
+    })
+    // statCont.innerHTML;
+    statCont.appendChild(userList);
 }
 
 window.addEventListener('hashchange', function () {
