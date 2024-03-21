@@ -27,10 +27,140 @@ let score = new Array(2);
 score[0]=0;
 score[1]=0;
 
-//Powerups setupw
-let powerUp = false;
-const powerGroup = new THREE.Group();
+//Powerups setup
+//Power-up const
+let powerUpSpeed = 0.1;
+let powerUpLDirection = { x: -1, y: 0};
+let powerUpRDirection = { x: 1, y: 0};
+let powerLUp = false;
+let powerRUp = false;
+let LBoardSpeedMalus = false;
+let RBoardSpeedMalus = false;
+let boardSpeedMalus = 0.5;
+let LBoardUpscale = false;
+let RBoardUpscale = false;
+let boardUpscale = 1;
+let randomBallMalus = false;
+let powerUpType = "none";
+let powerUpLClock = 0;
+let powerUpRClock = 0;
+let randomMoveClock = 0;
+const powerUpLGroup = new THREE.Group();
+const powerUpRGroup = new THREE.Group();
 
+function checkPowerUp(){
+  //Si il n'y a aucun power up a l'ecran, on lance un random pour voir si on en cree un
+  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1){
+    console.log("here");
+    powerLUp = true;
+    powerRUp = true;
+    createPowerUp();
+  }
+  //Mouvement et collision du power up de gauuche
+  else{
+    if (powerLUp == true){
+      powerUpLGroup.position.x += powerUpLDirection.x * powerUpSpeed;
+      if (powerUpLGroup.position.x < playerOne.position.x + 1 &&
+          powerUpLGroup.position.x > playerOne.position.x - 1 &&
+          powerUpLGroup.position.y < playerOne.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
+          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))) {
+        scene.remove(powerUpLGroup);
+        powerLUp = false;
+        switch (powerUpType){
+          case "boardUpscale":
+            LBoardUpscale = true;       
+            break;
+          case "ballSpeedMalus":
+            ballSpeed *= 1.5;
+            break;
+          case "boardSpeedNalus":
+            RBoardSpeedMalus = true;
+            break;
+          case "randomBallMalus":
+            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            break;
+        }
+      }
+      if (powerUpLGroup.position.x < canvasBounds.left){
+        scene.remove(powerUpLGroup);
+        powerLUp = false;
+      }
+    }
+    //Mouvement et collision du power up de droite
+    if (powerRUp == true)
+    {
+      powerUpRGroup.position.x += powerUpRDirection.x * powerUpSpeed;
+      if (powerUpRGroup.position.x < playerTwo.position.x + 1 &&
+          powerUpRGroup.position.x > playerTwo.position.x - 1 &&
+          powerUpRGroup.position.y < playerTwo.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
+          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale))) {
+        scene.remove(powerUpRGroup);
+        powerRUp = false;
+        switch (powerUpType){
+          case "boardUpscale":
+            RBoardUpscale = true;           
+            break;
+          case "ballSpeedMalus":
+            ballSpeed *= 1.5;
+            break;
+          case "boardSpeedNalus":
+            LBoardSpeedMalus = true;
+            break;
+          case "randomBallMalus":
+            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            break;
+        }
+      }
+      if (powerUpRGroup.position.x > canvasBounds.right){
+        scene.remove(powerUpRGroup);
+        powerRUp = false;
+      }
+    }
+  }
+  playerOne.scale.y = 1 + LBoardUpscale;
+  playerTwo.scale.y = 1 + RBoardUpscale;
+  }
+
+function createPowerUp(){
+  const capsuleL = new THREE.SphereGeometry();
+  const capsuleR = new THREE.SphereGeometry();
+  let powerUpMaterial;
+  switch (getRandomInt(4)) {
+      case 0:
+        console.log("0")
+        powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
+        powerUpType = "boardUpscale";       
+        break;
+      case 1:
+        console.log("1")
+        powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
+        powerUpType = "ballSpeedMalus";
+        break;
+      case 2:
+        console.log("2")
+        powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
+        powerUpType = "boardSpeedMalus";
+        break;
+      case 3:
+        console.log("3")
+        powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
+        powerUpType = "randomBallMalus";
+        break;
+  }
+  const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  powerUpLGroup.add(modelL);
+  powerUpRGroup.add(modelR);
+  let pos = getRandomInt(20) + 1;
+  powerUpLGroup.position.set(0,pos,0);
+  powerUpRGroup.position.set(0,-pos,0);
+  scene.add(powerUpLGroup);
+  scene.add(powerUpRGroup);
+}
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
 let clock;
 const params = {
   threshold: 0,
@@ -205,7 +335,6 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
-
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
@@ -241,22 +370,20 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 2)
+    if (score[1] == 10)
       rWin();
     else
       scoring();
-    console.log(score[1]);
   }
   //Player1 gets a point
   if (ball.position.x > canvasBounds.right) {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 2)
+    if (score[0] == 10)
       lWin();
     else
       scoring();
-    console.log(score[0]);
   }
 
   // Check for bottom and top boundary collisions
@@ -267,8 +394,8 @@ function updated() {
   // Check for playerOne collision
   if (ball.position.x < playerOne.position.x + 1 &&
       ball.position.x > playerOne.position.x - 1 &&
-      ball.position.y < playerOne.position.y + boardHeight/2 &&
-      ball.position.y > playerOne.position.y - boardHeight/2 && ballDirection.x < 0) {
+      ball.position.y < playerOne.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
+      ball.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
   }
@@ -276,8 +403,8 @@ function updated() {
   // Check for playerTwo collision
   if (ball.position.x < playerTwo.position.x + 1 &&
       ball.position.x > playerTwo.position.x - 1 &&
-      ball.position.y < playerTwo.position.y + boardHeight/2 &&
-      ball.position.y > playerTwo.position.y - boardHeight/2 && ballDirection.x > 0) {
+      ball.position.y < playerTwo.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
+      ball.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
   }
@@ -298,17 +425,17 @@ function updated() {
   }
 
   //To make the light follow the ball
-  pointLight.position.set(ball.position.x,ball.position.y, 10);
+  pointLight.position.set(ball.position.x,ball.position.y,10);
 
   //Moves the boards
   if (keyState[87])
-    movePong(playerOne, playerOne.position.y + 4);
+    movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
   if (keyState[83])
-    movePong(playerOne, playerOne.position.y - 4);
+    movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
   if (keyState[38])
-    movePong(playerTwo, playerTwo.position.y + 4);
+    movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
   if (keyState[40])
-    movePong(playerTwo, playerTwo.position.y - 4);
+    movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
 }
 
 //Moves smoothly
@@ -444,27 +571,6 @@ function resetGame(){
   startGame();
   playerOne.position.set(canvasBounds.left + 2, 0, 0);
   playerTwo.position.set(canvasBounds.right - 2, 0, 0);
-}
-
-function checkPowerUp(){
-  if (powerUp == false && getRandomInt(2) == 1){
-    console.log("1>");
-    powerUp = true
-    createPowerUp();
-    }
-}
-
-function createPowerUp(){
-  console.log("here");
-  const capsule = new THREE.CapsuleGeometry();
-  const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} );
-  const model = new THREE.Mesh( capsule, material);
-  powerGroup.add(model)
-  model.position.set(0,0,1);
-}
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
 }
 
 function animate() {

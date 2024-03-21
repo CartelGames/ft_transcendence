@@ -7,18 +7,24 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-	<link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	<link rel="shortcut icon" type="image/ico" href="{% static 'images/faviconcartelgames.ico' %}"/>
+	<link href="https://fonts.googleapis.com/css2?family=Honk&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	<script src="{% static 'js/script.js' %}" defer></script>
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
 	{% csrf_token %}
 <header>
+	<div class="header-logo">
+		<img src="{% static 'images/cartelgames.jpeg' %}" alt="logo" title="logo du site" width="100%">
+	</div>
 	<nav class="header-items">
 		<ul>
+			<li><a href="#games" onclick="showDiv('games')">Game</a></li>
+			<li><a href="#stats" onclick="showDiv('stats')">Stats</a></li>
 			<li><a href="#index" onclick="showDiv('index')">Home</a></li>
 			{% if user.is_authenticated %}
 			<li><a href="#profil" onclick="showDiv('profil')">My profile</a></li>
@@ -32,9 +38,33 @@
 <div class="content">
 	<!-- index -->
 	<div id="index" class="block">
+		<h1>Welcome to our Transcendence !</h1>
+	</div>
+
+	<!-- game -->
+	<div id="games" class="block">
 		<div class="game">
-			<h1>Welcome to our Transcendence !</h1>
 			<canvas id="game" class="game"></canvas>
+		</div>
+	</div>
+	
+	<!-- stats -->
+	<div id="stats" class="block">
+		<div class="stats-container" id="stats-container">
+			<h2>Stats of players</h2>
+			<table id="stats-users-table">
+				<thead>
+					<tr>
+					  <th scope="col">Groupe</th>
+					  <th scope="col">Année de formation</th>
+					  <th scope="col">Nombre d'albums</th>
+					  <th scope="col">Morceau le plus célèbre</th>
+					</tr>
+				  </thead>
+				<tbody id="stats-users-container">
+				
+				</tbody>
+			</table>
 		</div>
 	</div>
 
