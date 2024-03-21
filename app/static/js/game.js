@@ -27,6 +27,7 @@ let score = new Array(2);
 score[0]=0;
 score[1]=0;
 
+
 //Powerups setup
 //Power-up const
 let powerUpSpeed = 0.1;
@@ -208,44 +209,24 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
 } );
 
-// const video = document.getElementById('background-video');
-// const videoTexture = new THREE.VideoTexture(video);
-// videoTexture.minFilter = THREE.LinearFilter;
-// videoTexture.magFilter = THREE.LinearFilter;
+let vertex; 
+let fragment;
+async function fetchingfragShader(){
+  return fetch('static/js/shaders/fragment.glsl').then((response) => response.text()).then((text) => {fragment = text;});
+}
+await fetchingfragShader();
+async function fetchingvertShader(){
+  return fetch('static/js/shaders/vertex.glsl').then((response) => response.text()).then((text) => {vertex = text;});
+}
+await fetchingvertShader();
 
 const shaderMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
     resolution: { value: new THREE.Vector2() }
   },
-  vertexShader: `
-    void main() {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform float time;
-    uniform vec2 resolution;
-
-    void main() {
-      // Calculate the distance from the center of the screen
-      vec2 uv = gl_FragCoord.xy / resolution.xy;
-      uv = uv * 2.0 - 1.0;
-      float dist = length(uv);
-
-      // Calculate the amplitude of the popping effect based on time
-      float amplitude = 0.5 * (1.0 + sin(time));
-
-      // Calculate the color based on the distance and amplitude
-      vec3 color = vec3(0.0);
-      if (dist < 0.5) {
-        float t = 1.0 - smoothstep(0.4, 0.5, dist);
-        color = vec3(1.0, 1.0, 1.0) * t * amplitude;
-      }
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-  `
+  vertexShader: vertex,
+  fragmentShader: fragment
 });
 
 //Menu setup
@@ -260,7 +241,7 @@ function startGame() {
           size: 3,
           height: 1,
         } );
-        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
         textMenu = new THREE.Mesh(geometry, textMaterial);
         textMenu.position.set(-15, 0, 0);
         menu.clear();
@@ -461,24 +442,33 @@ function togglePause() {
 
 
 async function printPseudo(){
-  const pseudo = await getPseudo();
+  let pseudo = await getPseudo();
+  let pseudo2 = await getPseudo(); // Pseudo du joueur 2
+  //To cut pseudo if its too big
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( pseudo, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const geometry2 = new TextGeometry( pseudo, {
+      const geometry2 = new TextGeometry( pseudo2, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      //var center = new THREE.Vector3();
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
-      textMesh.position.set(-25, 15, -2);
+      textMesh.geometry.center();
+      textMesh.position.set(canvasBounds.left + 20, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-      textMesh2.position.set(20, 15, -2);
+      textMesh2.geometry.center();
+      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
       scoreGrp.clear();
       scoreGrp.add(textMesh, textMesh2);
       scene.add(scoreGrp);
@@ -500,7 +490,7 @@ function scoring(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-25, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -524,7 +514,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -550,7 +540,7 @@ function lWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -578,7 +568,7 @@ function animate() {
     if (!isPaused){
       updated();
     }
-    shaderMaterial.uniforms.time.value += 0.01;
+    shaderMaterial.uniforms.time.value += 0.005;
     //videoTexture.needsUpdate = true;
     //Uncomment to get fps counter
 		stats.update();
