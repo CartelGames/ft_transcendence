@@ -15,11 +15,11 @@ const renderer = new THREE.WebGLRenderer({
 
 //FPS counter top left
 const stats = new Stats();
-document.body.appendChild(stats.dom);
+document.getElementById('games').appendChild(stats.dom);
 
 let isPaused = true;
 //Setting camera position
-camera.position.z =30;
+camera.position.z = 30;
 
 //Scores
 const scoreGrp = new THREE.Group();
@@ -563,7 +563,41 @@ function lWin(){
   });
 }
 
+function sendGameInfo(scene, score1, score2){
+  if (score1 == 10)
+  {
+    winner = 'player1';
+  }
+  if (score2 == 10){
+    winner = 'player2';
+  }
+  const pseudo1 = getPseudo();
+  const data = {
+    player1: user.id,
+    pseudo_p1: pseudo1,
+    winner: winner,
+  } 
+  $.ajax({
+    type: 'POST',
+    url: '/newGame/',
+    headers: { 'X-CSRFToken': token },
+    processData: false,
+    contentType: false,
+    data: data,
+    success: function (data) {
+        if (data.success) {
+            console.log('new game created');
+        }
+        token = data.csrf_token;
+    },
+    error: function (error) {
+        console.log('Erreur lors de la creation d\'une partie.');
+    }
+  });
+}
+
 function resetGame(){
+  sendGameInfo(scene, score[0], score[1]);
   isPaused = true;
   scene.remove(ball);
   score[0] = 0;

@@ -369,10 +369,34 @@ function printStats(user) {
     attr4.textContent = user.mmr;
     list.appendChild(attr4);
 
-    userList.addEventListener('click', function () {
-        var url = window.location.href + '#' + user.pseudo;
-    })
-    // statCont.innerHTML;
+    var profilHTML = `
+    <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+    <input type="hidden" name="type" value="sendChat">
+    <input type="hidden" name="id_to" value="${pseudo}">
+    <input type="hidden" name="csrfmiddlewaretoken" value="">
+    <input type="text" id="content" name="content" required>
+    <div class="hide"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)">Login</button></div>
+    <div id="error-form" class="error-form"></div>
+    </form>
+    `;
+    contentDiv.innerHTML = formHTML;
+    chatDiv.appendChild(contentDiv);
+
+    toggleDiv.addEventListener('click', function () {
+        chatDiv.classList.toggle('chat-box-open');
+        getMessages(); //Delete this later to setInterval
+        contentDiv.scrollTop = contentDiv.scrollHeight;
+    });
+    closeIcon.addEventListener('click', function (event) {
+        event.stopPropagation();
+        var parent = chatDiv.parentElement;
+        parent.removeChild(chatDiv);
+        chatCounter--;
+        var chatBoxes = document.getElementsByClassName('chat-box');
+        for (var i = 0; i < chatBoxes.length; i++) {
+            chatBoxes[i].style.left = 20 * i + 'vh';
+        }
+    });
     statCont.appendChild(userList);
 }
 
