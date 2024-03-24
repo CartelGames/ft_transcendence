@@ -194,7 +194,6 @@ def GetBlockedFriends(request):
 def GetStats(request):
     if request.method == 'GET':
         new_Stats = UserProfil.objects.all()
-        print('salut')
         users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:

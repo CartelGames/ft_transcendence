@@ -459,3 +459,11 @@ window.onload = function() {
 
 
 // setInterval(getMessages, 1000);
+
+
+const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
+const websocket = new WebSocket(wsEndpoint);
+
+websocket.onopen = () => {
+    console.log('WebSocket connected');
+};
