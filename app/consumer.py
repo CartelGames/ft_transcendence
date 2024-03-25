@@ -9,7 +9,6 @@ class MyConsumer(AsyncWebsocketConsumer):
         if self.user.is_anonymous:
             await self.close()
         self.group_name = f'{self.user.pseudo}'
-        print(self.group_name)
         await self.channel_layer.group_add(
             self.group_name,
             self.channel_name
@@ -31,13 +30,10 @@ class MyConsumer(AsyncWebsocketConsumer):
 
         if action == 'sendChat':
             await self.send_message_to_user(data["pseudo"])
-
-        print('test3')
         pass
 
     @staticmethod
     async def send_message_to_user(id_to):
-        print('test')
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             f'{id_to}',
