@@ -18,6 +18,7 @@ urlpatterns = [
     path('getFriends/', views.GetFriends, name='getFriends'),
     path('getBlockedFriends/', views.GetBlockedFriends, name='getBlockedFriends'),
     path('getStats/', views.GetStats, name='getStats'),
+    path('newGame/', views.NewGame, name='newGame'),
 ]
 
 if settings.DEBUG:

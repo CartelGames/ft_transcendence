@@ -2,5 +2,4 @@
 .env
 ./data/
 *.pyc
-__pycache__/
-
+./app/media/

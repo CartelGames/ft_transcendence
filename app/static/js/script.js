@@ -2,6 +2,24 @@ var upHist = false;
 let chatCounter = 0;
 var token = getCSRFToken();
 
+const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
+const websocket = new WebSocket(wsEndpoint);
+
+websocket.onopen = () => {
+    console.log('WebSocket connected');
+};
+
+websocket.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+    console.log('Event Socket : ' + data.type);
+    if (data.type === 'chat_message') {
+        console.log('GetMessage');
+        getMessages();
+    }
+};
+
+
+
 function getCSRFToken() {
     var csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
 
@@ -47,6 +65,12 @@ function sendForm(id, event) {
             var errorForm = form.querySelector('.error-form');
             if (response.success) {
                 if (formData.get('type') == 'sendChat') {
+                    websocket.send(
+                        JSON.stringify({
+                            action: 'sendChat',
+                            pseudo: formData.get('id_to')
+                        })
+                    );
                     getMessages();
                     return;
                 }
@@ -99,7 +123,7 @@ async function getPseudo() {
         headers: { 'X-CSRFToken': token },
       });
       token = response.csrf_token;
-      return response.pseudo;
+      return response.users[0];
     } catch (error) {
       console.log('Erreur lors de la récupération des données du profil.');
     }

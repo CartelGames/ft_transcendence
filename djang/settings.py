@@ -30,6 +30,7 @@ ALLOWED_HOSTS = ['0.0.0.0', 'localhost', 'localhost:8000']
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -38,6 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'app',
 ]
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -70,6 +77,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'djang.wsgi.application'
+ASGI_APPLICATION = 'djang.asgi.application'
 
 
 # Database
