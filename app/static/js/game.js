@@ -27,7 +27,6 @@ let score = new Array(2);
 score[0]=0;
 score[1]=0;
 
-
 //Powerups setup
 //Power-up const
 let powerUpSpeed = 0.1;

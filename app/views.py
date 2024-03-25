@@ -5,6 +5,7 @@ from .models import UserProfil, Message
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
+from app.consumer import MyConsumer
 # Create your views here.
 
 
@@ -87,6 +88,7 @@ def UserSendChat(request):
                 'username': request.user.username,
                 'email': request.user.email,
             }
+            MyConsumer.send_message_to_user(friend.id)
             return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Error', 'csrf_token': get_token(request)})
@@ -194,7 +196,6 @@ def GetBlockedFriends(request):
 def GetStats(request):
     if request.method == 'GET':
         new_Stats = UserProfil.objects.all()
-        print('salut')
         users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
