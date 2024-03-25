@@ -268,6 +268,7 @@ function startGame() {
         scene.add(menu);
   });
 }
+
 startGame();
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -370,7 +371,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 10)
+    if (score[1] == 3)
       rWin();
     else
       scoring();
@@ -380,7 +381,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 10)
+    if (score[0] == 3)
       lWin();
     else
       scoring();
@@ -563,41 +564,7 @@ function lWin(){
   });
 }
 
-function sendGameInfo(scene, score1, score2){
-  if (score1 == 10)
-  {
-    winner = 'player1';
-  }
-  if (score2 == 10){
-    winner = 'player2';
-  }
-  const pseudo1 = getPseudo();
-  const data = {
-    player1: user.id,
-    pseudo_p1: pseudo1,
-    winner: winner,
-  } 
-  $.ajax({
-    type: 'POST',
-    url: '/newGame/',
-    headers: { 'X-CSRFToken': token },
-    processData: false,
-    contentType: false,
-    data: data,
-    success: function (data) {
-        if (data.success) {
-            console.log('new game created');
-        }
-        token = data.csrf_token;
-    },
-    error: function (error) {
-        console.log('Erreur lors de la creation d\'une partie.');
-    }
-  });
-}
-
 function resetGame(){
-  sendGameInfo(scene, score[0], score[1]);
   isPaused = true;
   scene.remove(ball);
   score[0] = 0;
@@ -608,17 +575,17 @@ function resetGame(){
 }
 
 function animate() {
-    requestAnimationFrame(animate);
-    if (!isPaused){
-      updated();
-    }
-    shaderMaterial.uniforms.time.value += 0.01;
-    //videoTexture.needsUpdate = true;
-    //Uncomment to get fps counter
-		stats.update();
-    renderer.render(scene, camera);
-    shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
-
+  requestAnimationFrame(animate);
+  if (!isPaused){
+    updated();
+  }
+  shaderMaterial.uniforms.time.value += 0.01;
+  //videoTexture.needsUpdate = true;
+  //Uncomment to get fps counter
+  stats.update();
+  renderer.render(scene, camera);
+  shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
+  
 }
 //video.play();
 animate();

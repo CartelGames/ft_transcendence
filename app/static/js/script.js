@@ -105,6 +105,20 @@ async function getPseudo() {
     }
   }
 
+async function getProfile() {
+    try {
+      const response = await $.ajax({
+        type: 'GET',
+        url: '/getProfil/',
+        headers: { 'X-CSRFToken': token },
+      });
+      token = response.csrf_token;
+      return response;
+    } catch (error) {
+      console.log('Erreur lors de la récupération des données du profil.');
+    }
+  }
+
 function clearInput(button) {
     var form = button.closest('form');
     if (form) {
@@ -318,6 +332,8 @@ function checkURL() {
         loadProfileData();
     if (window.location.hash === "#stats")
         loadStats();
+    if (window.location.hash === "#games")
+        sendGameInfo(0, 0);
 }
 
 function loadStats() {
@@ -344,11 +360,9 @@ function loadStats() {
 
 function printStats(user) {
     var statCont = document.getElementById('stats-users-container');
-    var userList = document.createElement('div');
-    userList.className = 'users-list';
-
+    
     var list = document.createElement('tr');
-    userList.appendChild(list);
+    list.className = 'users-list';
 
     var attr = document.createElement('td');
     attr.className = 'pseudo';
@@ -356,7 +370,7 @@ function printStats(user) {
     list.appendChild(attr);
     var attr2 = document.createElement('td');
     attr2.className = 'img';
-    var img = document.createElement('td');
+    var img = document.createElement('img');
     img.src = user.img;
     attr2.appendChild(img);
     list.appendChild(attr2);
@@ -369,35 +383,7 @@ function printStats(user) {
     attr4.textContent = user.mmr;
     list.appendChild(attr4);
 
-    var profilHTML = `
-    <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
-    <input type="hidden" name="type" value="sendChat">
-    <input type="hidden" name="id_to" value="${pseudo}">
-    <input type="hidden" name="csrfmiddlewaretoken" value="">
-    <input type="text" id="content" name="content" required>
-    <div class="hide"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)">Login</button></div>
-    <div id="error-form" class="error-form"></div>
-    </form>
-    `;
-    contentDiv.innerHTML = formHTML;
-    chatDiv.appendChild(contentDiv);
-
-    toggleDiv.addEventListener('click', function () {
-        chatDiv.classList.toggle('chat-box-open');
-        getMessages(); //Delete this later to setInterval
-        contentDiv.scrollTop = contentDiv.scrollHeight;
-    });
-    closeIcon.addEventListener('click', function (event) {
-        event.stopPropagation();
-        var parent = chatDiv.parentElement;
-        parent.removeChild(chatDiv);
-        chatCounter--;
-        var chatBoxes = document.getElementsByClassName('chat-box');
-        for (var i = 0; i < chatBoxes.length; i++) {
-            chatBoxes[i].style.left = 20 * i + 'vh';
-        }
-    });
-    statCont.appendChild(userList);
+    statCont.appendChild(list);
 }
 
 window.addEventListener('hashchange', function () {
@@ -481,5 +467,43 @@ window.onload = function() {
     loadBlockedFriends();
 };
 
+function sendGameInfo(score1, score2){
+    var winner = 'ia';
+    var formData = new FormData();
+    const user = getProfile();
+    console.log(user);
+    user.then((res) => {
+        formData.append('type', 'newGame');
+        formData.append('player1', res.pseudo);
+        formData.append('pseudo', JSON.stringify(res.pseudo));
+        formData.append('id', res.id);
+        formData.append('user', JSON.stringify(res));
+        if (score1 == 3)
+        {
+            winner = 'player1';
+        }
+        if (score2 == 3){
+            winner = 'player2';
+        }
+        formData.append('winner', winner);
+        $.ajax({
+            type: 'POST',
+            url: '/newGame/',
+            headers: { 'X-CSRFToken': res.csrf_token },
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function (data) {
+                if (data.success) {
+                    console.log('new game created');
+                }
+                token = data.csrf_token;
+            },
+            error: function (error) {
+                console.log('Erreur lors de la creation d\'une partie.');
+            }
+        });
+    });
+}
 
 // setInterval(getMessages, 1000);

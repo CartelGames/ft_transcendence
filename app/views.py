@@ -141,7 +141,7 @@ def UserBlockFriend(request):
 def GetProfil(request):
     if request.method == 'GET':
         if request.user is not None:
-            return JsonResponse({'success': True, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
+            return JsonResponse({'success': True, 'id': request.user.id, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
@@ -201,35 +201,35 @@ def GetStats(request):
 def NewGame(request):
     if request.method == 'POST' and request.POST.get('type') == 'newGame':
         if isinstance(request.user, AnonymousUser):
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged in !', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': False, 'errors': 'Hey! You\'re not logged in !', 'csrf_token': get_token(request)})
         player1 = request.POST.get('player1')
-        if player1 == request.user.id:
+        if player1 == request.user.pseudo:
             try:
-                player1 = get_object_or_404(UserProfil, id=player1)
+                player1 = get_object_or_404(UserProfil, id=request.user.id)
             except Http404 as e:
                     return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
         else:
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged in !', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': False, 'errors': 'ta mere! You\'re not logged in !', 'csrf_token': get_token(request)})
         if request.POST.get('player2') is not None:
             try:
-                player2 = get_object_or_404(UserProfil, id=request.POST.get('player2'))
+                player2 = get_object_or_404(UserProfil, pseudo=request.POST.get('player2'))
             except Http404 as e:
                     return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
             player2.nb_games += 1
+        else:
+            player2 = None
         player1.nb_games += 1
         if request.POST.get('winner') == 'player1':
             player1.mmr += 10
-            player2.mmr -= 10
+            # player2.mmr -= 10
         elif request.POST.get('winner') == 'player2':
             player1.mmr -= 10
-            player2.mmr += 10
+            # player2.mmr += 10
         else:
             player1.mmr -= 5
         new_game = Game.objects.create(
             player1=request.user.id,
-            player2=player2.id,
             pseudo_p1=request.user.pseudo,
-            pseudo_p2=player2.pseudo,
             winner=request.POST.get('winner')
         )
         return JsonResponse({'success': True, 'errors': 'The stats game was correctly create !', 'csrf_token': get_token(request)})
