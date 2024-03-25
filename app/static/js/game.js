@@ -6,6 +6,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
 //Initiating scene and camera
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+
+ws.onopen = async function(event) {
+    console.log("WebSocket opened!");
+    const username = await getPseudo();
+    ws.send(JSON.stringify({
+        'message': username.pseudo + ' joined the game'
+    }));
+};
+
+ws.onmessage = function(event) {
+    console.log("Received message: " + event.data);
+};
+
+ws.onclose = function(event) {
+    console.log("WebSocket closed!");
+};
+
+
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
 const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 100);
@@ -73,7 +92,7 @@ function checkPowerUp(){
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
@@ -103,7 +122,7 @@ function checkPowerUp(){
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
@@ -350,7 +369,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 10)
+    if (score[1] == 2)
       rWin();
     else
       scoring();
@@ -360,7 +379,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 10)
+    if (score[0] == 2)
       lWin();
     else
       scoring();
@@ -441,8 +460,9 @@ function togglePause() {
 
 
 async function printPseudo(){
-  let pseudo = await getPseudo();
-  let pseudo2 = await getPseudo(); // Pseudo du joueur 2
+  let pseudo = (await getPseudo()).pseudo;
+  console.log(pseudo);
+  let pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
   //To cut pseudo if its too big
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';
@@ -552,7 +572,46 @@ function lWin(){
   });
 }
 
-function resetGame(){
+let winner;
+async function sendGameInfo(scene, score1, score2){
+  if (score1 == 2)
+  {
+    winner = 'player1';
+  }
+  if (score2 == 2){
+    winner = 'player2';
+  }
+
+  const user = await getPseudo();
+  const data = {
+    type: 'newGame',
+    player1: user.id,
+    pseudo_p1: user.pseudo,
+    winner: winner,
+  } 
+
+  console.log(data);
+  console.log(user.id, "won");
+  $.ajax({
+    type: 'POST',
+    url: '/newGame/',
+    headers: { 'X-CSRFToken': token },
+    data: data,
+    success: function (data) {
+      console.log(data.errors);
+        if (data.success) {
+            console.log('new game created');
+        }
+        token = data.csrf_token;
+    },
+    error: function (error) {
+        console.log('Erreur lors de la creation d\'une partie.');
+    }
+  });
+}
+
+async function resetGame(){
+  await sendGameInfo(scene, score[0], score[1]);
   isPaused = true;
   scene.remove(ball);
   score[0] = 0;

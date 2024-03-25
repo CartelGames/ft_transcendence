@@ -56,3 +56,12 @@ class Message(models.Model):
     pseudo_to = models.CharField(max_length=32, default="")
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class Game(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    player1 = models.IntegerField(null=False)
+    player2 = models.IntegerField(blank=True, null=True)
+    pseudo_p1 = models.CharField(max_length=32, default="")
+    pseudo_p2 = models.CharField(max_length=32, default="")
+    winner = models.CharField(max_length=32, default="")
+    timestamp = models.DateTimeField(auto_now_add=True)

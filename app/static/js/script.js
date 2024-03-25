@@ -123,7 +123,7 @@ async function getPseudo() {
         headers: { 'X-CSRFToken': token },
       });
       token = response.csrf_token;
-      return response.pseudo;
+      return response.users[0];
     } catch (error) {
       console.log('Erreur lors de la récupération des données du profil.');
     }
