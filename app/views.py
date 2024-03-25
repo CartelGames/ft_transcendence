@@ -5,7 +5,9 @@ from .models import UserProfil, Message, Game
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
+from app.consumer import MyConsumer
 # Create your views here.
+
 
 def UserLogin(request):
     if request.method == 'POST' and request.POST.get('type') == 'login':
@@ -86,6 +88,7 @@ def UserSendChat(request):
                 'username': request.user.username,
                 'email': request.user.email,
             }
+            MyConsumer.send_message_to_user(friend.id)
             return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Error', 'csrf_token': get_token(request)})
@@ -141,7 +144,8 @@ def UserBlockFriend(request):
 def GetProfil(request):
     if request.method == 'GET':
         if request.user is not None:
-            return JsonResponse({'success': True, 'id': request.user.id, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
+            users_list = [{'id': request.user.id, 'pseudo': request.user.pseudo}]
+            return JsonResponse({'success': True, 'users': users_list, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
@@ -197,7 +201,7 @@ def GetStats(request):
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
-   
+
 def NewGame(request):
     if request.method == 'POST' and request.POST.get('type') == 'newGame':
         if isinstance(request.user, AnonymousUser):
@@ -235,6 +239,6 @@ def NewGame(request):
         return JsonResponse({'success': True, 'errors': 'The stats game was correctly create !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
-
+   
 def index(request):
     return render(request, 'index.html')

@@ -2,6 +2,24 @@ var upHist = false;
 let chatCounter = 0;
 var token = getCSRFToken();
 
+const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
+const websocket = new WebSocket(wsEndpoint);
+
+websocket.onopen = () => {
+    console.log('WebSocket connected');
+};
+
+websocket.onmessage = function(event) {
+    var data = JSON.parse(event.data);
+    console.log('Event Socket : ' + data.type);
+    if (data.type === 'chat_message') {
+        console.log('GetMessage');
+        getMessages();
+    }
+};
+
+
+
 function getCSRFToken() {
     var csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
 
@@ -47,6 +65,12 @@ function sendForm(id, event) {
             var errorForm = form.querySelector('.error-form');
             if (response.success) {
                 if (formData.get('type') == 'sendChat') {
+                    websocket.send(
+                        JSON.stringify({
+                            action: 'sendChat',
+                            pseudo: formData.get('id_to')
+                        })
+                    );
                     getMessages();
                     return;
                 }
@@ -99,21 +123,7 @@ async function getPseudo() {
         headers: { 'X-CSRFToken': token },
       });
       token = response.csrf_token;
-      return response.pseudo;
-    } catch (error) {
-      console.log('Erreur lors de la récupération des données du profil.');
-    }
-  }
-
-async function getProfile() {
-    try {
-      const response = await $.ajax({
-        type: 'GET',
-        url: '/getProfil/',
-        headers: { 'X-CSRFToken': token },
-      });
-      token = response.csrf_token;
-      return response;
+      return response.users[0];
     } catch (error) {
       console.log('Erreur lors de la récupération des données du profil.');
     }
@@ -336,6 +346,43 @@ function checkURL() {
         sendGameInfo(0, 0);
 }
 
+function sendGameInfo(score1, score2){
+    var winner = 'ia';
+    var formData = new FormData();
+    const user = getPseudo();
+    console.log(user);
+        formData.append('type', 'newGame');
+        formData.append('player1', res.pseudo);
+        formData.append('pseudo', JSON.stringify(res.pseudo));
+        formData.append('id', res.id);
+        formData.append('user', JSON.stringify(res));
+        if (score1 == 3)
+        {
+            winner = 'player1';
+        }
+        if (score2 == 3){
+            winner = 'player2';
+        }
+        formData.append('winner', winner);
+        $.ajax({
+            type: 'POST',
+            url: '/newGame/',
+            headers: { 'X-CSRFToken': res.csrf_token },
+            processData: false,
+            contentType: false,
+            data: formData,
+            success: function (data) {
+                if (data.success) {
+                    console.log('new game created');
+                }
+                token = data.csrf_token;
+            },
+            error: function (error) {
+                console.log('Erreur lors de la creation d\'une partie.');
+            }
+    });
+}
+
 function loadStats() {
     $.ajax({
         type: 'GET',
@@ -467,43 +514,5 @@ window.onload = function() {
     loadBlockedFriends();
 };
 
-function sendGameInfo(score1, score2){
-    var winner = 'ia';
-    var formData = new FormData();
-    const user = getProfile();
-    console.log(user);
-    user.then((res) => {
-        formData.append('type', 'newGame');
-        formData.append('player1', res.pseudo);
-        formData.append('pseudo', JSON.stringify(res.pseudo));
-        formData.append('id', res.id);
-        formData.append('user', JSON.stringify(res));
-        if (score1 == 3)
-        {
-            winner = 'player1';
-        }
-        if (score2 == 3){
-            winner = 'player2';
-        }
-        formData.append('winner', winner);
-        $.ajax({
-            type: 'POST',
-            url: '/newGame/',
-            headers: { 'X-CSRFToken': res.csrf_token },
-            processData: false,
-            contentType: false,
-            data: formData,
-            success: function (data) {
-                if (data.success) {
-                    console.log('new game created');
-                }
-                token = data.csrf_token;
-            },
-            error: function (error) {
-                console.log('Erreur lors de la creation d\'une partie.');
-            }
-        });
-    });
-}
 
 // setInterval(getMessages, 1000);
