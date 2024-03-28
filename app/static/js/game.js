@@ -7,23 +7,42 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 //Initiating scene and camera
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
-
-ws.onopen = async function(event) {
+const username = await getPseudo();
+ws.onopen = function(event) {
     console.log("WebSocket opened!");
-    const username = await getPseudo();
+    
     ws.send(JSON.stringify({
         'message': username.pseudo + ' joined the game'
     }));
 };
 
 ws.onmessage = function(event) {
-    console.log("Received message: " + event.data);
+  const data = JSON.parse(event.data);
+  console.log(data)
+  if (data.type === 'game_state'){
+    console.log("On est dans le game_state");
+    const player_name = data.player_name;
+    const player_id = data.player_id;
+    const input_value = data.input_value;
+    updateGameState(player_name, player_id, input_value);
+  }
 };
 
 ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
+
+function updateGameState(player_name, player_id, input_value)
+{
+  if (player_id === username.id){
+    console.log('c\'est moi qui joue');
+  }
+  else{
+    pseudo2 = player_name;
+  }
+  printPseudo();
+}
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
@@ -334,10 +353,18 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
+let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
   }
+  const input_value = event.key === 'w' ? -1 : event.key === 's' ? 1 : 0;
+  ws.send(JSON.stringify({
+    type: 'input',
+    player_name: username.pseudo,
+    player_id: id,
+    input_value: input_value,
+  }));
 });
 
 //Speed and starting direction settings
@@ -458,11 +485,11 @@ function togglePause() {
   }
 }
 
-
+let pseudo = username.pseudo;
+let pseudo2 = username.pseudo;
 async function printPseudo(){
-  let pseudo = (await getPseudo()).pseudo;
-  console.log(pseudo);
-  let pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
+  console.log(pseudo2);
+  //pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
   //To cut pseudo if its too big
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';

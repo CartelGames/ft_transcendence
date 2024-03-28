@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-import json
+import json, asyncio
 
 class MyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -73,18 +73,34 @@ class MyGameConsumer(AsyncWebsocketConsumer):
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        message = text_data_json['type']
 
-        await self.channel_layer.group_send(
-            self.room_name,
-            {
-                'type': 'chat_message',
-                'message': message
-            }
-        )
+        if message == 'input':
+            player_name = text_data_json['player_name']
+            player_id = text_data_json['player_id']
+            input_value = text_data_json['input_value']
 
-    async def chat_message(self, event):
+            
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'game_state',
+                    'player_name': player_name,
+                    'player_id': player_id,
+                    'input_value': input_value,
+                    'message': message
+                }
+            )
+        
+    async def game_state(self, event):
+        player_name = event['player_name']
+        player_id = event['player_id']
+        input_value = event['input_value']
         message = event['message']
         await self.send(text_data=json.dumps({
+            'type': 'game_state',
+            'player_name': player_name,
+            'player_id': player_id,
+            'input_value': input_value,
             'message': message
         }))
