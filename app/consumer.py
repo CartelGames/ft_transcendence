@@ -7,7 +7,7 @@ class MyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
         if self.user.is_anonymous:
-            await self.close()
+            self.close()
         self.group_name = f'{self.user.pseudo}'
         print(self.group_name)
         await self.channel_layer.group_add(

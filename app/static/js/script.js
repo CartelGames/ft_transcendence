@@ -342,8 +342,6 @@ function checkURL() {
         loadProfileData();
     if (window.location.hash === "#stats")
         loadStats();
-    if (window.location.hash === "#games")
-        sendGameInfo(0, 0);
 }
 
 function sendGameInfo(score1, score2){
