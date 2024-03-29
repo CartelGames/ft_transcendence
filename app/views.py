@@ -142,11 +142,11 @@ def UserBlockFriend(request):
 
 def GetProfil(request):
     if request.method == 'GET':
-        if request.user is not None:
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
+        else:
             users_list = [{'id': request.user.id, 'pseudo': request.user.pseudo}]
             return JsonResponse({'success': True, 'users': users_list, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
-        else:
-            return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 

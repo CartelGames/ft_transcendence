@@ -6,6 +6,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
 //Initiating scene and camera
+let game_id = "";
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
@@ -32,6 +33,12 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
+export function reloadGame(set_game_id) {
+  game_id = set_game_id;
+  console.log("id de la game :" + game_id);
+  // reload la partie avec le game_id
+  // fonction appelé via queue.js pour lancer des nouvelles games
+}
 
 function updateGameState(player_name, player_id, input_value)
 {
