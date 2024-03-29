@@ -6,6 +6,44 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
 //Initiating scene and camera
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+const username = await getPseudo();
+ws.onopen = function(event) {
+    console.log("WebSocket opened!");
+    
+    ws.send(JSON.stringify({
+        'message': username.pseudo + ' joined the game'
+    }));
+};
+
+ws.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  console.log(data)
+  if (data.type === 'game_state'){
+    console.log("On est dans le game_state");
+    const player_name = data.player_name;
+    const player_id = data.player_id;
+    const input_value = data.input_value;
+    updateGameState(player_name, player_id, input_value);
+  }
+};
+
+ws.onclose = function(event) {
+    console.log("WebSocket closed!");
+};
+
+
+function updateGameState(player_name, player_id, input_value)
+{
+  if (player_id === username.id){
+    console.log('c\'est moi qui joue');
+  }
+  else{
+    pseudo2 = player_name;
+  }
+  printPseudo();
+}
+
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
 const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 100);
@@ -73,7 +111,7 @@ function checkPowerUp(){
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
@@ -103,7 +141,7 @@ function checkPowerUp(){
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
@@ -208,44 +246,24 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
 } );
 
-// const video = document.getElementById('background-video');
-// const videoTexture = new THREE.VideoTexture(video);
-// videoTexture.minFilter = THREE.LinearFilter;
-// videoTexture.magFilter = THREE.LinearFilter;
+let vertex; 
+let fragment;
+async function fetchingfragShader(){
+  return fetch('static/js/shaders/fragment.glsl').then((response) => response.text()).then((text) => {fragment = text;});
+}
+await fetchingfragShader();
+async function fetchingvertShader(){
+  return fetch('static/js/shaders/vertex.glsl').then((response) => response.text()).then((text) => {vertex = text;});
+}
+await fetchingvertShader();
 
 const shaderMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
     resolution: { value: new THREE.Vector2() }
   },
-  vertexShader: `
-    void main() {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform float time;
-    uniform vec2 resolution;
-
-    void main() {
-      // Calculate the distance from the center of the screen
-      vec2 uv = gl_FragCoord.xy / resolution.xy;
-      uv = uv * 2.0 - 1.0;
-      float dist = length(uv);
-
-      // Calculate the amplitude of the popping effect based on time
-      float amplitude = 0.5 * (1.0 + sin(time));
-
-      // Calculate the color based on the distance and amplitude
-      vec3 color = vec3(0.0);
-      if (dist < 0.5) {
-        float t = 1.0 - smoothstep(0.4, 0.5, dist);
-        color = vec3(1.0, 1.0, 1.0) * t * amplitude;
-      }
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-  `
+  vertexShader: vertex,
+  fragmentShader: fragment
 });
 
 //Menu setup
@@ -260,7 +278,7 @@ function startGame() {
           size: 3,
           height: 1,
         } );
-        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
         textMenu = new THREE.Mesh(geometry, textMaterial);
         textMenu.position.set(-15, 0, 0);
         menu.clear();
@@ -335,10 +353,18 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
+let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
   }
+  const input_value = event.key === 'w' ? -1 : event.key === 's' ? 1 : 0;
+  ws.send(JSON.stringify({
+    type: 'input',
+    player_name: username.pseudo,
+    player_id: id,
+    input_value: input_value,
+  }));
 });
 
 //Speed and starting direction settings
@@ -370,7 +396,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 10)
+    if (score[1] == 2)
       rWin();
     else
       scoring();
@@ -380,7 +406,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 10)
+    if (score[0] == 2)
       lWin();
     else
       scoring();
@@ -459,26 +485,36 @@ function togglePause() {
   }
 }
 
-
+let pseudo = username.pseudo;
+let pseudo2 = username.pseudo;
 async function printPseudo(){
-  const pseudo = await getPseudo();
+  console.log(pseudo2);
+  //pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
+  //To cut pseudo if its too big
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( pseudo, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const geometry2 = new TextGeometry( pseudo, {
+      const geometry2 = new TextGeometry( pseudo2, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      //var center = new THREE.Vector3();
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
-      textMesh.position.set(-25, 15, -2);
+      textMesh.geometry.center();
+      textMesh.position.set(canvasBounds.left + 20, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-      textMesh2.position.set(20, 15, -2);
+      textMesh2.geometry.center();
+      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
       scoreGrp.clear();
       scoreGrp.add(textMesh, textMesh2);
       scene.add(scoreGrp);
@@ -500,7 +536,7 @@ function scoring(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-25, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -524,7 +560,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -550,7 +586,7 @@ function lWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -563,7 +599,46 @@ function lWin(){
   });
 }
 
-function resetGame(){
+let winner;
+async function sendGameInfo(scene, score1, score2){
+  if (score1 == 2)
+  {
+    winner = 'player1';
+  }
+  if (score2 == 2){
+    winner = 'player2';
+  }
+
+  const user = await getPseudo();
+  const data = {
+    type: 'newGame',
+    player1: user.id,
+    pseudo_p1: user.pseudo,
+    winner: winner,
+  } 
+
+  console.log(data);
+  console.log(user.id, "won");
+  $.ajax({
+    type: 'POST',
+    url: '/newGame/',
+    headers: { 'X-CSRFToken': token },
+    data: data,
+    success: function (data) {
+      console.log(data.errors);
+        if (data.success) {
+            console.log('new game created');
+        }
+        token = data.csrf_token;
+    },
+    error: function (error) {
+        console.log('Erreur lors de la creation d\'une partie.');
+    }
+  });
+}
+
+async function resetGame(){
+  await sendGameInfo(scene, score[0], score[1]);
   isPaused = true;
   scene.remove(ball);
   score[0] = 0;
@@ -578,7 +653,7 @@ function animate() {
     if (!isPaused){
       updated();
     }
-    shaderMaterial.uniforms.time.value += 0.01;
+    shaderMaterial.uniforms.time.value += 0.005;
     //videoTexture.needsUpdate = true;
     //Uncomment to get fps counter
 		stats.update();

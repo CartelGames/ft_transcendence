@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
-import json
+import json, asyncio
 
 class MyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -49,5 +49,54 @@ class MyConsumer(AsyncWebsocketConsumer):
         # Envoyer le message au client WebSocket
         await self.send(text_data=json.dumps({
             'type': 'chat_message',
+            'message': message
+        }))
+
+class MyGameConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.room_name = "game_room"
+        await self.channel_layer.group_add(
+            self.room_name,
+            self.channel_name
+        )
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard(
+            self.room_name,
+            self.channel_name
+        )
+
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message = text_data_json['type']
+
+        if message == 'input':
+            player_name = text_data_json['player_name']
+            player_id = text_data_json['player_id']
+            input_value = text_data_json['input_value']
+
+            
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'game_state',
+                    'player_name': player_name,
+                    'player_id': player_id,
+                    'input_value': input_value,
+                    'message': message
+                }
+            )
+        
+    async def game_state(self, event):
+        player_name = event['player_name']
+        player_id = event['player_id']
+        input_value = event['input_value']
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'type': 'game_state',
+            'player_name': player_name,
+            'player_id': player_id,
+            'input_value': input_value,
             'message': message
         }))
