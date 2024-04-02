@@ -10,7 +10,7 @@ websocket.onmessage = function(event) {
     var data = JSON.parse(event.data);
     console.log('Event Queue Socket : ' + data.type);
     if (data.type === 'game_start') {
-        reloadGame(data.game_id);
+        reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
         console.log(data.message);
         $('#Msg').text('Message: ' + data.message);
     }

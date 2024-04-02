@@ -7,6 +7,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 //Initiating scene and camera
 let game_id = "";
+let playerPos = 0;
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
@@ -22,17 +23,14 @@ ws.onmessage = function(event) {
   console.log(data)
   if (data.type === 'game_state'){
     console.log("On est dans le game_state");
-    const player_name = data.player_name;
-    const player_id = data.player_id;
-    const input_value = data.input_value;
-    updateGameState(player_name, player_id, input_value);
+    updateGameInput(data.player_pos, data.input_value);
   }
   else if (data.type === 'game_info'){
     console.log("On reçoit les infos");
-    const player_name = data.player_name;
-    const player_id = data.player_id;
-    updateGameState(player_name, player_id, 0);
     resetGame()
+  }
+  else if (data.type === 'game_start'){
+    playerGameStarted();
   }
 };
 
@@ -40,9 +38,10 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame(set_game_id) {
+export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
   console.log("id de la game : " + game_id);
+  updateGameState(p1, p2);
   ws.send(JSON.stringify({
     type: 'game_info',
     game_id: game_id,
@@ -52,14 +51,25 @@ export function reloadGame(set_game_id) {
   // fonction appelé via queue.js pour lancer des nouvelles games
 }
 
-function updateGameState(player_name, player_id, input_value)
+function updateGameState(p1, p2)
 {
-  if (player_id === username.id){
-    console.log('c\'est moi qui joue');
-  }
-  else{
-    pseudo2 = player_name;
-  }
+  if (username.pseudo === p1)
+    playerPos = 0;
+  else
+    playerPos = 1;
+  pseudo = p1;
+  pseudo2 = p2;
+  printPseudo();
+}
+
+function updateGameInput(input_pos, input_value)
+{
+  if (playerPos === input_pos)
+    return;
+  if (playerPos === 1)
+    playerOne.position.y = input_value;
+  else
+    playerTwo.position.y = input_value;
   printPseudo();
 }
 
@@ -314,6 +324,18 @@ const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
 zoneMesh.position.y = 2; // Move the plane slightly behind the other objects
 scene.add(zoneMesh);
 
+function playerGameStarted(event) {
+  if (isPaused) {
+    // Start the game
+    isPaused = !isPaused;
+    scene.remove(zoneMesh);
+    scene.add(ball);
+    // Hide the "Start Game" button
+    menu.remove(textMenu);
+    scoring();
+  }
+}
+
 function onMouseClick(event) {
   // Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -334,6 +356,9 @@ function onMouseClick(event) {
     // Hide the "Start Game" button
     menu.remove(textMenu);
     scoring();
+    ws.send(JSON.stringify({
+      type: 'game_start',
+    }));
   }
 }
 
@@ -377,13 +402,6 @@ window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
   }
-  const input_value = event.key === 'w' ? -1 : event.key === 's' ? 1 : 0;
-  ws.send(JSON.stringify({
-    type: 'input',
-    player_name: username.pseudo,
-    player_id: id,
-    input_value: input_value,
-  }));
 });
 
 //Speed and starting direction settings
@@ -473,14 +491,33 @@ function updated() {
   pointLight.position.set(ball.position.x,ball.position.y,10);
 
   //Moves the boards
-  if (keyState[87])
-    movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-  if (keyState[83])
-    movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-  if (keyState[38])
-    movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-  if (keyState[40])
-    movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+  if (playerPos === 0) {
+    if (keyState[87])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+  }
+  else {
+    if (keyState[87])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+  }
+
+  const input_value = playerPos === 0 ? playerOne.position.y : playerTwo.position.y;
+  ws.send(JSON.stringify({
+    type: 'input',
+    player_pos: playerPos,
+    input_value: input_value
+  }));
 }
 
 //Moves smoothly
