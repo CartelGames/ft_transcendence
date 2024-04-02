@@ -11,9 +11,12 @@ const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 ws.onopen = async function(event) {
     console.log("WebSocket opened!");
     const username = await getPseudo();
-    ws.send(JSON.stringify({
-        'message': username.pseudo + ' joined the game'
-    }));
+    if (username) {
+      ws.send(JSON.stringify({
+          'message': username.pseudo + ' joined the game'
+      }));
+    } else
+        ws.close();
 };
 
 ws.onmessage = function(event) {

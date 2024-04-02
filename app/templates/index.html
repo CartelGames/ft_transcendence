@@ -13,6 +13,7 @@
 	<link href="https://fonts.googleapis.com/css2?family=Honk&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	<script src="{% static 'js/script.js' %}" defer></script>
+	<script src="{% static 'js/chat.js' %}" defer></script>
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
@@ -56,6 +57,11 @@
 	<div id="stats" class="block">
 		<div class="stats-container" id="stats-container">
 			<h2>Stats of players</h2>
+			<div id="profile">
+				{% block content %}
+					{% include 'profile.html'%}
+				{% endblock %}
+			</div>
 			<table id="stats-users-table">
 				<thead>
 					<tr>
