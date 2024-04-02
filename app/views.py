@@ -230,13 +230,13 @@ def NewGame(request):
             player2.mmr += 10
         else:
             player1.mmr -= 5
-        new_game = Game.objects.create(
-            player1=request.user.id,
-            player2=player2.id,
-            pseudo_p1=request.user.pseudo,
-            pseudo_p2=player2.pseudo,
-            winner=request.POST.get('winner')
-        )
+        # new_game = Game.objects.create(
+        #     player1=request.user.id,
+        #     player2=player2.id,
+        #     pseudo_p1=request.user.pseudo,
+        #     pseudo_p2=player2.pseudo,
+        #     winner=request.POST.get('winner')
+        # )
         return JsonResponse({'success': True, 'errors': 'The stats game was correctly created !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})

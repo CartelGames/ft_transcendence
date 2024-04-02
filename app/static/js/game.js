@@ -27,6 +27,13 @@ ws.onmessage = function(event) {
     const input_value = data.input_value;
     updateGameState(player_name, player_id, input_value);
   }
+  else if (data.type === 'game_info'){
+    console.log("On reçoit les infos");
+    const player_name = data.player_name;
+    const player_id = data.player_id;
+    updateGameState(player_name, player_id, 0);
+    resetGame()
+  }
 };
 
 ws.onclose = function(event) {
@@ -35,7 +42,12 @@ ws.onclose = function(event) {
 
 export function reloadGame(set_game_id) {
   game_id = set_game_id;
-  console.log("id de la game :" + game_id);
+  console.log("id de la game : " + game_id);
+  ws.send(JSON.stringify({
+    type: 'game_info',
+    game_id: game_id,
+    player_id: id
+  }));
   // reload la partie avec le game_id
   // fonction appelé via queue.js pour lancer des nouvelles games
 }
