@@ -177,6 +177,24 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'input_value': input_value,
                 }
             )
+        elif message == 'ball':
+            print('test')
+            ball_posx = text_data_json['ball_posx']
+            ball_posy = text_data_json['ball_posy']
+            ball_dirx = text_data_json['ball_dirx']
+            ball_diry = text_data_json['ball_diry']
+            ball_speed = text_data_json['ball_speed']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'ball',
+                    'ball_posx': ball_posx,
+                    'ball_posy': ball_posy,
+                    'ball_dirx': ball_dirx,
+                    'ball_diry': ball_diry,
+                    'ball_speed': ball_speed,
+                }
+            )
         
     async def game_state(self, event):
         player_pos = event['player_pos']
@@ -199,4 +217,19 @@ class MyGameConsumer(AsyncWebsocketConsumer):
     async def game_start(self, event):
         await self.send(text_data=json.dumps({
             'type': 'game_start',
+        }))
+
+    async def ball(self, event):
+        ball_posx = event['ball_posx']
+        ball_posy = event['ball_posy']
+        ball_dirx = event['ball_dirx']
+        ball_diry = event['ball_diry']
+        ball_speed = event['ball_speed']
+        await self.send(text_data=json.dumps({
+            'type': 'ball',
+            'ball_posx': ball_posx,
+            'ball_posy': ball_posy,
+            'ball_dirx': ball_dirx,
+            'ball_diry': ball_diry,
+            'ball_speed': ball_speed,
         }))

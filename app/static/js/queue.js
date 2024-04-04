@@ -1,4 +1,3 @@
-import { reloadGame } from './game.js';
 const wsEndpoint = 'ws://' + window.location.host + '/ws/queue/';
 const websocket = new WebSocket(wsEndpoint);
 
@@ -10,7 +9,14 @@ websocket.onmessage = function(event) {
     var data = JSON.parse(event.data);
     console.log('Event Queue Socket : ' + data.type);
     if (data.type === 'game_start') {
-        reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        import('/static/js/game.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
         console.log(data.message);
         $('#Msg').text('Message: ' + data.message);
     }
@@ -20,13 +26,12 @@ websocket.onmessage = function(event) {
 };
 
 function LaunchQueue() {
-    console.log('test')
     websocket.send(
         JSON.stringify({
             action: 'join_queue',
         })
     );
-    var HideDiv = document.getElementById('JoinQueue');
+    var HideDiv = document.getElementById('ChooseGame');
     HideDiv.style.display = 'none';
     var showDiv = document.getElementById('LeaveQueue');
     showDiv.style.display = 'block';
@@ -39,8 +44,9 @@ function LeaveQueue() {
         })
     );
     var HideDiv = document.getElementById('LeaveQueue');
+    $('#Msg').text('');
     HideDiv.style.display = 'none';
-    var showDiv = document.getElementById('JoinQueue');
+    var showDiv = document.getElementById('ChooseGame');
     showDiv.style.display = 'block';
 }
 

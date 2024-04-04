@@ -22,12 +22,17 @@ ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
   console.log(data)
   if (data.type === 'game_state'){
-    console.log("On est dans le game_state");
     updateGameInput(data.player_pos, data.input_value);
   }
   else if (data.type === 'game_info'){
-    console.log("On reçoit les infos");
     resetGame()
+  }
+  else if (data.type === 'ball'){
+    ball.position.x = data.ball_posx,
+    ball.position.y = data.ball_posy,
+    ballDirection.x = data.ball_dirx;
+    ballDirection.y = data.ball_diry;
+    ballSpeed = data.ball_speed;
   }
   else if (data.type === 'game_start'){
     playerGameStarted();
@@ -511,7 +516,14 @@ function updated() {
     if (keyState[40])
       movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
   }
-
+  ws.send(JSON.stringify({
+    type: 'ball',
+    ball_posx: ball.position.x,
+    ball_posy: ball.position.y,
+    ball_dirx: ballDirection.x,
+    ball_diry: ballDirection.y,
+    ball_speed: ballSpeed
+  }));
   const input_value = playerPos === 0 ? playerOne.position.y : playerTwo.position.y;
   ws.send(JSON.stringify({
     type: 'input',
