@@ -56,7 +56,8 @@ class MyConsumer(AsyncWebsocketConsumer):
             'message': message
         }))
 
-waiting = "none"
+waiting_id = "none"
+waiting_pseudo = "none"
 
 class MyGameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -74,23 +75,32 @@ class MyGameConsumer(AsyncWebsocketConsumer):
         )
 
     async def receive(self, text_data):
-        global waiting
+        global waiting_id
+        global waiting_pseudo
         text_data_json = json.loads(text_data)
         message = text_data_json['type']
         print(message)
         if message == 'connect':
-            if waiting == "none":
+            if waiting_id == "none":
                 print("moi")
-                player_name = text_data_json['player_id']
-                waiting = player_name
+                waiting_pseudo = text_data_json['player_name']
+                waiting_id = text_data_json['player_id']
             else:
                 print("adversaire")
-                print(waiting)
+                print(waiting_pseudo)
                 await self.send(text_data=json.dumps({
                     'type':'connect',
-                    'player_id': waiting,
+                    'player_name': waiting_pseudo,
+                    'player_id': waiting_id,
                 }))
-                waiting = "none"
+                waiting_pseudo = "none"
+                waiting_id = "none"
+                print(waiting_pseudo)
+        if message == 'disconnect':
+            id = text_data_json['player_id']
+            if waiting_id == id:
+                waiting_id = "none"
+                waiting_pseudo = "none"
         if message == 'input':
             player_name = text_data_json['player_name']
             player_id = text_data_json['player_id']
@@ -118,16 +128,3 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'input_value': input_value,
             'message': message
         }))
-
-    @staticmethod
-    async def send_message_to_user(id_to):
-        print('test')
-        channel_layer = get_channel_layer()
-        await channel_layer.group_send(
-            f'{id_to}',
-            {
-                'type': 'chat_message',
-                'message': 'none'
-            }
-        )
-        pass
