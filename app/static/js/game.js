@@ -18,6 +18,7 @@ const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 let isPaused = true;
+
 //Setting camera position
 camera.position.z =30;
 
@@ -323,7 +324,16 @@ playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 
 
-let time = 0;
+//Ball data and timer for AI
+let currentPos = ball.position;
+let previousPos = ball.position;
+let previousPreviousPos = ball.position;
+let currentDir = ballDirection;
+let previousDir = ballDirection;
+let previousPreviousDir = ballDirection;
+let predictedNextPos;
+let predictedFinalPos;
+let timer = 0;
 
 //Light settings
 const pointLight = new THREE.PointLight(0xffffff);
@@ -359,11 +369,13 @@ function onKeyUp(event) {
 
 scoring();
 function updated() {
+
   checkPowerUp();
   ball.rotateOnAxis(new THREE.Vector3(0,1,0), 0.05);
   ball.rotateOnAxis(new THREE.Vector3(0,0,1), 0.05);
   ball.position.x += ballSpeed * ballDirection.x;
   ball.position.y += ballSpeed * ballDirection.y;
+
   //Player2 gets a point
   if (ball.position.x < canvasBounds.left){
     ballSpeed = 0.2;
@@ -426,6 +438,65 @@ function updated() {
 
   //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
+
+  // AI PART
+  // -----------------------------------------------------------------------------
+  timer++;
+  if (timer % stats.value == 0)
+  {
+    previousPreviousPos = previousPos;
+    previousPreviousDir = previousDir;
+    previousPos = currentPos;
+    previousDir = currentDir;
+    currentPos = ball.position;
+    currentDir = ballDirection;
+  }
+
+  if (currentDir.x < 0 && powerRUp == true) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
+  {
+    if (playerTwo.position.y < powerUpRGroup.y)
+      // keyState[38] pour que le j2 aille vers le haut
+    keyState[38] = true;
+    else if (playerTwo.position.y > powerUpRGroup.y)
+      // keyState[40] pour que le j2 aille vers le bas
+    keyState[40] = true;
+    else if (playerTwo.position.y == powerUpRGroup.y)
+    {
+      keyState[40] = false;
+      keyState[38] = false;
+    }
+  }
+  else if (currentDir.x < 0 && powerRUp == false) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
+  {
+    if (playerTwo.position.y < canvasBounds.top/2)
+      keyState[38] = true;
+    else if (playerTwo.position.y > canvasBounds.top/2)
+      keyState[40] = true;
+    else if (playerTwo.position.y == canvasBounds.top/2)
+    {
+      keyState[40] = false;
+      keyState[38] = false;
+    }
+  }
+  else if (ballDirection.x > 0) // Si la balle se rapproche, aller vers sa destination
+  {
+    // Si aucune prédiction n'est faite ou que la prédiction précédente est fausse, faire une prédiction
+    if (!predictedNextPos || predictedNextPost != currentPos)
+    {
+      predictedNextPos = predictNextPos(currentPos, previousPos, previousPreviousPos);
+      predictedFinalPos = predictFinalPos(predictedNextPos, currentPos, previousPos);
+    }
+    if (playerTwo.position.y < predictedFinalPos.y)
+      keyState[38] = true;
+    else if (playerTwo.position.y > predictedFinalPos.y)
+      keyState[40] = true;
+    else if (playerTwo.position.y == predictedFinalPos.y)
+    {
+      keyState[40] = false;
+      keyState[38] = false;
+    }
+  }
+  // -----------------------------------------------------------------------------
 
   //Moves the boards
   if (keyState[87])
