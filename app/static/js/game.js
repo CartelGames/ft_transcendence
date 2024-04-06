@@ -334,6 +334,7 @@ let previousPreviousDir = ballDirection;
 let predictedNextPos;
 let predictedFinalPos;
 let timer = 0;
+let isBotPlaying = false;
 
 //Light settings
 const pointLight = new THREE.PointLight(0xffffff);
@@ -365,6 +366,50 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
   keyState[event.keyCode] = false; 
+}
+
+function predictNextPos(currentPos, previousPos, previousPreviousPos) {
+  let deltaPos = [currentPos.x - previousPos.x, currentPos.y - previousPos.y];
+  let deltaPreviousPos = [previousPos.x - previousPreviousPos.x, previousPos.y - previousPreviousPos.y];
+  let predictedPosition = currentPos;
+  predictedPosition.x = currentPos.x + deltaPos[0];
+  predictedPosition.y = currentPost.y + deltaPos[1];
+
+  // Inverser la composante x si le déplacement horizontal a changé de direction
+  if (deltaPos[0] * deltaPreviousPos[0] < 0) {
+    predictedPosition.x = 2 * currentPos.x - previousPos.x;
+  }
+
+  // Inverser la composante y si le déplacement vertical a changé de direction
+  if (deltaPos[1] * deltaPreviousPos[1] < 0) {
+    predictedPosition.y = 2 * currentPos.y - previousPos.y;
+  }
+
+  // Corriger la composante y si la coordonnée verticale de la position sort de la map
+  if (predictedPosition.y > canvasBounds.top)
+    predictedPosition.y = canvasBounds.top - (predictedPosition.y - canvasBounds.top);
+  else if (predictedPosition.y < canvasBounds.bottom)
+    predictedPosition.y = canvasBounds.bottom - (predictedPosition.y - canvasBounds.bottom);
+
+  // Corriger la composante x si la coordonnée horizontale de la position passe derrière la raquette adverse
+  if (predictedPosition.x < playerOne.position.x)
+    predictedPosition.x = playerOne.position.x - (predictedPosition.x - playerOne.position.x);
+
+  return predictedPosition;
+}
+
+function predictFinalPos(predictedNextPos, currentPos, previousPos) {
+  let predictedFinalPos = predictedNextPos;
+
+  while (predictedFinalPos.x < playerTwo.position.x)
+  {
+    predictedFinalPos = predictNextPos(predictedNextPos, currentPos, previousPos);
+    predictedNextPos = predictedFinalPos;
+    currentPos = predictedNextPos;
+    previousPos = currentPos;
+  }
+
+  return predictedFinalPos;
 }
 
 scoring();
@@ -441,59 +486,62 @@ function updated() {
 
   // AI PART
   // -----------------------------------------------------------------------------
-  timer++;
-  if (timer % stats.value == 0)
+  if (isBotPlaying == true)
   {
-    previousPreviousPos = previousPos;
-    previousPreviousDir = previousDir;
-    previousPos = currentPos;
-    previousDir = currentDir;
-    currentPos = ball.position;
-    currentDir = ballDirection;
-  }
-
-  if (currentDir.x < 0 && powerRUp == true) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
-  {
-    if (playerTwo.position.y < powerUpRGroup.y)
-      // keyState[38] pour que le j2 aille vers le haut
-    keyState[38] = true;
-    else if (playerTwo.position.y > powerUpRGroup.y)
-      // keyState[40] pour que le j2 aille vers le bas
-    keyState[40] = true;
-    else if (playerTwo.position.y == powerUpRGroup.y)
+    timer++;
+    if (timer % stats.value == 0)
     {
-      keyState[40] = false;
-      keyState[38] = false;
+      previousPreviousPos = previousPos;
+      previousPreviousDir = previousDir;
+      previousPos = currentPos;
+      previousDir = currentDir;
+      currentPos = ball.position;
+      currentDir = ballDirection;
     }
-  }
-  else if (currentDir.x < 0 && powerRUp == false) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
-  {
-    if (playerTwo.position.y < canvasBounds.top/2)
+  
+    if (currentDir.x < 0 && powerRUp == true) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
+    {
+      if (playerTwo.position.y < powerUpRGroup.y)
+        // keyState[38] pour que le j2 aille vers le haut
       keyState[38] = true;
-    else if (playerTwo.position.y > canvasBounds.top/2)
+      else if (playerTwo.position.y > powerUpRGroup.y)
+        // keyState[40] pour que le j2 aille vers le bas
       keyState[40] = true;
-    else if (playerTwo.position.y == canvasBounds.top/2)
-    {
-      keyState[40] = false;
-      keyState[38] = false;
+      else if (playerTwo.position.y == powerUpRGroup.y)
+      {
+        keyState[40] = false;
+        keyState[38] = false;
+      }
     }
-  }
-  else if (ballDirection.x > 0) // Si la balle se rapproche, aller vers sa destination
-  {
-    // Si aucune prédiction n'est faite ou que la prédiction précédente est fausse, faire une prédiction
-    if (!predictedNextPos || predictedNextPost != currentPos)
+    else if (currentDir.x < 0 && powerRUp == false) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
     {
-      predictedNextPos = predictNextPos(currentPos, previousPos, previousPreviousPos);
-      predictedFinalPos = predictFinalPos(predictedNextPos, currentPos, previousPos);
+      if (playerTwo.position.y < canvasBounds.top/2)
+        keyState[38] = true;
+      else if (playerTwo.position.y > canvasBounds.top/2)
+        keyState[40] = true;
+      else if (playerTwo.position.y == canvasBounds.top/2)
+      {
+        keyState[40] = false;
+        keyState[38] = false;
+      }
     }
-    if (playerTwo.position.y < predictedFinalPos.y)
-      keyState[38] = true;
-    else if (playerTwo.position.y > predictedFinalPos.y)
-      keyState[40] = true;
-    else if (playerTwo.position.y == predictedFinalPos.y)
+    else if (ballDirection.x > 0) // Si la balle se rapproche, aller vers sa destination
     {
-      keyState[40] = false;
-      keyState[38] = false;
+      // Si aucune prédiction n'est faite ou que la prédiction précédente est fausse, faire une prédiction
+      if (!predictedNextPos || predictedNextPost != currentPos)
+      {
+        predictedNextPos = predictNextPos(currentPos, previousPos, previousPreviousPos);
+        predictedFinalPos = predictFinalPos(predictedNextPos, currentPos, previousPos);
+      }
+      if (playerTwo.position.y < predictedFinalPos.y)
+        keyState[38] = true;
+      else if (playerTwo.position.y > predictedFinalPos.y)
+        keyState[40] = true;
+      else if (playerTwo.position.y == predictedFinalPos.y)
+      {
+        keyState[40] = false;
+        keyState[38] = false;
+      }
     }
   }
   // -----------------------------------------------------------------------------
