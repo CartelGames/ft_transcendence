@@ -18,8 +18,6 @@ websocket.onmessage = function(event) {
     }
 };
 
-
-
 function getCSRFToken() {
     var csrfTokenInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
 
