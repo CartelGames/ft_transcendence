@@ -13,11 +13,13 @@ urlpatterns = [
     path('sendChat/', views.UserSendChat, name='sendChat'),
     path('addFriend/', views.UserAddFriend, name='addFriend'),
     path('blockFriend/', views.UserBlockFriend, name='blockFriend'),
+    path('createTour/', views.CreateTournament, name='createTour'),
     path('getProfil/', views.GetProfil, name='getProfil'),
     path('getChat/', views.GetChat, name='getChat'),
     path('getFriends/', views.GetFriends, name='getFriends'),
     path('getBlockedFriends/', views.GetBlockedFriends, name='getBlockedFriends'),
     path('getStats/', views.GetStats, name='getStats'),
+    path('getTournamentList/', views.GetTournamentList, name='getTournamentList'),
     path('newGame/', views.NewGame, name='newGame'),
 ]
 

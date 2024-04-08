@@ -65,3 +65,34 @@ class Game(models.Model):
     pseudo_p2 = models.CharField(max_length=32, default="")
     winner = models.CharField(max_length=32, default="", null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
+
+class TournamentsGame(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    tournament_id = models.IntegerField(null=False)
+    tournament_phase = models.IntegerField(null=False)
+    started = models.BooleanField(default=False)
+    player1 = models.IntegerField(null=False)
+    player2 = models.IntegerField(blank=True, null=True)
+    pseudo_p1 = models.CharField(max_length=32, default="")
+    pseudo_p2 = models.CharField(max_length=32, default="")
+    winner = models.CharField(max_length=32, default="", null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+
+class Tournaments(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    name = models.CharField(max_length=32, unique=True)
+    creator = models.IntegerField(null=False)
+    players = models.ManyToManyField('UserProfil', blank=True)
+    winner = models.CharField(max_length=32, default="", null=True)
+    ended = models.BooleanField(default=False)
+
+    def add_player(self, player):
+        if player not in self.players.all():
+            self.players.add(player)
+            self.save()
+
+    def remove_player(self, player):
+        if player in self.players.all():
+            self.players.remove(player)
+            self.save()

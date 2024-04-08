@@ -447,6 +447,17 @@ thead th{
   border: 3px solid purple;
 }
 
+#TournamentsList li {
+    display: inline-block;
+    white-space: nowrap; /* Empêche le saut à la ligne des éléments */
+}
+
+#TournamentsList li > div {
+    display: inline-block;
+    vertical-align: top; /* Alignement vertical pour éviter les espaces vides */
+    /* Ajoutez d'autres styles nécessaires à vos div ici */
+}
+
 /* 
 .users-list ul {
 	list-style: none;

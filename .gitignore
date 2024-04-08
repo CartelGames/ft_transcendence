@@ -6,3 +6,5 @@
 app/__pycache__/
 djang/__pycache__/
 app/migrations/__pycache__/
+app/migrations/
+data/

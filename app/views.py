@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import LoginForm, SignupForm, ProfilImgForm
 from django.contrib.auth.models import AnonymousUser
-from .models import UserProfil, Message, Game
+from .models import UserProfil, Message, Game, Tournaments
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
@@ -140,6 +140,26 @@ def UserBlockFriend(request):
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
+def CreateTournament(request):
+    if request.method == 'POST' and request.POST.get('type') == 'createTour':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        tourName = request.POST.get('tourName')
+        exist_name = Tournaments.objects.filter(name=tourName)
+        if exist_name:
+            return JsonResponse({'success': False, 'errors': 'This tournament name is already exist !', 'csrf_token': get_token(request)})
+        exist_id = Tournaments.objects.filter(creator=request.user.id, ended=False)
+        if exist_id:
+            return JsonResponse({'success': False, 'errors': 'You have already a tournament in progress !', 'csrf_token': get_token(request)})
+        new_tournament = Tournaments.objects.create(
+            name=tourName,
+            creator=request.user.id,
+        )
+        new_tournament.add_player(UserProfil.objects.get(id=request.user.id))
+        return JsonResponse({'success': True, 'errors': '<p>Tournament successfully created</p>', 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
 def GetProfil(request):
     if request.method == 'GET':
         if isinstance(request.user, AnonymousUser):
@@ -198,6 +218,16 @@ def GetStats(request):
         new_Stats = UserProfil.objects.all()
         users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def GetTournamentList(request):
+    if request.method == 'GET':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        tournaments = Tournaments.objects.filter(ended=False)
+        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count()} for tourn in tournaments]
+        return JsonResponse({'success': True, 'tourList': tourList, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
