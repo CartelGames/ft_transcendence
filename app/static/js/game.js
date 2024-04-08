@@ -64,6 +64,7 @@ function updateGameState(p1, p2)
     playerPos = 1;
   pseudo = p1;
   pseudo2 = p2;
+  $('#Msg').text(p1 + ' vs ' + p2);
   printPseudo();
 }
 

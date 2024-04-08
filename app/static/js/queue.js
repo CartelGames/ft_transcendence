@@ -9,6 +9,8 @@ websocket.onmessage = function(event) {
     var data = JSON.parse(event.data);
     console.log('Event Queue Socket : ' + data.type);
     if (data.type === 'game_start') {
+        var HideDiv = document.getElementById('LeaveQueue');
+        HideDiv.style.display = 'none';
         import('/static/js/game.js?ver=${Math.random()}')
         .then(module => {
             const { reloadGame } = module;
