@@ -27,12 +27,15 @@ ws.onmessage = function(event) {
   else if (data.type === 'game_info'){
     resetGame()
   }
-  else if (data.type === 'ball'){
+  else if (data.type === 'ball' && playerPos == 1){
     ball.position.x = data.ball_posx,
     ball.position.y = data.ball_posy,
     ballDirection.x = data.ball_dirx;
     ballDirection.y = data.ball_diry;
     ballSpeed = data.ball_speed;
+  }
+  else if (data.type === 'powerupgenerate' && playerPos == 1){
+    receivePowerUp(data.poweruptype, data.poweruppos);
   }
   else if (data.type === 'game_start'){
     playerGameStarted();
@@ -64,7 +67,6 @@ function updateGameState(p1, p2)
     playerPos = 1;
   pseudo = p1;
   pseudo2 = p2;
-  $('#Msg').text(p1 + ' vs ' + p2);
   printPseudo();
 }
 
@@ -123,8 +125,8 @@ const powerUpRGroup = new THREE.Group();
 
 function checkPowerUp(){
   //Si il n'y a aucun power up a l'ecran, on lance un random pour voir si on en cree un
-  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1){
-    console.log("here");
+  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1 && playerPos == 0){
+    console.log("create");
     powerLUp = true;
     powerRUp = true;
     createPowerUp();
@@ -141,7 +143,7 @@ function checkPowerUp(){
         powerLUp = false;
         switch (powerUpType){
           case "boardUpscale":
-            LBoardUpscale = true;       
+            LBoardUpscale = true;
             break;
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
@@ -150,7 +152,16 @@ function checkPowerUp(){
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0){
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -180,7 +191,16 @@ function checkPowerUp(){
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0){
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -192,30 +212,25 @@ function checkPowerUp(){
   }
   playerOne.scale.y = 1 + LBoardUpscale;
   playerTwo.scale.y = 1 + RBoardUpscale;
-  }
+}
 
 function createPowerUp(){
   const capsuleL = new THREE.SphereGeometry();
-  const capsuleR = new THREE.SphereGeometry();
   let powerUpMaterial;
   switch (getRandomInt(4)) {
       case 0:
-        console.log("0")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
         powerUpType = "boardUpscale";       
         break;
       case 1:
-        console.log("1")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
         powerUpType = "ballSpeedMalus";
         break;
       case 2:
-        console.log("2")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
         powerUpType = "boardSpeedMalus";
         break;
       case 3:
-        console.log("3")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
         powerUpType = "randomBallMalus";
         break;
@@ -227,8 +242,48 @@ function createPowerUp(){
   let pos = getRandomInt(20) + 1;
   powerUpLGroup.position.set(0,pos,0);
   powerUpRGroup.position.set(0,-pos,0);
+  ws.send(JSON.stringify({
+    type: 'powerupgenerate',
+    poweruptype: powerUpType,
+    poweruppos: pos,
+  }));
   scene.add(powerUpLGroup);
   scene.add(powerUpRGroup);
+}
+
+function receivePowerUp(poweruptype, poweruppos)
+{
+  console.log("receive")
+  const capsuleL = new THREE.SphereGeometry();
+  let powerUpMaterial;
+  switch (poweruptype){
+    case "boardUpscale":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
+      powerUpType = "boardUpscale";       
+      break;
+    case "ballSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
+      powerUpType = "ballSpeedMalus";
+      break;
+    case "boardSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
+      powerUpType = "boardSpeedMalus";
+      break;
+    case "randomBallMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
+      powerUpType = "randomBallMalus";
+      break;
+  }
+  const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  powerUpLGroup.add(modelL);
+  powerUpRGroup.add(modelR);
+  powerUpLGroup.position.set(0,poweruppos,0);
+  powerUpRGroup.position.set(0,-poweruppos,0);
+  powerLUp = true;
+  powerRUp = true;
+  scene.add(powerUpLGroup);
+  scene.add(powerUpRGroup);  
 }
 
 function getRandomInt(max) {
@@ -458,6 +513,15 @@ function updated() {
   // Check for bottom and top boundary collisions
   if (ball.position.y  < canvasBounds.bottom || ball.position.y  > canvasBounds.top) {
     ballDirection.y *= -1; // reverse the Y direction of the ball
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerOne collision
@@ -467,6 +531,15 @@ function updated() {
       ball.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerTwo collision
@@ -476,21 +549,66 @@ function updated() {
       ball.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //Check for top boundary collision for players
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   // Check for bottom boundary collision for players
   if (playerOne.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerOne.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y + boardHeight/2 > canvasBounds.top) {
     playerTwo.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //To make the light follow the ball
@@ -516,7 +634,7 @@ function updated() {
       movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
     if (keyState[40])
       movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-  }
+  }/*
   ws.send(JSON.stringify({
     type: 'ball',
     ball_posx: ball.position.x,
@@ -530,7 +648,7 @@ function updated() {
     type: 'input',
     player_pos: playerPos,
     input_value: input_value
-  }));
+  }));*/
 }
 
 //Moves smoothly
@@ -540,6 +658,16 @@ function movePong(mesh, targetY) {
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
+  let playerPos;
+  if(mesh === playerOne)
+    playerPos = 0;
+  else
+    playerPos = 1;
+  ws.send(JSON.stringify({
+    type: 'input',
+    player_pos: playerPos,
+    input_value: targetY
+  }));
 }
 
 function togglePause() {

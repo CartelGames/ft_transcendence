@@ -178,7 +178,6 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                 }
             )
         elif message == 'ball':
-            print('test')
             ball_posx = text_data_json['ball_posx']
             ball_posy = text_data_json['ball_posy']
             ball_dirx = text_data_json['ball_dirx']
@@ -193,6 +192,26 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'ball_dirx': ball_dirx,
                     'ball_diry': ball_diry,
                     'ball_speed': ball_speed,
+                }
+            )
+        elif message == 'powerupgenerate':
+            poweruptype = text_data_json['poweruptype']
+            poweruppos = text_data_json['poweruppos']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'powerupgenerate',
+                    'poweruptype': poweruptype,
+                    'poweruppos': poweruppos,
+                }
+            )
+        elif message == 'powerupactivate':
+            poweruptype = text_data_json['poweruptype']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'powerupactivate',
+                    'poweruptype': poweruptype,
                 }
             )
         
@@ -233,3 +252,12 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'ball_diry': ball_diry,
             'ball_speed': ball_speed,
         }))
+
+    async def powerupgenerate(self, event):
+        poweruptype = event['poweruptype']
+        poweruppos = event['poweruppos']
+        await self.send(text_data=json.dumps({
+            'type': 'powerupgenerate',
+            'poweruptype': poweruptype,
+            'poweruppos': poweruppos,
+        }))   
