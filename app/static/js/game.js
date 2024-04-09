@@ -149,7 +149,8 @@ function createPowerUp(){
         break;
   }
   const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
-  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  //powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x000000} );
+  const modelR = new THREE.Mesh( capsuleR, powerUpMaterial);
   powerUpLGroup.add(modelL);
   powerUpRGroup.add(modelR);
   let pos = getRandomInt(20) + 1;
@@ -340,7 +341,7 @@ window.addEventListener('keydown', function (event) {
 });
 
 //Speed and starting direction settings
-let ballSpeed = 0.2;
+let ballSpeed = 0.5;
 let ballDirection = { x: 1, y: 1 };
 
 //Making sure two players can play
@@ -438,7 +439,7 @@ function updated() {
 
   //Player2 gets a point
   if (ball.position.x < canvasBounds.left){
-    ballSpeed = 0.2;
+    ballSpeed = 0.5;
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
@@ -449,7 +450,7 @@ function updated() {
   }
   //Player1 gets a point
   if (ball.position.x > canvasBounds.right) {
-    ballSpeed = 0.2;
+    ballSpeed = 0.5;
     ball.position.set(0,0,0);
     score[0]++;
     if (score[0] == 10)
@@ -507,7 +508,7 @@ function updated() {
   //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
 
-  // AI PART
+  // AI PART - Commented conditions are potentiel nerfs.
   // -----------------------------------------------------------------------------
   if (isBotPlaying == true)
   {
@@ -528,35 +529,33 @@ function updated() {
       }
     }
 
-    if (currentDir.x < 0 && powerRUp == true) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
+    if (powerRUp == true && (currentDir.x < 0 || (currentDir.x > 0 && currentPos.x <= 0)) && powerUpRGroup.position.x > playerTwo.position.x - canvasBounds.right / 6) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
     {
-      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < powerUpRGroup.y)
+      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < powerUpRGroup.position.y)
         // keyState[38] pour que le j2 aille vers le haut
       keyState[38] = true;
-      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > powerUpRGroup.y)
+      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > powerUpRGroup.position.y)
         // keyState[40] pour que le j2 aille vers le bas
       keyState[40] = true;
     }
-    else if (currentDir.x < 0 && powerRUp == false) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
+    else if (currentDir.x < 0 || currentPos.x <= 0) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
     {
-      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < canvasBounds.top/2)
+      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < 0)
         keyState[38] = true;
-      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > canvasBounds.top/2)
+      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > 0)
         keyState[40] = true;
     }
-    else if (ballDirection.x > 0) // Si la balle se rapproche, aller vers sa destination
+    else // Si la balle se rapproche, aller vers sa destination
     {
       if (predictedFinalPos != "none")
       {
-        console.log("final");
-        if (playerTwo.position.y /*+ (boardHeight * playerTwo.scale.y * 0.5) / 2*/ < predictedFinalPos.y)
+        if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < predictedFinalPos.y)
           keyState[38] = true;
-        else if (playerTwo.position.y /*- (boardHeight * playerTwo.scale.y * 0.5) / 2*/ > predictedFinalPos.y)
+        else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > predictedFinalPos.y)
           keyState[40] = true;
       }
       else
       {
-        console.log("current");
         if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < currentPos.y)
           keyState[38] = true;
         else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > currentPos.y)
