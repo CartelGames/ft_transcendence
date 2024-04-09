@@ -44,6 +44,15 @@
 	<!-- game -->
 	<div id="games" class="block">
 		<div class="game">
+			<div id="ChooseGame">
+				<div id="Local" class="butt"><button type="button">Local</button></div>
+				<div id="2v2" class="butt"><button type="button">2 v 2</button></div>
+				<div id="JoinQueue" class="butt"><button type="button">Go in queue</button></div>
+				<div id="Tournois" class="butt"><button type="button">Tournois</button></div>
+				<div id="TronGame" class="butt"><button type="button">TronGame</button></div>
+			</div>
+			<div id="LeaveQueue" class="butt" style="display:none;"><button type="button">Leave the queue</button></div>
+			<p id="Msg"></p>
 			<canvas id="game" class="game"></canvas>
 		</div>
 	</div>
@@ -179,7 +188,6 @@
 	{% endif %}
 	
 </div>
-
 	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
 	<script type="importmap">
 		{
@@ -189,10 +197,10 @@
 		  }
 		}
 	</script>
-	<video id="background-video" src="{% static 'models/videos/background_pong.mp4' %}" muted loop style="display: none;"></video>
 	<script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-		<script type="module" src="{% static 'js/game.js' %}"></script>
+		<script type="module" src="{% static 'js/gametwo.js' %}"></script>
+		<script type="module" src="{% static 'js/queuetwo.js' %}"></script>
 </body>
 </html>
