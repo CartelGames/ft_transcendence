@@ -76,7 +76,6 @@ function updateGameInput(input_pos, input_value)
   else
     playerTwo.position.y = input_value;
   if(isPaused == true){
-    console.log("here")
     printPseudo();
   }
 }
@@ -351,7 +350,24 @@ const shaderMaterial = new THREE.ShaderMaterial({
 //Menu setup
 const menu = new THREE.Group();
 let textMenu;
+startGame();
+
 function startGame() {
+  var HideDiv = document.getElementById('LeaveQueue')
+  HideDiv.style.display = 'none';
+  score[0] = 0;
+  score[1] = 0;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
   const ttfloader = new TTFLoader();
     ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
       const cyberfont = loader.parse(json);
@@ -368,7 +384,8 @@ function startGame() {
         scene.add(menu);
   });
 }
-startGame();
+
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
@@ -832,6 +849,17 @@ async function resetGame(){
   score[1] = 0;
   powerLUp = false;
   powerRUp = false;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
   powerUpLGroup.clear;
   powerUpRGroup.clear;
   playerOne.position.set(canvasBounds.left + 2, 0, 0);
