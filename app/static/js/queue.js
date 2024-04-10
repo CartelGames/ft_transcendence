@@ -52,6 +52,74 @@ function LeaveQueue() {
     showDiv.style.display = 'block';
 }
 
+function TournamentInfo(id) {
+    displayDiv('ChooseTour', 'InfoTour');
+    $.ajax({
+        type: 'GET',
+        url: '/getTournamentInfo/?id=' + id,
+        headers: { 'X-CSRFToken': token },
+        success: function (data) {
+            if (data.success) {
+                var TournamentContainer = $('#InfoTourUpdate');
+                TournamentContainer.empty();
+                var TourInfo = data.tourList;
+                var TourPlayers = data.player;
+                var Title =$('<h1 style="font-weight: bold; font-size: 26px">Tournament name : ' + TourInfo[0].name + '</h1>');
+                var Title2 =$('<h1 style="font-weight: bold; font-size: 20px"><i>Created by ' + TourInfo[0].creator + '</i></h1><hr /><br />');
+                TournamentContainer.append(Title);
+                TournamentContainer.append(Title2);
+                var Players =$('<h1 style="font-weight: bold; font-size: 24px">Players registered (' + TourInfo[0].players + ') :</h1>');
+                var PlayersList =$('<p></p>');
+                TourPlayers.forEach(function (player) {
+                    var pseudo =$('<span> ' + player.pseudo + ',</span>');
+                    PlayersList.append(pseudo[0]);
+                });
+                TournamentContainer.append(Players);
+                TournamentContainer.append(PlayersList);
+                if (TourInfo[0].state == 1) {
+                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>In progress</b></h1>');
+                    TournamentContainer.append(TitleStatut);
+                }
+                else {
+                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>Not launched yet</b></h1>');
+                    TournamentContainer.append(TitleStatut);
+                }
+
+                if (data.owner) {
+                    if (TourInfo[0].state == 0) {
+                        var launchTour = $('<button type="submit" style="margin-right: 35px;">Launch the tournament</button>');
+                        launchTour.click(function () {
+                            TournamentUpdate(id, 'start');
+                            setTimeout(function() {
+                                TournamentInfo(id);
+                            }, 1000);
+                        });
+                        TournamentContainer.append(launchTour[0]);
+                    }
+                    var deleteTour = $('<button2 type="submit">Delete this tournament</button2>');
+                    deleteTour.click(function () {
+                        TournamentUpdate(id, 'delete');
+                        setTimeout(function() {
+                            getTournamentList();
+                            displayDiv('InfoTour', 'ChooseTour');
+                        }, 300);
+                    });
+                    TournamentContainer.append(deleteTour[0]);
+                }
+                var refreshTour = $('<div class="butt"><button type="submit" style="margin-top: 50px;">Refresh</button></div>');
+                refreshTour.click(function () {
+                    TournamentInfo(id)
+                });
+                TournamentContainer.append(refreshTour[0]);
+            }
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Can\'t load tournament info.');
+        }
+    });
+}
+
 function getTournamentList() {
     $.ajax({
         type: 'GET',
@@ -60,22 +128,42 @@ function getTournamentList() {
         success: function (data) {
             if (data.success) {
                 var TournamentContainer = $('#TournamentsList');
+                var alreadyIn = false;
                 TournamentContainer.empty();
                 var friendsList = data.tourList;
-                console.log(friendsList);
                 friendsList.forEach(function (list) {
-                    console.log(list.name);
+                    if (list.me == list.id)
+                        alreadyIn = true;
+                });
+                friendsList.forEach(function (list) {
                     var friendDiv =$('<li><span style="font-weight: bold; font-size: 24px">' + list.name + '</span> (' + list.players + ' players) - <i>created by ' + list.creator + '</i></li>');
-                    var clickableRow = $('<div class="clickable-row" data-pseudo="' + list.name + '">Join</div>');
-                    clickableRow.click(function () {
-
-                    });
-                    var BlockRow = $('<div class="clickable-row" title="Block this list" data-pseudo="' + list.pseudo + '"><span class="close-icon">' + list.creator + '</span></div>');
-                    BlockRow.click(function (event) {
-                        //Join Tournament
-                    });
+                    
+                    if (list.me != list.id && !alreadyIn) {
+                        var clickableRow = $('<button type="submit" style="margin-left: 25px;">Join</button>');
+                        clickableRow.click(function () {
+                            TournamentRegistration(list.id, true);
+                            setTimeout(function() {
+                                getTournamentList();
+                            }, 300);
+                        });
                     friendDiv.append(clickableRow[0]);
-                    friendDiv.append(BlockRow[0]);
+                    }
+                    else if (list.me == list.id) {
+                        var clickableRow = $('<button2 type="submit" style="margin-left: 25px;">Leave</button2>');
+                        clickableRow.click(function (event) {
+                            TournamentRegistration(list.id, false);
+                            setTimeout(function() {
+                                getTournamentList();
+                            }, 300);
+                        });
+                    friendDiv.append(clickableRow[0]);
+                    }
+
+                    var MoreInfo = $('<button type="submit" style="margin-left: 30px;">More info</button>');
+                    MoreInfo.click(function () {
+                        TournamentInfo(list.id);
+                    });
+                    friendDiv.append(MoreInfo[0]);
                     TournamentContainer.append(friendDiv);
                 });
             }

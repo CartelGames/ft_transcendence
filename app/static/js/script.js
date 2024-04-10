@@ -306,6 +306,49 @@ function deleteFriend(pseudo) {
     });
 }
 
+function TournamentUpdate(id, statut) {
+    var formData = new FormData();
+    formData.append('type', 'tourUpdate');
+    formData.append('id', id);
+    formData.append('statut', statut);
+    $.ajax({
+        type: 'POST',
+        url: '/tourUpdate/',
+        headers: { 'X-CSRFToken': token },
+        processData: false,
+        contentType: false,
+        data: formData,
+        success: function (data) {
+            $('#error-tour').text(data.errors);
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des amis.');
+        }
+    });
+}
+
+function TournamentRegistration(id, join) {
+    var formData = new FormData();
+    formData.append('type', 'tourRegist');
+    formData.append('id', id);
+    formData.append('join', (join ? 'true' : 'false'));
+    $.ajax({
+        type: 'POST',
+        url: '/tourRegist/',
+        headers: { 'X-CSRFToken': token },
+        processData: false,
+        contentType: false,
+        data: formData,
+        success: function (data) {
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des amis.');
+        }
+    });
+}
+
 function blockFriend(pseudo, unblock) {
     var formData = new FormData();
     formData.append('type', 'blockFriend');

@@ -260,4 +260,4 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'type': 'powerupgenerate',
             'poweruptype': poweruptype,
             'poweruppos': poweruppos,
-        }))   
+        }))
