@@ -64,7 +64,7 @@ class Game(models.Model):
     player2 = models.IntegerField(blank=True, null=True)
     pseudo_p1 = models.CharField(max_length=32, default="")
     pseudo_p2 = models.CharField(max_length=32, default="")
-    winner = models.IntegerField(blank=True, null=True)
+    winner = models.IntegerField(blank=True, null=True, default=0)
     tournament = models.IntegerField(null=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 
@@ -94,7 +94,7 @@ class Tournaments(models.Model):
     name = models.CharField(max_length=32, unique=True)
     creator = models.IntegerField(null=False)
     players = models.ManyToManyField('UserProfil', blank=True)
-    winner = models.CharField(max_length=32, default="", null=True)
+    winner = models.IntegerField(blank=True, null=True, default=0)
     state = models.IntegerField(null=True, default=0)
     ended = models.BooleanField(default=False)
 

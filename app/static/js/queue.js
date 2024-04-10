@@ -79,24 +79,47 @@ function TournamentInfo(id) {
                 if (TourInfo[0].state == 1) {
                     var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>In progress</b></h1>');
                     TournamentContainer.append(TitleStatut);
-                    games = data.games;
-                    games.forEach(function (game) {
-                        var game_li =$('<li><span style="font-weight: bold; font-size: 24px">' + game.p1 + ' VS ' + game.p2 + '</span> </li>');
-                    
-                        if (game.state == 2) {
-                            var JoinGame = $('<button type="submit" style="margin-left: 25px;">Join the game</button>');
-                            JoinGame.click(function () {
-                                //join game : game.id
-                            });
-                            game_li.append(JoinGame[0]);
-                        }
-                        else if (game.state == 3) {
-                            var game_wini =$('<span style="font-weight: bold; font-size: 24px; color:green;"> Winner : ' + game.winner + '</span>');
-                            game_li.append(game_wini);
-                        }
+                    var games = data.games;
+                    if (games) {
+                        var phase = null;
+                        games.forEach(function (game) {
+                            if (phase !== game.phase) {
+                                phase = game.phase;
+                                var text = null;
+                                switch(game.phase) {
+                                    case 0:
+                                        text = "Final"
+                                        break;
+                                    case 1:
+                                        text = "Semifinals"
+                                        break;
+                                    case 3:
+                                        text = "Quarterfinals"
+                                        break;
+                                    default:
+                                        text = game.phase;
+                                        break;
+                                }
+                                var phase_txt =$('<h1 style="font-weight: bold; font-size: 28px">Phase ' + text + '</h1>');
+                                TournamentContainer.append(phase_txt);
+                            }
+                            var game_li =$('<li><span style="font-weight: bold; font-size: 24px">' + game.p1 + ' VS ' + game.p2 + '</span> </li>');
+                        
+                            if (game.state == 2) {
+                                var JoinGame = $('<button type="submit" style="margin-left: 25px;">Join the game</button>');
+                                JoinGame.click(function () {
+                                    //join game : game.id
+                                });
+                                game_li.append(JoinGame[0]);
+                            }
+                            else if (game.state == 3) {
+                                var game_wini =$('<span style="font-weight: bold; font-size: 24px; color:green;"> Winner : ' + game.winner + '</span>');
+                                game_li.append(game_wini);
+                            }
 
-                        TournamentContainer.append(game_li);
-                    });
+                            TournamentContainer.append(game_li);
+                        });
+                    }
                 }
                 else {
                     var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>Not launched yet</b></h1>');

@@ -314,7 +314,7 @@ def GetTournamentInfo(request):
                     player1_profile = UserProfil.objects.filter(id=game.player1).first()
                     player2_profile = UserProfil.objects.filter(id=game.player2).first()
                     if player1_profile and player2_profile:
-                        games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2':  UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'winner': UserProfil.objects.filter(id=game.winner).first()})
+                        games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2':  UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'phase': match.phase, 'winner': UserProfil.objects.filter(id=game.winner).first()})
             return JsonResponse({'success': True, 'tourList': tourList, 'player': players_list, 'games': games, 'owner': tournament.creator == request.user.id, 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Wrong tournament id !', 'csrf_token': get_token(request)})
