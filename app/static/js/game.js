@@ -11,16 +11,13 @@ let playerPos = 0;
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
-    console.log("WebSocket opened!");
-    
-    ws.send(JSON.stringify({
+  ws.send(JSON.stringify({
         'message': username.pseudo + ' joined the game'
     }));
 };
 
 ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
-  console.log(data)
   if (data.type === 'game_state'){
     updateGameInput(data.player_pos, data.input_value);
   }
@@ -38,6 +35,7 @@ ws.onmessage = function(event) {
     receivePowerUp(data.poweruptype, data.poweruppos);
   }
   else if (data.type === 'game_start'){
+    console.log("ici")
     playerGameStarted();
   }
 };
@@ -48,7 +46,6 @@ ws.onclose = function(event) {
 
 export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
-  console.log("id de la game : " + game_id);
   updateGameState(p1, p2);
   ws.send(JSON.stringify({
     type: 'game_info',
@@ -78,7 +75,10 @@ function updateGameInput(input_pos, input_value)
     playerOne.position.y = input_value;
   else
     playerTwo.position.y = input_value;
-  printPseudo();
+  if(isPaused == true){
+    console.log("here")
+    printPseudo();
+  }
 }
 
 const scene = new THREE.Scene();
@@ -111,22 +111,16 @@ let powerLUp = false;
 let powerRUp = false;
 let LBoardSpeedMalus = false;
 let RBoardSpeedMalus = false;
-let boardSpeedMalus = 0.5;
 let LBoardUpscale = false;
 let RBoardUpscale = false;
 let boardUpscale = 1;
-let randomBallMalus = false;
 let powerUpType = "none";
-let powerUpLClock = 0;
-let powerUpRClock = 0;
-let randomMoveClock = 0;
 const powerUpLGroup = new THREE.Group();
 const powerUpRGroup = new THREE.Group();
 
 function checkPowerUp(){
   //Si il n'y a aucun power up a l'ecran, on lance un random pour voir si on en cree un
   if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1 && playerPos == 0){
-    console.log("create");
     powerLUp = true;
     powerRUp = true;
     createPowerUp();
@@ -253,7 +247,6 @@ function createPowerUp(){
 
 function receivePowerUp(poweruptype, poweruppos)
 {
-  console.log("receive")
   const capsuleL = new THREE.SphereGeometry();
   let powerUpMaterial;
   switch (poweruptype){
@@ -307,7 +300,6 @@ new GLTFLoader().load( '/static/models/gltf/ball.glb', function ( gltf ) {
 
   const model = gltf.scene;
   ball.add( model );
-  //scene.add(ball);
 } );
 
 const mConvert = 0.0002645833;
@@ -634,21 +626,7 @@ function updated() {
       movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
     if (keyState[40])
       movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-  }/*
-  ws.send(JSON.stringify({
-    type: 'ball',
-    ball_posx: ball.position.x,
-    ball_posy: ball.position.y,
-    ball_dirx: ballDirection.x,
-    ball_diry: ballDirection.y,
-    ball_speed: ballSpeed
-  }));
-  const input_value = playerPos === 0 ? playerOne.position.y : playerTwo.position.y;
-  ws.send(JSON.stringify({
-    type: 'input',
-    player_pos: playerPos,
-    input_value: input_value
-  }));*/
+  }
 }
 
 //Moves smoothly
@@ -686,8 +664,6 @@ let pseudo = username.pseudo;
 let pseudo2 = username.pseudo;
 async function printPseudo(){
   console.log(pseudo2);
-  //pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
-  //To cut pseudo if its too big
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';
   if (pseudo2.length > 8)
@@ -757,16 +733,26 @@ function rWin(){
         size: 3,
         height: 1,
       } );
+      let winText = pseudo2 + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry( winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
       //WE ADD THE SCORE TO PLAYERTWO LOGS
       resetGame();
+      togglePause();
   });
 }
 
@@ -783,23 +769,31 @@ function lWin(){
         size: 3,
         height: 1,
       } );
+      let winText = pseudo + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry(winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
-      //WE ADD THE SCORE TO PLAYERONE LOGS
       resetGame();
+      togglePause();
   });
 }
 
 let winner;
 async function sendGameInfo(scene, score1, score2){
-  if (score1 == 2)
-  {
+  if (score1 == 2){
     winner = 'player1';
   }
   if (score2 == 2){
@@ -813,9 +807,6 @@ async function sendGameInfo(scene, score1, score2){
     pseudo_p1: user.pseudo,
     winner: winner,
   } 
-
-  console.log(data);
-  console.log(user.id, "won");
   $.ajax({
     type: 'POST',
     url: '/newGame/',
@@ -836,11 +827,13 @@ async function sendGameInfo(scene, score1, score2){
 
 async function resetGame(){
   await sendGameInfo(scene, score[0], score[1]);
-  isPaused = true;
   scene.remove(ball);
   score[0] = 0;
   score[1] = 0;
-  startGame();
+  powerLUp = false;
+  powerRUp = false;
+  powerUpLGroup.clear;
+  powerUpRGroup.clear;
   playerOne.position.set(canvasBounds.left + 2, 0, 0);
   playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 }
@@ -851,12 +844,9 @@ function animate() {
       updated();
     }
     shaderMaterial.uniforms.time.value += 0.005;
-    //videoTexture.needsUpdate = true;
-    //Uncomment to get fps counter
 		stats.update();
     renderer.render(scene, camera);
     shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
 
 }
-//video.play();
 animate();
