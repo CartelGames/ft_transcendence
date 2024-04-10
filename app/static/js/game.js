@@ -8,6 +8,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //Initiating scene and camera
 let game_id = "";
 let playerPos = 0;
+let playerOneReady = false;
+let playerTwoReady = false;
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
@@ -35,8 +37,10 @@ ws.onmessage = function(event) {
     receivePowerUp(data.poweruptype, data.poweruppos);
   }
   else if (data.type === 'game_start'){
-    console.log("ici")
     playerGameStarted();
+  }
+  else if(data.type === 'pause' && playerPos != data.player){
+    togglePause()
   }
 };
 
@@ -438,6 +442,7 @@ document.addEventListener('mousedown', onMouseClick);
 let boardHeight = 10;
 const geometry = new THREE.BoxGeometry( 1, boardHeight, 1 );
 const background = new THREE.PlaneGeometry(144, 81);
+
 //const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, shaderMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
@@ -453,7 +458,6 @@ back.position.set(0,0,-10);
 ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
-
 
 let time = 0;
 
@@ -471,6 +475,10 @@ let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
+    ws.send(JSON.stringify({
+      type: 'pause',
+      player: playerPos,
+    }));
   }
 });
 

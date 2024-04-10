@@ -214,6 +214,15 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'poweruptype': poweruptype,
                 }
             )
+        elif message == 'pause':
+            player = text_data_json['player']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'pause',
+                    'player': player,
+                }
+            )
         
     async def game_state(self, event):
         player_pos = event['player_pos']
@@ -260,4 +269,12 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'type': 'powerupgenerate',
             'poweruptype': poweruptype,
             'poweruppos': poweruppos,
-        }))   
+        }))
+    
+    async def pause(self, event):
+        player = event['player']
+        await self.send(text_data=json.dumps({
+            'type': 'pause',
+            'player': player,
+
+        }))
