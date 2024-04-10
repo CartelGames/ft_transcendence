@@ -147,7 +147,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
 
         if message == 'game_info':
             await self.channel_layer.group_discard(self.room_name, self.channel_name)
-            self.room_name = text_data_json['game_id']
+            self.room_name = str(text_data_json['game_id'])
             await self.channel_layer.group_add(self.room_name, self.channel_name)
             game = await database_sync_to_async(Game.objects.get)(id=int(text_data_json['game_id']))
             if game.player1 == text_data_json['player_id']:
@@ -174,15 +174,12 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     })
                     print('found for ', text_data_json['game_id'], ' by ', self.user.pseudo)
                     found = True
+                    await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': 'Game is started good luck !'})
                     break
             if not found:
                 self.games.append((text_data_json['game_id'], self.user.pseudo))
                 print(self.games)
-                await self.channel_layer.group_send(self.room_name,
-                {
-                    'type': 'msg',
-                    'message': self.user.pseudo + ' is ready, waiting for the oponent..'
-                })
+                await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': self.user.pseudo + ' is ready, waiting for the oponent..'})
 
            
         elif message == 'input':

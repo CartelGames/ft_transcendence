@@ -108,7 +108,16 @@ function TournamentInfo(id) {
                             if (game.state == 2) {
                                 var JoinGame = $('<button type="submit" style="margin-left: 25px;">Join the game</button>');
                                 JoinGame.click(function () {
-                                    //join game : game.id
+                                    var showDiv = document.getElementById('InfoTour');
+                                    showDiv.style.display = 'none';
+                                    import('/static/js/game.js?ver=${Math.random()}')
+                                    .then(module => {
+                                        const { reloadGame } = module;
+                                        reloadGame(game.id, game.p1, game.p2);
+                                    })
+                                    .catch(error => {
+                                        console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+                                    });
                                 });
                                 game_li.append(JoinGame[0]);
                             }
