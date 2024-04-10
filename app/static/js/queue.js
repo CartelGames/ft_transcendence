@@ -220,4 +220,5 @@ function getTournamentList() {
 document.getElementById('JoinQueue').addEventListener('click', LaunchQueue);
 document.getElementById('LeaveQueue').addEventListener('click', LeaveQueue);
 document.getElementById('refreshTourList').addEventListener('click', getTournamentList);
+document.getElementById('Tournament').addEventListener('click', getTournamentList);
 

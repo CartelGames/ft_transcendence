@@ -641,6 +641,11 @@ function updated() {
       movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
     if (keyState[40])
       movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
   }
   else {
     if (keyState[87])
@@ -651,6 +656,11 @@ function updated() {
       movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
     if (keyState[40])
       movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    ws.send(JSON.stringify({
+      type: 'input',
+      player_pos: playerPos,
+      input_value: playerTwo.position.y
+    }));
   }
 }
 
@@ -661,16 +671,6 @@ function movePong(mesh, targetY) {
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
-  let playerPos;
-  if(mesh === playerOne)
-    playerPos = 0;
-  else
-    playerPos = 1;
-  ws.send(JSON.stringify({
-    type: 'input',
-    player_pos: playerPos,
-    input_value: targetY
-  }));
 }
 
 function togglePause() {
