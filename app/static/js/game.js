@@ -42,6 +42,9 @@ ws.onmessage = function(event) {
   else if(data.type === 'pause' && playerPos != data.player){
     togglePause()
   }
+  else if (data.type === 'msg') {
+    $('#Msg').text('Message: ' + data.message);
+}
 };
 
 ws.onclose = function(event) {
@@ -411,7 +414,7 @@ function playerGameStarted(event) {
 }
 
 function onMouseClick(event) {
-  // Update the mouse position
+  /*// Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -429,11 +432,12 @@ function onMouseClick(event) {
     scene.add(ball);
     // Hide the "Start Game" button
     menu.remove(textMenu);
-    scoring();
+    scoring();*/
     ws.send(JSON.stringify({
       type: 'game_start',
+      game_id: game_id
     }));
-  }
+  //}
 }
 
 document.addEventListener('mousedown', onMouseClick);

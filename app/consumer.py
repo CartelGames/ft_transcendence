@@ -121,8 +121,11 @@ class MyQueueConsumer(AsyncWebsocketConsumer):
         }))
 
 class MyGameConsumer(AsyncWebsocketConsumer):
+    games = []
+
     async def connect(self):
         self.room_name = "game_room"
+        self.user = self.scope["user"]
         await self.channel_layer.group_add(
             self.room_name,
             self.channel_name
@@ -162,10 +165,26 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         'player_id': game.player1
                     })
         elif message == 'game_start':
-            await self.channel_layer.group_send(self.room_name,
+            found = False
+            for game in self.games:
+                if game[0] == text_data_json['game_id'] and game[1] != self.user.pseudo:
+                    await self.channel_layer.group_send(self.room_name,
+                    {
+                        'type': 'game_start'
+                    })
+                    print('found for ', text_data_json['game_id'], ' by ', self.user.pseudo)
+                    found = True
+                    break
+            if not found:
+                self.games.append((text_data_json['game_id'], self.user.pseudo))
+                print(self.games)
+                await self.channel_layer.group_send(self.room_name,
                 {
-                    'type': 'game_start'
+                    'type': 'msg',
+                    'message': self.user.pseudo + ' is ready, waiting for the oponent..'
                 })
+
+           
         elif message == 'input':
             player_pos = text_data_json['player_pos']
             input_value = text_data_json['input_value']
@@ -233,6 +252,13 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'input_value': input_value,
         }))
 
+    async def msg(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'type': 'msg',
+            'message': message
+        }))
+
     async def game_info(self, event):
         player_name = event['player_name']
         player_id = event['player_id']
@@ -276,5 +302,4 @@ class MyGameConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             'type': 'pause',
             'player': player,
-
         }))
