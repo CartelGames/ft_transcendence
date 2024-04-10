@@ -214,6 +214,7 @@ def TournamentUpdate(request):
                     find_tour.set_state(1)
                     i += 2
                 exist_tour.update_state(1)
+                TournamentsGame.objects.filter(tournament_id=exist_tour.id, phase=phase, state=1).first().set_state(2)
                 return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
             elif request.POST.get('statut') == 'delete':
                 exist_tour.clear_players()
@@ -305,7 +306,16 @@ def GetTournamentInfo(request):
             players = tournament.players.all()
             players_list = [{'pseudo': player.pseudo} for player in players]
             tourList = [{'id': tournament.id, 'name': tournament.name, 'creator':  UserProfil.objects.get(id=tournament.creator).pseudo, 'players': tournament.players.count(), 'state': tournament.state}]
-            return JsonResponse({'success': True, 'tourList': tourList, 'player': players_list, 'owner': tournament.creator == request.user.id, 'csrf_token': get_token(request)})
+            tournament_games = TournamentsGame.objects.filter(tournament_id=tournament.id)
+            games = []
+            for match in tournament_games:
+                game = Game.objects.filter(tournament=match.id).first()
+                if game:
+                    player1_profile = UserProfil.objects.filter(id=game.player1).first()
+                    player2_profile = UserProfil.objects.filter(id=game.player2).first()
+                    if player1_profile and player2_profile:
+                        games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2':  UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'winner': UserProfil.objects.filter(id=game.winner).first()})
+            return JsonResponse({'success': True, 'tourList': tourList, 'player': players_list, 'games': games, 'owner': tournament.creator == request.user.id, 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Wrong tournament id !', 'csrf_token': get_token(request)})
     else:

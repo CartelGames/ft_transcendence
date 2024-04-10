@@ -64,7 +64,7 @@ class Game(models.Model):
     player2 = models.IntegerField(blank=True, null=True)
     pseudo_p1 = models.CharField(max_length=32, default="")
     pseudo_p2 = models.CharField(max_length=32, default="")
-    winner = models.CharField(max_length=32, default="", null=True)
+    winner = models.IntegerField(blank=True, null=True)
     tournament = models.IntegerField(null=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
 

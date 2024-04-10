@@ -79,6 +79,24 @@ function TournamentInfo(id) {
                 if (TourInfo[0].state == 1) {
                     var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>In progress</b></h1>');
                     TournamentContainer.append(TitleStatut);
+                    games = data.games;
+                    games.forEach(function (game) {
+                        var game_li =$('<li><span style="font-weight: bold; font-size: 24px">' + game.p1 + ' VS ' + game.p2 + '</span> </li>');
+                    
+                        if (game.state == 2) {
+                            var JoinGame = $('<button type="submit" style="margin-left: 25px;">Join the game</button>');
+                            JoinGame.click(function () {
+                                //join game : game.id
+                            });
+                            game_li.append(JoinGame[0]);
+                        }
+                        else if (game.state == 3) {
+                            var game_wini =$('<span style="font-weight: bold; font-size: 24px; color:green;"> Winner : ' + game.winner + '</span>');
+                            game_li.append(game_wini);
+                        }
+
+                        TournamentContainer.append(game_li);
+                    });
                 }
                 else {
                     var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>Not launched yet</b></h1>');
@@ -106,6 +124,7 @@ function TournamentInfo(id) {
                     });
                     TournamentContainer.append(deleteTour[0]);
                 }
+
                 var refreshTour = $('<div class="butt"><button type="submit" style="margin-top: 50px;">Refresh</button></div>');
                 refreshTour.click(function () {
                     TournamentInfo(id)
