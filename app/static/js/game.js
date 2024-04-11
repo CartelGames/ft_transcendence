@@ -6,6 +6,35 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
 //Initiating scene and camera
+let game_id = "";
+let playerPos = 0;
+let playerOneReady = false;
+let playerTwoReady = false;
+
+function updateGameState(p1, p2)
+{
+  if (username.pseudo === p1)
+    playerPos = 0;
+  else
+    playerPos = 1;
+  pseudo = p1;
+  pseudo2 = p2;
+  printPseudo();
+}
+
+function updateGameInput(input_pos, input_value)
+{
+  if (playerPos === input_pos)
+    return;
+  if (playerPos === 1)
+    playerOne.position.y = input_value;
+  else
+    playerTwo.position.y = input_value;
+  if(isPaused == true){
+    printPseudo();
+  }
+}
+
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
 const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 100);
@@ -18,7 +47,6 @@ const stats = new Stats();
 document.body.appendChild(stats.dom);
 
 let isPaused = true;
-
 //Setting camera position
 camera.position.z =30;
 
@@ -37,22 +65,16 @@ let powerLUp = false;
 let powerRUp = false;
 let LBoardSpeedMalus = false;
 let RBoardSpeedMalus = false;
-let boardSpeedMalus = 0.5;
 let LBoardUpscale = false;
 let RBoardUpscale = false;
 let boardUpscale = 1;
-let randomBallMalus = false;
 let powerUpType = "none";
-let powerUpLClock = 0;
-let powerUpRClock = 0;
-let randomMoveClock = 0;
 const powerUpLGroup = new THREE.Group();
 const powerUpRGroup = new THREE.Group();
 
 function checkPowerUp(){
   //Si il n'y a aucun power up a l'ecran, on lance un random pour voir si on en cree un
-  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1){
-    console.log("here");
+  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1 && playerPos == 0){
     powerLUp = true;
     powerRUp = true;
     createPowerUp();
@@ -69,16 +91,17 @@ function checkPowerUp(){
         powerLUp = false;
         switch (powerUpType){
           case "boardUpscale":
-            LBoardUpscale = true;       
+            LBoardUpscale = true;
             break;
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0)
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
             break;
         }
       }
@@ -104,11 +127,12 @@ function checkPowerUp(){
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
             break;
-          case "boardSpeedNalus":
+          case "boardSpeedMalus":
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0)
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
             break;
         }
       }
@@ -120,7 +144,7 @@ function checkPowerUp(){
   }
   playerOne.scale.y = 1 + LBoardUpscale;
   playerTwo.scale.y = 1 + RBoardUpscale;
-  }
+}
 
 function createPowerUp(){
   const capsuleL = new THREE.SphereGeometry();
@@ -128,36 +152,66 @@ function createPowerUp(){
   let powerUpMaterial;
   switch (getRandomInt(4)) {
       case 0:
-        console.log("0")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
         powerUpType = "boardUpscale";       
         break;
       case 1:
-        console.log("1")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
         powerUpType = "ballSpeedMalus";
         break;
       case 2:
-        console.log("2")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
         powerUpType = "boardSpeedMalus";
         break;
       case 3:
-        console.log("3")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
         powerUpType = "randomBallMalus";
         break;
   }
   const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
-  //powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x000000} );
   const modelR = new THREE.Mesh( capsuleR, powerUpMaterial);
   powerUpLGroup.add(modelL);
   powerUpRGroup.add(modelR);
   let pos = getRandomInt(20) + 1;
   powerUpLGroup.position.set(0,pos,0);
   powerUpRGroup.position.set(0,-pos,0);
+
   scene.add(powerUpLGroup);
   scene.add(powerUpRGroup);
+}
+
+function receivePowerUp(poweruptype, poweruppos)
+{
+  const capsuleL = new THREE.SphereGeometry();
+  let powerUpMaterial;
+  switch (poweruptype){
+    case "boardUpscale":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
+      powerUpType = "boardUpscale";       
+      break;
+    case "ballSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
+      powerUpType = "ballSpeedMalus";
+      break;
+    case "boardSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
+      powerUpType = "boardSpeedMalus";
+      break;
+    case "randomBallMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
+      powerUpType = "randomBallMalus";
+      break;
+  }
+  const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  powerUpLGroup.add(modelL);
+  powerUpRGroup.add(modelR);
+  powerUpLGroup.position.set(0,poweruppos,0);
+  powerUpRGroup.position.set(0,-poweruppos,0);
+  powerLUp = true;
+  powerRUp = true;
+  scene.add(powerUpLGroup);
+  scene.add(powerUpRGroup);  
 }
 
 function getRandomInt(max) {
@@ -181,7 +235,6 @@ new GLTFLoader().load( '/static/models/gltf/ball.glb', function ( gltf ) {
 
   const model = gltf.scene;
   ball.add( model );
-  //scene.add(ball);
 } );
 
 const mConvert = 0.0002645833;
@@ -210,50 +263,45 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
 } );
 
-// const video = document.getElementById('background-video');
-// const videoTexture = new THREE.VideoTexture(video);
-// videoTexture.minFilter = THREE.LinearFilter;
-// videoTexture.magFilter = THREE.LinearFilter;
+let vertex; 
+let fragment;
+async function fetchingfragShader(){
+  return fetch('static/js/shaders/fragment.glsl').then((response) => response.text()).then((text) => {fragment = text;});
+}
+await fetchingfragShader();
+async function fetchingvertShader(){
+  return fetch('static/js/shaders/vertex.glsl').then((response) => response.text()).then((text) => {vertex = text;});
+}
+await fetchingvertShader();
 
 const shaderMaterial = new THREE.ShaderMaterial({
   uniforms: {
     time: { value: 0.0 },
     resolution: { value: new THREE.Vector2() }
   },
-  vertexShader: `
-    void main() {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `,
-  fragmentShader: `
-    uniform float time;
-    uniform vec2 resolution;
-
-    void main() {
-      // Calculate the distance from the center of the screen
-      vec2 uv = gl_FragCoord.xy / resolution.xy;
-      uv = uv * 2.0 - 1.0;
-      float dist = length(uv);
-
-      // Calculate the amplitude of the popping effect based on time
-      float amplitude = 0.5 * (1.0 + sin(time));
-
-      // Calculate the color based on the distance and amplitude
-      vec3 color = vec3(0.0);
-      if (dist < 0.5) {
-        float t = 1.0 - smoothstep(0.4, 0.5, dist);
-        color = vec3(1.0, 1.0, 1.0) * t * amplitude;
-      }
-
-      gl_FragColor = vec4(color, 1.0);
-    }
-  `
+  vertexShader: vertex,
+  fragmentShader: fragment
 });
 
 //Menu setup
 const menu = new THREE.Group();
 let textMenu;
+startGame();
+
 function startGame() {
+  score[0] = 0;
+  score[1] = 0;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
   const ttfloader = new TTFLoader();
     ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
       const cyberfont = loader.parse(json);
@@ -262,7 +310,7 @@ function startGame() {
           size: 3,
           height: 1,
         } );
-        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
         textMenu = new THREE.Mesh(geometry, textMaterial);
         textMenu.position.set(-15, 0, 0);
         menu.clear();
@@ -270,7 +318,8 @@ function startGame() {
         scene.add(menu);
   });
 }
-startGame();
+
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
@@ -278,6 +327,18 @@ const zoneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent:
 const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
 zoneMesh.position.y = 2; // Move the plane slightly behind the other objects
 scene.add(zoneMesh);
+
+function playerGameStarted(event) {
+  if (isPaused) {
+    // Start the game
+    isPaused = !isPaused;
+    scene.remove(zoneMesh);
+    scene.add(ball);
+    // Hide the "Start Game" button
+    menu.remove(textMenu);
+    scoring();
+  }
+}
 
 function onMouseClick(event) {
   // Update the mouse position
@@ -308,6 +369,7 @@ document.addEventListener('mousedown', onMouseClick);
 let boardHeight = 10;
 const geometry = new THREE.BoxGeometry( 1, boardHeight, 1 );
 const background = new THREE.PlaneGeometry(144, 81);
+
 //const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, shaderMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
@@ -324,6 +386,8 @@ ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 
+let time = 0;
+
 //Light settings
 const pointLight = new THREE.PointLight(0xffffff);
 const pointLight2 = new THREE.PointLight(0xff00ff);
@@ -335,13 +399,12 @@ scene.add(pointLight, pointLight2);
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
 window.addEventListener('keydown', function (event) {
-  if (event.key === 'p') {
+  if (event.key === 'p')
     togglePause();
-  }
 });
 
 //Speed and starting direction settings
-let ballSpeed = 0.25;
+let ballSpeed = 0.2;
 let ballDirection = { x: 1, y: 1 };
 
 //Making sure two players can play
@@ -430,30 +493,28 @@ function predictFinalPos(predictedNextPos, predictedNextDir) {
 
 scoring();
 function updated() {
-
   checkPowerUp();
   ball.rotateOnAxis(new THREE.Vector3(0,1,0), 0.05);
   ball.rotateOnAxis(new THREE.Vector3(0,0,1), 0.05);
   ball.position.x += ballSpeed * ballDirection.x;
   ball.position.y += ballSpeed * ballDirection.y;
-
   //Player2 gets a point
   if (ball.position.x < canvasBounds.left){
-    ballSpeed = 0.25;
+    ballSpeed = 0.2;
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 10)
+    if (score[1] == 2)
       rWin();
     else
       scoring();
   }
   //Player1 gets a point
   if (ball.position.x > canvasBounds.right) {
-    ballSpeed = 0.25;
+    ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 10)
+    if (score[0] == 2)
       lWin();
     else
       scoring();
@@ -529,7 +590,7 @@ function updated() {
       }
     }
 
-    if (powerRUp == true && (currentDir.x < 0 || (currentDir.x > 0 && currentPos.x <= 0)) && powerUpRGroup.position.x > playerTwo.position.x - canvasBounds.right / 6) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
+    if (powerRUp == true && (currentDir.x < 0 || (currentDir.x > 0 && currentPos.x <= -canvasBounds.right / 2)) && powerUpRGroup.position.x > playerTwo.position.x - canvasBounds.right / 6) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
     {
       if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < powerUpRGroup.position.y)
         // keyState[38] pour que le j2 aille vers le haut
@@ -538,7 +599,7 @@ function updated() {
         // keyState[40] pour que le j2 aille vers le bas
       keyState[40] = true;
     }
-    else if (currentDir.x < 0 || currentPos.x <= 0) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
+    else if (currentDir.x < 0 || currentPos.x <= -canvasBounds.right / 2) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
     {
       if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < 0)
         keyState[38] = true;
@@ -604,26 +665,34 @@ function togglePause() {
   }
 }
 
-
+let pseudo = username.pseudo;
+let pseudo2 = username.pseudo;
 async function printPseudo(){
-  const pseudo = await getPseudo();
+  console.log(pseudo2);
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( pseudo, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const geometry2 = new TextGeometry( pseudo, {
+      const geometry2 = new TextGeometry( pseudo2, {
         font: cyberfont,
-        size: 3,
+        size: 2,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      //var center = new THREE.Vector3();
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
-      textMesh.position.set(-25, 15, -2);
+      textMesh.geometry.center();
+      textMesh.position.set(canvasBounds.left + 20, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-      textMesh2.position.set(20, 15, -2);
+      textMesh2.geometry.center();
+      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
       scoreGrp.clear();
       scoreGrp.add(textMesh, textMesh2);
       scene.add(scoreGrp);
@@ -645,7 +714,7 @@ function scoring(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-25, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
@@ -669,16 +738,26 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      let winText = pseudo2 + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry( winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
       //WE ADD THE SCORE TO PLAYERTWO LOGS
       resetGame();
+      togglePause();
   });
 }
 
@@ -695,25 +774,47 @@ function lWin(){
         size: 3,
         height: 1,
       } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x0 });
+      let winText = pseudo + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry(winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
-      //WE ADD THE SCORE TO PLAYERONE LOGS
       resetGame();
+      togglePause();
   });
 }
 
-function resetGame(){
-  isPaused = true;
+async function resetGame(){
   scene.remove(ball);
   score[0] = 0;
   score[1] = 0;
-  startGame();
+  powerLUp = false;
+  powerRUp = false;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
+  powerUpLGroup.clear;
+  powerUpRGroup.clear;
   playerOne.position.set(canvasBounds.left + 2, 0, 0);
   playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 }
@@ -723,13 +824,10 @@ function animate() {
     if (!isPaused){
       updated();
     }
-    shaderMaterial.uniforms.time.value += 0.01;
-    //videoTexture.needsUpdate = true;
-    //Uncomment to get fps counter
+    shaderMaterial.uniforms.time.value += 0.005;
 		stats.update();
     renderer.render(scene, camera);
     shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
 
 }
-//video.play();
 animate();
