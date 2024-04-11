@@ -44,7 +44,64 @@
 	<!-- game -->
 	<div id="games" class="block">
 		<div class="game">
+			<div id="ChooseGame">
+				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local</button></div>
+				<div id="2v2" class="butt"><button type="button">2 v 2</button></div>
+				<div id="JoinQueue" class="butt"><button type="button">Go in queue</button></div>
+				<div id="Tournament" class="butt"><button type="button" onclick="displayDiv('ChooseGame', 'ChooseTour');">Tournois</button></div>
+			</div>
+			<div id="BackMenu" style="display:none;">
+				<div class="butt"><button2 type="submit" onclick="displayDiv('BackMenu', 'ChooseGame')">Back</button></div>
+			</div>
+			<div id="LeaveQueue" class="butt" style="display:none;"><button type="button">Leave the queue</button></div>
+			<div id="ChooseTour" style="display:none;">
+				<div id="CreateTour" class="butt"><button type="button" onclick="displayDiv('ChooseTour', 'FormTour');">Create tournament</button></div>
+				<ul id="TournamentsList"></ul>
+				<div id="BackGames" class="butt">
+					<div id="refreshTourList"><button type="submit" style="margin-right: 25px;">Refresh</button></div>
+					<button2 type="submit" onclick="displayDiv('ChooseTour', 'ChooseGame');">Back</button2>
+				</div>
+			</div>
+			<div id="InfoTour" style="display:none;">
+				<div id="InfoTourUpdate">
+				</div>
+				<p id="error-tour" style="text-align: center; color: red;"></p>
+				<div class="butt"><button2 type="submit" onclick="displayDiv('InfoTour', 'ChooseTour');">Back</button2></div>
+			</div>
+			<div id="FormTour" style="display:none;">
+				<h1>Create a Tournament</h1>
+				<form id="FormCreateTour" enctype="multipart/form-data" action="{% url 'createTour' %}" method="post">
+					<input type="hidden" name="type" value="createTour">
+					<input type="hidden" name="delete" value="false">
+					<label for="tourName">Tournament name :</label>
+					<input type="text" id="tourName" name="tourName" required>
+					<div id="error-form" class="error-form"></div>
+					<div class="butt"><button type="submit" onclick="sendForm('FormCreateTour', event)">Create</button></div>
+					<div class="butt"><button2 type="submit" onclick="displayDiv('FormTour', 'ChooseTour')">Back</button></div>
+				</form>
+			</div>
+			<p id="Msg"></p>
 			<canvas id="game" class="game"></canvas>
+		</div>
+	</div>
+	
+	<!-- stats -->
+	<div id="stats" class="block">
+		<div class="stats-container" id="stats-container">
+			<h2>Stats of players</h2>
+			<table id="stats-users-table">
+				<thead>
+					<tr>
+					  <th scope="col">Groupe</th>
+					  <th scope="col">Année de formation</th>
+					  <th scope="col">Nombre d'albums</th>
+					  <th scope="col">Morceau le plus célèbre</th>
+					</tr>
+				  </thead>
+				<tbody id="stats-users-container">
+				
+				</tbody>
+			</table>
 		</div>
 	</div>
 	
@@ -179,7 +236,6 @@
 	{% endif %}
 	
 </div>
-
 	<input type="hidden" id="image-url" value="{% static 'images/neon.jpg' %}">
 	<script type="importmap">
 		{
@@ -189,10 +245,10 @@
 		  }
 		}
 	</script>
-	<video id="background-video" src="{% static 'models/videos/background_pong.mp4' %}" muted loop style="display: none;"></video>
 	<script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-		<script type="module" src="{% static 'js/game.js' %}"></script>
+		<!-- <script type="module" src="{% static 'js/game.js' %}"></script> -->
+		<script type="module" src="{% static 'js/queue.js' %}"></script>
 </body>
 </html>

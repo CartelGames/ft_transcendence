@@ -6,24 +6,84 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 
 //Initiating scene and camera
+let game_id = "";
+let playerPos = 0;
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
-
-ws.onopen = async function(event) {
-    console.log("WebSocket opened!");
-    const username = await getPseudo();
-    ws.send(JSON.stringify({
+const username = await getPseudo();
+ws.onopen = function(event) {
+  ws.send(JSON.stringify({
         'message': username.pseudo + ' joined the game'
     }));
 };
 
 ws.onmessage = function(event) {
-    console.log("Received message: " + event.data);
+  const data = JSON.parse(event.data);
+  if (data.type === 'game_state'){
+    updateGameInput(data.player_pos, data.input_value);
+  }
+  else if (data.type === 'game_info'){
+    resetGame()
+  }
+  else if (data.type === 'ball' && playerPos == 1){
+    ball.position.x = data.ball_posx,
+    ball.position.y = data.ball_posy,
+    ballDirection.x = data.ball_dirx;
+    ballDirection.y = data.ball_diry;
+    ballSpeed = data.ball_speed;
+  }
+  else if (data.type === 'powerupgenerate' && playerPos == 1){
+    receivePowerUp(data.poweruptype, data.poweruppos);
+  }
+  else if (data.type === 'game_start'){
+    playerGameStarted();
+  }
+  else if(data.type === 'pause' && playerPos != data.player){
+    togglePause()
+  }
+  else if (data.type === 'msg') {
+    $('#Msg').text('Message: ' + data.message);
+}
 };
 
 ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
+export function reloadGame(set_game_id, p1, p2) {
+  game_id = set_game_id;
+  updateGameState(p1, p2);
+  ws.send(JSON.stringify({
+    type: 'game_info',
+    game_id: game_id,
+    player_id: id
+  }));
+  // reload la partie avec le game_id
+  // fonction appelé via queue.js pour lancer des nouvelles games
+}
+
+function updateGameState(p1, p2)
+{
+  if (username.pseudo === p1)
+    playerPos = 0;
+  else
+    playerPos = 1;
+  pseudo = p1;
+  pseudo2 = p2;
+  printPseudo();
+}
+
+function updateGameInput(input_pos, input_value)
+{
+  if (playerPos === input_pos)
+    return;
+  if (playerPos === 1)
+    playerOne.position.y = input_value;
+  else
+    playerTwo.position.y = input_value;
+  if(isPaused == true){
+    printPseudo();
+  }
+}
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
@@ -55,22 +115,16 @@ let powerLUp = false;
 let powerRUp = false;
 let LBoardSpeedMalus = false;
 let RBoardSpeedMalus = false;
-let boardSpeedMalus = 0.5;
 let LBoardUpscale = false;
 let RBoardUpscale = false;
 let boardUpscale = 1;
-let randomBallMalus = false;
 let powerUpType = "none";
-let powerUpLClock = 0;
-let powerUpRClock = 0;
-let randomMoveClock = 0;
 const powerUpLGroup = new THREE.Group();
 const powerUpRGroup = new THREE.Group();
 
 function checkPowerUp(){
   //Si il n'y a aucun power up a l'ecran, on lance un random pour voir si on en cree un
-  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1){
-    console.log("here");
+  if (powerLUp == false && powerRUp == false && getRandomInt(2) == 1 && playerPos == 0){
     powerLUp = true;
     powerRUp = true;
     createPowerUp();
@@ -87,7 +141,7 @@ function checkPowerUp(){
         powerLUp = false;
         switch (powerUpType){
           case "boardUpscale":
-            LBoardUpscale = true;       
+            LBoardUpscale = true;
             break;
           case "ballSpeedMalus":
             ballSpeed *= 1.5;
@@ -96,7 +150,16 @@ function checkPowerUp(){
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0){
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -126,7 +189,16 @@ function checkPowerUp(){
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            ballDirection.y = (getRandomInt(100) - 50) / 15;
+            if(playerPos == 0){
+              ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -138,30 +210,25 @@ function checkPowerUp(){
   }
   playerOne.scale.y = 1 + LBoardUpscale;
   playerTwo.scale.y = 1 + RBoardUpscale;
-  }
+}
 
 function createPowerUp(){
   const capsuleL = new THREE.SphereGeometry();
-  const capsuleR = new THREE.SphereGeometry();
   let powerUpMaterial;
   switch (getRandomInt(4)) {
       case 0:
-        console.log("0")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
         powerUpType = "boardUpscale";       
         break;
       case 1:
-        console.log("1")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
         powerUpType = "ballSpeedMalus";
         break;
       case 2:
-        console.log("2")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
         powerUpType = "boardSpeedMalus";
         break;
       case 3:
-        console.log("3")
         powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
         powerUpType = "randomBallMalus";
         break;
@@ -173,8 +240,47 @@ function createPowerUp(){
   let pos = getRandomInt(20) + 1;
   powerUpLGroup.position.set(0,pos,0);
   powerUpRGroup.position.set(0,-pos,0);
+  ws.send(JSON.stringify({
+    type: 'powerupgenerate',
+    poweruptype: powerUpType,
+    poweruppos: pos,
+  }));
   scene.add(powerUpLGroup);
   scene.add(powerUpRGroup);
+}
+
+function receivePowerUp(poweruptype, poweruppos)
+{
+  const capsuleL = new THREE.SphereGeometry();
+  let powerUpMaterial;
+  switch (poweruptype){
+    case "boardUpscale":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
+      powerUpType = "boardUpscale";       
+      break;
+    case "ballSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
+      powerUpType = "ballSpeedMalus";
+      break;
+    case "boardSpeedMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x00ff50} );
+      powerUpType = "boardSpeedMalus";
+      break;
+    case "randomBallMalus":
+      powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x6aff00} );
+      powerUpType = "randomBallMalus";
+      break;
+  }
+  const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  powerUpLGroup.add(modelL);
+  powerUpRGroup.add(modelR);
+  powerUpLGroup.position.set(0,poweruppos,0);
+  powerUpRGroup.position.set(0,-poweruppos,0);
+  powerLUp = true;
+  powerRUp = true;
+  scene.add(powerUpLGroup);
+  scene.add(powerUpRGroup);  
 }
 
 function getRandomInt(max) {
@@ -198,7 +304,6 @@ new GLTFLoader().load( '/static/models/gltf/ball.glb', function ( gltf ) {
 
   const model = gltf.scene;
   ball.add( model );
-  //scene.add(ball);
 } );
 
 const mConvert = 0.0002645833;
@@ -250,7 +355,24 @@ const shaderMaterial = new THREE.ShaderMaterial({
 //Menu setup
 const menu = new THREE.Group();
 let textMenu;
+startGame();
+
 function startGame() {
+  var HideDiv = document.getElementById('LeaveQueue')
+  HideDiv.style.display = 'none';
+  score[0] = 0;
+  score[1] = 0;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
   const ttfloader = new TTFLoader();
     ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
       const cyberfont = loader.parse(json);
@@ -267,7 +389,8 @@ function startGame() {
         scene.add(menu);
   });
 }
-startGame();
+
+
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
@@ -276,8 +399,20 @@ const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
 zoneMesh.position.y = 2; // Move the plane slightly behind the other objects
 scene.add(zoneMesh);
 
+function playerGameStarted(event) {
+  if (isPaused) {
+    // Start the game
+    isPaused = !isPaused;
+    scene.remove(zoneMesh);
+    scene.add(ball);
+    // Hide the "Start Game" button
+    menu.remove(textMenu);
+    scoring();
+  }
+}
+
 function onMouseClick(event) {
-  // Update the mouse position
+  /*// Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -295,8 +430,12 @@ function onMouseClick(event) {
     scene.add(ball);
     // Hide the "Start Game" button
     menu.remove(textMenu);
-    scoring();
-  }
+    scoring();*/
+    ws.send(JSON.stringify({
+      type: 'game_start',
+      game_id: game_id
+    }));
+  //}
 }
 
 document.addEventListener('mousedown', onMouseClick);
@@ -305,6 +444,7 @@ document.addEventListener('mousedown', onMouseClick);
 let boardHeight = 10;
 const geometry = new THREE.BoxGeometry( 1, boardHeight, 1 );
 const background = new THREE.PlaneGeometry(144, 81);
+
 //const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, shaderMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
@@ -321,7 +461,6 @@ ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 
-
 let time = 0;
 
 //Light settings
@@ -334,9 +473,14 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
+let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p') {
     togglePause();
+    ws.send(JSON.stringify({
+      type: 'pause',
+      player: playerPos,
+    }));
   }
 });
 
@@ -388,6 +532,15 @@ function updated() {
   // Check for bottom and top boundary collisions
   if (ball.position.y  < canvasBounds.bottom || ball.position.y  > canvasBounds.top) {
     ballDirection.y *= -1; // reverse the Y direction of the ball
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerOne collision
@@ -397,6 +550,15 @@ function updated() {
       ball.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerTwo collision
@@ -406,35 +568,102 @@ function updated() {
       ball.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //Check for top boundary collision for players
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   // Check for bottom boundary collision for players
   if (playerOne.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerOne.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y + boardHeight/2 > canvasBounds.top) {
     playerTwo.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
 
   //Moves the boards
-  if (keyState[87])
-    movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-  if (keyState[83])
-    movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-  if (keyState[38])
-    movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-  if (keyState[40])
-    movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+  if (playerPos === 0) {
+    if (keyState[87])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
+  }
+  else {
+    if (keyState[87])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    ws.send(JSON.stringify({
+      type: 'input',
+      player_pos: playerPos,
+      input_value: playerTwo.position.y
+    }));
+  }
 }
 
 //Moves smoothly
@@ -444,6 +673,11 @@ function movePong(mesh, targetY) {
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
+  let playerPos;
+  if(mesh === playerOne)
+    playerPos = 0;
+  else
+    playerPos = 1;
 }
 
 function togglePause() {
@@ -458,12 +692,10 @@ function togglePause() {
   }
 }
 
-
+let pseudo = username.pseudo;
+let pseudo2 = username.pseudo;
 async function printPseudo(){
-  let pseudo = (await getPseudo()).pseudo;
-  console.log(pseudo);
-  let pseudo2 = (await getPseudo()).pseudo; // Pseudo du joueur 2
-  //To cut pseudo if its too big
+  console.log(pseudo2);
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';
   if (pseudo2.length > 8)
@@ -533,16 +765,26 @@ function rWin(){
         size: 3,
         height: 1,
       } );
+      let winText = pseudo2 + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry( winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
       //WE ADD THE SCORE TO PLAYERTWO LOGS
       resetGame();
+      togglePause();
   });
 }
 
@@ -559,23 +801,31 @@ function lWin(){
         size: 3,
         height: 1,
       } );
+      let winText = pseudo + " WIN"
+      console.log(winText)
+      const geometry3 = new TextGeometry(winText, {
+        font: cyberfont,
+        size: 3,
+        height: 1,
+      } );
       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.position.set(-30, 15, -2);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.position.set(10, 15, -2);
+      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+      textMesh3.position.set(-30, 0, -2);
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
+      scoreGrp.add(textMesh, textMesh2, textMesh3);
       scene.add(scoreGrp);
-      //WE ADD THE SCORE TO PLAYERONE LOGS
       resetGame();
+      togglePause();
   });
 }
 
 let winner;
 async function sendGameInfo(scene, score1, score2){
-  if (score1 == 2)
-  {
+  if (score1 == 2){
     winner = 'player1';
   }
   if (score2 == 2){
@@ -589,9 +839,6 @@ async function sendGameInfo(scene, score1, score2){
     pseudo_p1: user.pseudo,
     winner: winner,
   } 
-
-  console.log(data);
-  console.log(user.id, "won");
   $.ajax({
     type: 'POST',
     url: '/newGame/',
@@ -612,11 +859,24 @@ async function sendGameInfo(scene, score1, score2){
 
 async function resetGame(){
   await sendGameInfo(scene, score[0], score[1]);
-  isPaused = true;
   scene.remove(ball);
   score[0] = 0;
   score[1] = 0;
-  startGame();
+  powerLUp = false;
+  powerRUp = false;
+  powerUpSpeed = 0.1;
+  powerUpLDirection = { x: -1, y: 0};
+  powerUpRDirection = { x: 1, y: 0};
+  powerLUp = false;
+  powerRUp = false;
+  LBoardSpeedMalus = false;
+  RBoardSpeedMalus = false;
+  LBoardUpscale = false;
+  RBoardUpscale = false;
+  boardUpscale = 1;
+  powerUpType = "none";
+  powerUpLGroup.clear;
+  powerUpRGroup.clear;
   playerOne.position.set(canvasBounds.left + 2, 0, 0);
   playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 }
@@ -627,12 +887,9 @@ function animate() {
       updated();
     }
     shaderMaterial.uniforms.time.value += 0.005;
-    //videoTexture.needsUpdate = true;
-    //Uncomment to get fps counter
 		stats.update();
     renderer.render(scene, camera);
     shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
 
 }
-//video.play();
 animate();
