@@ -148,6 +148,7 @@ function checkPowerUp(){
 
 function createPowerUp(){
   const capsuleL = new THREE.SphereGeometry();
+  const capsuleR = new THREE.SphereGeometry();
   let powerUpMaterial;
   switch (getRandomInt(4)) {
       case 0:
@@ -168,7 +169,7 @@ function createPowerUp(){
         break;
   }
   const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
-  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleR, powerUpMaterial);
   powerUpLGroup.add(modelL);
   powerUpRGroup.add(modelR);
   let pos = getRandomInt(20) + 1;
@@ -288,8 +289,6 @@ let textMenu;
 startGame();
 
 function startGame() {
-  var HideDiv = document.getElementById('LeaveQueue')
-  HideDiv.style.display = 'none';
   score[0] = 0;
   score[1] = 0;
   powerUpSpeed = 0.1;
@@ -399,7 +398,6 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
-let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p')
     togglePause();
@@ -419,6 +417,78 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
   keyState[event.keyCode] = false; 
+}
+
+//Ball data and timer for AI
+let currentPos = ball.position;
+let currentDir = ballDirection;
+let predictedNextDir = "none";
+let predictedNextPos = "none";
+let predictedFinalPos = "none";
+let timer = 0;
+let isBotPlaying = true;
+
+function predictNextDir(currentPos, currentDir) {
+  let delta_x = currentDir.x * ballSpeed;
+  let delta_y = currentDir.y * ballSpeed;
+  let predictedPosition = $.extend( true, {}, currentPos);
+  let predictedDir = $.extend( true, {}, currentDir);
+  predictedPosition.x += delta_x;
+  predictedPosition.y += delta_y;
+
+  // Mirror la direction y si la coordonnée verticale de la position sort de la map
+  if (predictedPosition.y > canvasBounds.top || predictedPosition.y < canvasBounds.bottom)
+    predictedDir.y *= -1;
+
+  // Mirror la direction x si la coordonnée horizontale de la position passe derrière la raquette adverse
+  if (predictedPosition.x < playerOne.position.x)
+    predictedDir.x *= -1;
+
+  return predictedDir;
+}
+
+function predictNextPos(currentPos, currentDir) {
+  let delta_x = currentDir.x * ballSpeed;
+  let delta_y = currentDir.y * ballSpeed;
+  let predictedPosition = $.extend( true, {}, currentPos);
+  predictedPosition.x += delta_x;
+  predictedPosition.y += delta_y;
+
+  // Mirror la composante y si la coordonnée verticale de la position sort de la map
+  if (predictedPosition.y > canvasBounds.top)
+    predictedPosition.y = canvasBounds.top - (predictedPosition.y - canvasBounds.top);
+  else if (predictedPosition.y < canvasBounds.bottom)
+    predictedPosition.y = canvasBounds.bottom - (predictedPosition.y - canvasBounds.bottom);
+
+  // Mirror la composante x si la coordonnée horizontale de la position passe derrière la raquette adverse
+  if (predictedPosition.x < playerOne.position.x)
+    predictedPosition.x = playerOne.position.x - (predictedPosition.x - playerOne.position.x);
+
+  // Corriger la position prédite si elle passe derrière la board de l'IA
+
+  if (predictedPosition.x > playerTwo.position.x + 1)
+  {
+    let slope = (predictedPosition.y - currentPos.y) / (predictedPosition.x - currentPos.x);
+    predictedPosition.x = playerTwo.position.x - 1;
+    predictedPosition.y = currentPos.y + slope * (predictedPosition.x - currentPos.y);
+  }
+
+  return predictedPosition;
+}
+
+function predictFinalPos(predictedNextPos, predictedNextDir) {
+  let predictedFinalPos = $.extend( true, {}, predictedNextPos);
+  let predictedFinalDir = $.extend( true, {}, predictedNextDir);
+
+  while (predictedFinalPos.x < playerTwo.position.x - 1)
+  {
+    predictedFinalPos = predictNextPos(predictedNextPos, predictedNextDir);
+    predictedFinalDir = predictNextDir(predictedNextPos, predictedNextDir)
+    predictedNextPos = $.extend( true, {}, predictedFinalPos);
+    predictedNextDir = $.extend( true, {}, predictedFinalDir);
+  }
+
+  return predictedFinalPos;
 }
 
 scoring();
@@ -471,6 +541,14 @@ function updated() {
       ball.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if (isBotPlaying == true)
+    {
+      predictedNextPos = "none";
+      predictedNextDir = "none";
+      predictedFinalPos = "none";
+      currentPos = "none";
+      currentDir = "none";
+    }
   }
 
   //Check for top boundary collision for players
@@ -491,26 +569,78 @@ function updated() {
   //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
 
-  //Moves the boards
-  if (playerPos === 0) {
-    if (keyState[87])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+  // AI PART - Commented conditions are potentiel nerfs.
+  // -----------------------------------------------------------------------------
+  if (isBotPlaying == true)
+  {
+    if (timer % 60 == 0) // would timer % current fps count be more precise?
+    {
+      currentPos = $.extend( true, {}, ball.position);
+      currentDir = $.extend( true, {}, ballDirection);
+
+      // Si aucune prédiction n'est faite ou que la prédiction précédente est fausse, faire une prédiction
+      if (predictedFinalPos == "none" || predictedNextPos == "none"
+      || Math.trunc(predictedNextPos.x) != Math.trunc(currentPos.x)
+      || Math.trunc(predictedNextPos.y) != Math.trunc(currentPos.y))
+      {
+        console.log("predict");
+        predictedNextPos = predictNextPos(currentPos, currentDir);
+        predictedNextDir = predictNextDir(currentPos, currentDir)
+        predictedFinalPos = predictFinalPos(predictedNextPos, predictedNextDir);
+      }
+    }
+
+    if (powerRUp == true && (currentDir.x < 0 || (currentDir.x > 0 && currentPos.x <= -canvasBounds.right / 2)) && powerUpRGroup.position.x > playerTwo.position.x - canvasBounds.right / 6) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
+    {
+      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < powerUpRGroup.position.y)
+        // keyState[38] pour que le j2 aille vers le haut
+      keyState[38] = true;
+      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > powerUpRGroup.position.y)
+        // keyState[40] pour que le j2 aille vers le bas
+      keyState[40] = true;
+    }
+    else if (currentDir.x < 0 || currentPos.x <= -canvasBounds.right / 2) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
+    {
+      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < 0)
+        keyState[38] = true;
+      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > 0)
+        keyState[40] = true;
+    }
+    else // Si la balle se rapproche, aller vers sa destination
+    {
+      if (predictedFinalPos != "none")
+      {
+        if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < predictedFinalPos.y)
+          keyState[38] = true;
+        else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > predictedFinalPos.y)
+          keyState[40] = true;
+      }
+      else
+      {
+        if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < currentPos.y)
+          keyState[38] = true;
+        else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > currentPos.y)
+          keyState[40] = true;
+      }
+    }
+    timer++;
   }
-  else {
-    if (keyState[87])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+  // -----------------------------------------------------------------------------
+
+  //Moves the boards
+  if (keyState[87])
+    movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+  if (keyState[83])
+    movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+  if (keyState[38])
+    movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+  if (keyState[40])
+    movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+
+  if (isBotPlaying == true)
+  {
+    keyState[38] = false;
+    keyState[40] = false;
   }
 }
 
