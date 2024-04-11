@@ -143,11 +143,11 @@ def UserBlockFriend(request):
 
 def GetProfil(request):
     if request.method == 'GET':
-        if (isinstance(request.user, AnonymousUser) == False):
+        if request.user is not None:
             users_list = [{'id': request.user.id, 'pseudo': request.user.pseudo}]
             return JsonResponse({'success': True, 'users': users_list, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
         else:
-            return JsonResponse({'success': False, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
@@ -197,7 +197,7 @@ def GetBlockedFriends(request):
 def GetStats(request):
     if request.method == 'GET':
         new_Stats = UserProfil.objects.all()
-        users_list = [{'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
@@ -205,38 +205,40 @@ def GetStats(request):
 def NewGame(request):
     if request.method == 'POST' and request.POST.get('type') == 'newGame':
         if isinstance(request.user, AnonymousUser):
-            return JsonResponse({'success': False, 'errors': 'Hey! You\'re not logged in !', 'csrf_token': get_token(request)})
-        player1 = request.POST.get('player1')
-        if player1 == request.user.pseudo:
+            return JsonResponse({'success': False, 'errors': 'You\'re not logged out !', 'csrf_token': get_token(request)})
+        player1 = int(request.POST.get('player1'))
+        
+        if player1 == request.user.id:
             try:
-                player1 = get_object_or_404(UserProfil, id=request.user.id)
+                player1 = get_object_or_404(UserProfil, id=player1)
             except Http404 as e:
                     return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
         else:
-            return JsonResponse({'success': False, 'errors': 'ta mere! You\'re not logged in !', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': False, 'errors': 'You\'re not logged in !', 'csrf_token': get_token(request)})
         if request.POST.get('player2') is not None:
             try:
-                player2 = get_object_or_404(UserProfil, pseudo=request.POST.get('player2'))
+                player2 = get_object_or_404(UserProfil, id=request.POST.get('player2'))
             except Http404 as e:
                     return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
             player2.nb_games += 1
-        else:
-            player2 = None
+        player2 = player1
         player1.nb_games += 1
         if request.POST.get('winner') == 'player1':
             player1.mmr += 10
-            # player2.mmr -= 10
+            player2.mmr -= 10
         elif request.POST.get('winner') == 'player2':
             player1.mmr -= 10
-            # player2.mmr += 10
+            player2.mmr += 10
         else:
             player1.mmr -= 5
         new_game = Game.objects.create(
             player1=request.user.id,
+            player2=player2.id,
             pseudo_p1=request.user.pseudo,
+            pseudo_p2=player2.pseudo,
             winner=request.POST.get('winner')
         )
-        return JsonResponse({'success': True, 'errors': 'The stats game was correctly create !', 'csrf_token': get_token(request)})
+        return JsonResponse({'success': True, 'errors': 'The stats game was correctly created !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
    

@@ -11,12 +11,9 @@ const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 ws.onopen = async function(event) {
     console.log("WebSocket opened!");
     const username = await getPseudo();
-    if (username) {
-      ws.send(JSON.stringify({
-          'message': username.pseudo + ' joined the game'
-      }));
-    } else
-        ws.close();
+    ws.send(JSON.stringify({
+        'message': username.pseudo + ' joined the game'
+    }));
 };
 
 ws.onmessage = function(event) {
@@ -37,7 +34,7 @@ const renderer = new THREE.WebGLRenderer({
 
 //FPS counter top left
 const stats = new Stats();
-document.getElementById("game").appendChild(stats.dom);
+document.body.appendChild(stats.dom);
 
 let isPaused = true;
 //Setting camera position

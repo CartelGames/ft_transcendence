@@ -1,4 +1,3 @@
-from django.contrib.auth.models import AnonymousUser
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
@@ -8,7 +7,7 @@ class MyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.user = self.scope["user"]
         if self.user.is_anonymous:
-            self.close()
+            await self.close()
         self.group_name = f'{self.user.pseudo}'
         print(self.group_name)
         await self.channel_layer.group_add(
