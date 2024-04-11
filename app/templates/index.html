@@ -12,14 +12,16 @@
 	<link rel="shortcut icon" type="image/ico" href="{% static 'images/faviconcartelgames.ico' %}"/>
 	<link href="https://fonts.googleapis.com/css2?family=Honk&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+	<link rel="stylesheet" href="{% static 'css/sass/style.css' %}" />
 	<script src="{% static 'js/script.js' %}" defer></script>
+	<script src="{% static 'js/chat.js' %}" defer></script>
 	<title>Transcendence Pong 42</title>
 </head>
 <body>
 	{% csrf_token %}
 <header>
 	<div class="header-logo">
-		<img src="{% static 'images/cartelgames.jpeg' %}" alt="logo" title="logo du site" width="100%">
+		<a href="#index" onclick="showDiv('index')"><img src="{% static 'images/cartelgames.jpeg' %}" alt="logo" title="logo du site" width="100%"></a>
 	</div>
 	<nav class="header-items">
 		<ul>
@@ -43,6 +45,7 @@
 
 	<!-- game -->
 	<div id="games" class="block">
+		{% if user.is_authenticated %}
 		<div class="game">
 			<div id="ChooseGame">
 				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local</button></div>
@@ -83,19 +86,27 @@
 			<p id="Msg"></p>
 			<canvas id="game" class="game"></canvas>
 		</div>
+		{% else %}
+		<h3>You need to be logged in for play!</h3>
+		{% endif %}
 	</div>
-	
+
 	<!-- stats -->
 	<div id="stats" class="block">
 		<div class="stats-container" id="stats-container">
 			<h2>Stats of players</h2>
+			<div id="profile">
+				{% block content %}
+					{% include 'profile.html'%}
+				{% endblock %}
+			</div>
 			<table id="stats-users-table">
 				<thead>
 					<tr>
-					  <th scope="col">Groupe</th>
-					  <th scope="col">Année de formation</th>
-					  <th scope="col">Nombre d'albums</th>
-					  <th scope="col">Morceau le plus célèbre</th>
+					  <th scope="col">Pseudo Utilisateur</th>
+					  <th scope="col">Photo du profil</th>
+					  <th scope="col">Nombre de parties jouées</th>
+					  <th scope="col">MMR du joueur</th>
 					</tr>
 				  </thead>
 				<tbody id="stats-users-container">

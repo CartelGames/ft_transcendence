@@ -1,5 +1,4 @@
 var upHist = false;
-let chatCounter = 0;
 var token = getCSRFToken();
 
 function getCSRFToken() {
@@ -196,7 +195,22 @@ function loadStats() {
 function printStats(user) {
     var statCont = document.getElementById('stats-users-container');
     var list = document.createElement('tr');
-    userList.appendChild(list);
+    list.className = 'users-list';
+    list.onclick = function () {
+        document.getElementById('profil-card').style.display = 'flex';
+        document.getElementById('profile').style.display = 'inline-flex';
+        document.getElementById('profil-card').classList.toggle('profil-open');   
+        $('#user-name').text(user.username);
+        $('#user-pseudo').text(user.pseudo);
+        $('#user-email').text(user.email);
+        $('#user-img').attr('src', user.img);
+        document.getElementById('profil-card').addEventListener( "click", () => {
+            document.getElementById('profil-card').classList.toggle('profil-open');   
+            document.getElementById('profil-card').style.display = 'none';
+            document.getElementById('profile').style.display = 'none';
+        });
+        
+    }
 
     var attr = document.createElement('td');
     attr.className = 'pseudo';
@@ -204,7 +218,7 @@ function printStats(user) {
     list.appendChild(attr);
     var attr2 = document.createElement('td');
     attr2.className = 'img';
-    var img = document.createElement('td');
+    var img = document.createElement('img');
     img.src = user.img;
     attr2.appendChild(img);
     list.appendChild(attr2);
@@ -217,11 +231,7 @@ function printStats(user) {
     attr4.textContent = user.mmr;
     list.appendChild(attr4);
 
-    userList.addEventListener('click', function () {
-        var url = window.location.href + '#' + user.pseudo;
-    })
-    // statCont.innerHTML;
-    statCont.appendChild(userList);
+    statCont.appendChild(list);
 }
 
 window.addEventListener('hashchange', function () {
@@ -251,44 +261,6 @@ document.getElementById('profil-img').addEventListener('change', function (event
     sendForm('profilImg', event)
 });
 
-function getMessages() {
-    $.ajax({
-        type: 'GET',
-        url: '/getChat/',
-        headers: { 'X-CSRFToken': token },
-        success: function (data) {
-            var messages = data.messages;
- 
-            var chatBoxContents = document.querySelectorAll('.chat-box-content');
-            chatBoxContents.forEach(function (chatBoxContent) {
-                var paragraphs = chatBoxContent.querySelectorAll('p');
-                paragraphs.forEach(function (paragraph) {
-                    paragraph.remove();
-                });
-                messages.forEach(function (message) {
-                    var id = message.pseudo_from === message.me ? message.pseudo_to : message.pseudo_from;
-                    var chatDiv = document.getElementById(id);
-                    if (!chatDiv)
-                        return;
-                    var chatBoxContent = chatDiv.querySelector('.chat-box-content');
-                    if (!chatBoxContent)
-                        return;
-                    var messageElement = document.createElement('p');
-                    
-                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
-                    messageElement.innerHTML = from + message.content;
-
-                    chatBoxContent.appendChild(messageElement);
-                    chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
-                });
-            });
-            token = data.csrf_token;
-        },
-        error: function (error) {
-            console.log('Erreur lors de la récupération des amis.');
-        }
-    });
-}
 
 function displayDiv(hide, show) {
     var hideDiv = document.getElementById(hide);
@@ -304,6 +276,3 @@ window.onload = function() {
     loadFriends();
     loadBlockedFriends();
 };
-
-
-// setInterval(getMessages, 1000);

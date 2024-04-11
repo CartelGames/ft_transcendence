@@ -227,11 +227,11 @@ def TournamentUpdate(request):
 
 def GetProfil(request):
     if request.method == 'GET':
-        if request.user is not None:
+        if (isinstance(request.user, AnonymousUser) == False):
             users_list = [{'id': request.user.id, 'pseudo': request.user.pseudo}]
             return JsonResponse({'success': True, 'users': users_list, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
         else:
-            return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': False, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
@@ -281,7 +281,7 @@ def GetBlockedFriends(request):
 def GetStats(request):
     if request.method == 'GET':
         new_Stats = UserProfil.objects.all()
-        users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        users_list = [{'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})

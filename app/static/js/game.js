@@ -94,7 +94,7 @@ const renderer = new THREE.WebGLRenderer({
 
 //FPS counter top left
 const stats = new Stats();
-document.body.appendChild(stats.dom);
+document.getElementById("game").appendChild(stats.dom);
 
 let isPaused = true;
 //Setting camera position

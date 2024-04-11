@@ -1,7 +1,5 @@
 FROM nginx:alpine
 
-COPY default.conf nginx.conf/etc/nginx/conf.d/default.conf
-COPY your_ssl_certificate.crt /etc/ssl/certs/your_ssl_certificate.crt
-COPY your_ssl_certificate_key.key /etc/ssl/private/your_ssl_certificate_key.key
+COPY nginx.conf /etc/nginx/nginx.conf
 
-EXPOSE 80 443
+EXPOSE 80
