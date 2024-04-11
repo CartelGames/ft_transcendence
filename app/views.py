@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import LoginForm, SignupForm, ProfilImgForm
 from django.contrib.auth.models import AnonymousUser
-from .models import UserProfil, Message, Game
+from .models import UserProfil, Message, Game, Tournaments, TournamentsGame
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
@@ -140,13 +140,98 @@ def UserBlockFriend(request):
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
+def CreateTournament(request):
+    if request.method == 'POST' and request.POST.get('type') == 'createTour':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        tourName = request.POST.get('tourName')
+        exist_name = Tournaments.objects.filter(name=tourName)
+        if exist_name:
+            return JsonResponse({'success': False, 'errors': 'This tournament name is already exist !', 'csrf_token': get_token(request)})
+        exist_id = Tournaments.objects.filter(creator=request.user.id, ended=False)
+        if exist_id:
+            return JsonResponse({'success': False, 'errors': 'You have already a tournament in progress !', 'csrf_token': get_token(request)})
+        new_tournament = Tournaments.objects.create(name=tourName, creator=request.user.id)
+        new_tournament.add_player(UserProfil.objects.get(id=request.user.id))
+        return JsonResponse({'success': True, 'errors': '<p>Tournament successfully created</p>', 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def TournamentRegistration(request):
+    if request.method == 'POST' and request.POST.get('type') == 'tourRegist':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        
+        exist_tour = Tournaments.objects.filter(id=request.POST.get('id')).first()
+        if exist_tour:
+            if request.POST.get('join') == 'true':
+                exist_tour.add_player(UserProfil.objects.get(id=request.user.id))
+                return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
+            else:
+                exist_tour.remove_player(UserProfil.objects.get(id=request.user.id))
+                return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'errors': 'This tournament does not exist !', 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def TournamentUpdate(request):
+    if request.method == 'POST' and request.POST.get('type') == 'tourUpdate':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        exist_tour = Tournaments.objects.filter(id=request.POST.get('id')).first()
+        if exist_tour:
+            if exist_tour.creator != request.user.id:
+                return JsonResponse({'success': False, 'errors': 'You are not the creator !', 'csrf_token': get_token(request)})
+            if request.POST.get('statut') == 'start':
+
+                players_count = exist_tour.players.count()
+                if players_count < 2:
+                    return JsonResponse({'success': False, 'errors': 'You need atleast 2 players', 'csrf_token': get_token(request)})
+                if not players_count & 1 == 0:
+                    return JsonResponse({'success': False, 'errors': 'You need to have ² players (2/4/8/16/32...)', 'csrf_token': get_token(request)})
+                phase = 0
+                while players_count > 2:
+                    players_count /= 2
+                    phase += 1
+                calc_phase = phase
+                while calc_phase >= 0:
+                    matchs = calc_phase * 2
+                    while matchs > 0 or calc_phase == 0:
+                        new_tour = TournamentsGame.objects.create(tournament_id=exist_tour.id, phase=calc_phase)
+                        new_match = Game.objects.create(tournament=new_tour.id)
+                        new_tour.set_match(new_match.id)
+                        matchs -= 1
+                        if calc_phase == 0:
+                            calc_phase -= 1
+                    calc_phase -= 1
+                players = exist_tour.players.all()
+                i = 0
+                while i < exist_tour.players.count():
+                    find_tour = TournamentsGame.objects.filter(tournament_id=exist_tour.id, state=0).first()
+                    find_match = Game.objects.filter(id=find_tour.game_id).first()
+                    find_match.set_players(players[i].id,  players[i + 1].id, 1)
+                    find_tour.set_state(1)
+                    i += 2
+                exist_tour.update_state(1)
+                TournamentsGame.objects.filter(tournament_id=exist_tour.id, phase=phase, state=1).first().set_state(2)
+                return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
+            elif request.POST.get('statut') == 'delete':
+                exist_tour.clear_players()
+                exist_tour.delete()
+                return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'errors': 'This tournament does not exist !', 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
 def GetProfil(request):
     if request.method == 'GET':
-        if isinstance(request.user, AnonymousUser):
-            return JsonResponse({'success': True, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
-        else:
+        if (isinstance(request.user, AnonymousUser) == False):
             users_list = [{'id': request.user.id, 'pseudo': request.user.pseudo}]
             return JsonResponse({'success': True, 'users': users_list, 'username': request.user.username, 'pseudo': request.user.pseudo, 'email': request.user.email, 'img': request.user.profil_img.url, 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'username': '', 'email': '', 'img': '', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
@@ -196,8 +281,43 @@ def GetBlockedFriends(request):
 def GetStats(request):
     if request.method == 'GET':
         new_Stats = UserProfil.objects.all()
-        users_list = [{'id': usr.id, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        users_list = [{'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def GetTournamentList(request):
+    if request.method == 'GET':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        tournaments = Tournaments.objects.filter(ended=False)
+        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'me': request.user.tournament} for tourn in tournaments]
+        return JsonResponse({'success': True, 'tourList': tourList, 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def GetTournamentInfo(request):
+    if request.method == 'GET':
+        if isinstance(request.user, AnonymousUser):
+            return JsonResponse({'success': False, 'csrf_token': get_token(request)})
+        tournament = Tournaments.objects.filter(id=request.GET.get('id')).first()
+        print(request.GET.get('id'))
+        if tournament:
+            players = tournament.players.all()
+            players_list = [{'pseudo': player.pseudo} for player in players]
+            tourList = [{'id': tournament.id, 'name': tournament.name, 'creator':  UserProfil.objects.get(id=tournament.creator).pseudo, 'players': tournament.players.count(), 'state': tournament.state}]
+            tournament_games = TournamentsGame.objects.filter(tournament_id=tournament.id)
+            games = []
+            for match in tournament_games:
+                game = Game.objects.filter(tournament=match.id).first()
+                if game:
+                    player1_profile = UserProfil.objects.filter(id=game.player1).first()
+                    player2_profile = UserProfil.objects.filter(id=game.player2).first()
+                    if player1_profile and player2_profile:
+                        games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2':  UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'phase': match.phase, 'winner': UserProfil.objects.filter(id=game.winner).first()})
+            return JsonResponse({'success': True, 'tourList': tourList, 'player': players_list, 'games': games, 'owner': tournament.creator == request.user.id, 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'errors': 'Wrong tournament id !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 

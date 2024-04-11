@@ -1,0 +1,140 @@
+
+#chat {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 30vh;
+    max-height: 10vh;
+    color: #fff;
+    cursor: pointer;
+    overflow: hidden;
+    transition: max-height 0.4s;
+}
+
+#chat-toggle {
+    padding: 5px;
+    text-align: center;
+    background-color: #000120;
+}
+
+#chat.chat-open {
+	height: 30vh;
+    max-height: 30vh;
+	background-color: #ffffff;
+}
+
+#chat-content {
+    display: none;
+
+    p, label 
+    {
+        font-weight: 600;
+        margin-top: 20px;
+        text-align: center;
+        color: #000000;
+    }
+    .clickable-row {
+        margin-bottom: 5px;
+        font-size: 20px;
+    }
+    input {
+        margin-bottom: 0px;
+    }
+    .butt {
+        margin-top: 5px;
+    }
+    .butt.friend {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+}
+
+#chat.chat-open #chat-content {
+    display: block;
+}
+
+.chat-box {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 20vh;
+    max-height: 10vh;
+    color: #fff;
+    overflow: hidden;
+    cursor: pointer;
+	transition: max-height 0.4s;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	border-left: solid #000000;
+	border-right: solid #000000;
+	border-top: solid #000000;
+	border-width: 2px;
+}
+
+.chat-box-toggle {
+	border-bottom: solid #000000;
+	border-width: 2px;
+    padding: 5px;
+    text-align: center;
+    background-color: red;
+    
+    span {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin-right: 5px;
+        color:#f14949;
+        font-weight: 700;
+        font-size: 35px;
+    }
+}
+
+.chat-box.chat-box-open {
+    height: 30vh;
+    max-height: 30vh;
+    background-color: #ffffff; 
+}
+
+.chat-box-content {
+    display: none;
+}
+
+.chat-box.chat-box-open .chat-box-content {
+    display: block;
+    overflow-y: auto;
+	overflow-x: hidden;
+    max-height: 65%;
+    max-width: 100%;
+    white-space: normal;
+}
+
+.list-friends {
+    display: inline-block;
+    color: #000000;
+	font-size: 24px;
+    width: 49%;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.list-friends.active{
+	color: #fff;
+	background-color: #2f97dd;
+}
+
+.friends-list {
+    display: flex;
+	justify-content: center;
+    span {
+        color:#f14949;
+        font-weight: 700;
+        font-size: 25px;
+    }
+    .name{
+        margin-right: 20px;
+    }
+}
+

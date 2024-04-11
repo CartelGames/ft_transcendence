@@ -200,8 +200,11 @@ class MyQueueTwoConsumer(AsyncWebsocketConsumer):
         }))
 
 class MyGameConsumer(AsyncWebsocketConsumer):
+    games = []
+
     async def connect(self):
         self.room_name = "game_room"
+        self.user = self.scope["user"]
         await self.channel_layer.group_add(
             self.room_name,
             self.channel_name
@@ -223,7 +226,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
 
         if message == 'game_info':
             await self.channel_layer.group_discard(self.room_name, self.channel_name)
-            self.room_name = text_data_json['game_id']
+            self.room_name = str(text_data_json['game_id'])
             await self.channel_layer.group_add(self.room_name, self.channel_name)
             game = await database_sync_to_async(Game.objects.get)(id=int(text_data_json['game_id']))
             if game.player1 == text_data_json['player_id']:
@@ -241,10 +244,23 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         'player_id': game.player1
                     })
         elif message == 'game_start':
-            await self.channel_layer.group_send(self.room_name,
-                {
-                    'type': 'game_start'
-                })
+            found = False
+            for game in self.games:
+                if game[0] == text_data_json['game_id'] and game[1] != self.user.pseudo:
+                    await self.channel_layer.group_send(self.room_name,
+                    {
+                        'type': 'game_start'
+                    })
+                    print('found for ', text_data_json['game_id'], ' by ', self.user.pseudo)
+                    found = True
+                    await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': 'Game is started good luck !'})
+                    break
+            if not found:
+                self.games.append((text_data_json['game_id'], self.user.pseudo))
+                print(self.games)
+                await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': self.user.pseudo + ' is ready, waiting for the oponent..'})
+
+           
         elif message == 'input':
             player_pos = text_data_json['player_pos']
             input_value = text_data_json['input_value']
@@ -293,6 +309,15 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'poweruptype': poweruptype,
                 }
             )
+        elif message == 'pause':
+            player = text_data_json['player']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'pause',
+                    'player': player,
+                }
+            )
         
     async def game_state(self, event):
         player_pos = event['player_pos']
@@ -301,6 +326,13 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'type': 'game_state',
             'player_pos': player_pos,
             'input_value': input_value,
+        }))
+
+    async def msg(self, event):
+        message = event['message']
+        await self.send(text_data=json.dumps({
+            'type': 'msg',
+            'message': message
         }))
 
     async def game_info(self, event):
@@ -339,6 +371,13 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             'type': 'powerupgenerate',
             'poweruptype': poweruptype,
             'poweruppos': poweruppos,
+        }))   
+    
+    async def pause(self, event):
+        player = event['player']
+        await self.send(text_data=json.dumps({
+            'type': 'pause',
+            'player': player,
         }))   
 
 class MyGameTwoConsumer(AsyncWebsocketConsumer):
