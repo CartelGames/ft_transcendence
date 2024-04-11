@@ -1,0 +1,120 @@
+
+.error-form {
+	margin-top: 20px;
+	font-weight: 500;
+	color: rgb(136, 12, 12);
+	font-size: 16px;
+	text-align: center;
+}
+
+.error-form p {
+	color: rgb(12, 136, 53) !important;
+}
+
+.content {
+	display: block;
+}
+
+/* login */
+.form-container {
+	position: relative;
+	background-color: #ffffff;
+	max-width: 400px;
+	margin: 2rem auto;
+	padding: 20px;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+    background: url("../../images/neon.jpg");
+	box-shadow: 0px 2px 2px 2px rgba(0, 0, 0, 0.9);
+	font-family: $first-font;
+}
+
+.form-container h2 {
+	text-align: center;
+	padding-bottom: 30px;
+}
+
+label {
+	display: block;
+	margin-bottom: 8px;
+	font-size: 1.7rem;
+}
+
+label a {
+	color: #000000;
+	font-weight: 600;
+}
+
+label a:hover {
+	text-decoration: underline;	
+}
+
+input {
+	width: 100%;
+	padding: 8px;
+	border-radius: 5px;
+	margin-bottom: 15px;
+	background-color: #ffffff;
+	box-sizing: border-box;
+}
+
+.butt  {
+	margin-top: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+button {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover {
+	background-color: #45a049;
+}
+
+button2 {
+    background-color: #af4c4c;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button2:hover {
+	background-color: #a04545;
+}
+
+.profil-img {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.img-profil {
+	position: relative;
+	max-width: 150px;
+}
+
+.overlay {
+	position: absolute;
+    transition: opacity 0.3s;
+	max-width: 150px;
+    content: url('../img/plus.png');
+    opacity: 0;
+    z-index: 1;
+}
+
+.overlay:hover {
+    opacity: 0.8;
+    z-index: 1;
+}

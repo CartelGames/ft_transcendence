@@ -8,8 +8,58 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //Initiating scene and camera
 let game_id = "";
 let playerPos = 0;
-let playerOneReady = false;
-let playerTwoReady = false;
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+const username = await getPseudo();
+ws.onopen = function(event) {
+  ws.send(JSON.stringify({
+        'message': username.pseudo + ' joined the game'
+    }));
+};
+
+ws.onmessage = function(event) {
+  const data = JSON.parse(event.data);
+  if (data.type === 'game_state'){
+    updateGameInput(data.player_pos, data.input_value);
+  }
+  else if (data.type === 'game_info'){
+    resetGame()
+  }
+  else if (data.type === 'ball' && playerPos == 1){
+    ball.position.x = data.ball_posx,
+    ball.position.y = data.ball_posy,
+    ballDirection.x = data.ball_dirx;
+    ballDirection.y = data.ball_diry;
+    ballSpeed = data.ball_speed;
+  }
+  else if (data.type === 'powerupgenerate' && playerPos == 1){
+    receivePowerUp(data.poweruptype, data.poweruppos);
+  }
+  else if (data.type === 'game_start'){
+    playerGameStarted();
+  }
+  else if(data.type === 'pause' && playerPos != data.player){
+    togglePause()
+  }
+  else if (data.type === 'msg') {
+    $('#Msg').text('Message: ' + data.message);
+}
+};
+
+ws.onclose = function(event) {
+    console.log("WebSocket closed!");
+};
+
+export function reloadGame(set_game_id, p1, p2) {
+  game_id = set_game_id;
+  updateGameState(p1, p2);
+  ws.send(JSON.stringify({
+    type: 'game_info',
+    game_id: game_id,
+    player_id: id
+  }));
+  // reload la partie avec le game_id
+  // fonction appelé via queue.js pour lancer des nouvelles games
+}
 
 function updateGameState(p1, p2)
 {
@@ -44,7 +94,7 @@ const renderer = new THREE.WebGLRenderer({
 
 //FPS counter top left
 const stats = new Stats();
-document.body.appendChild(stats.dom);
+document.getElementById("game").appendChild(stats.dom);
 
 let isPaused = true;
 //Setting camera position
@@ -100,8 +150,16 @@ function checkPowerUp(){
             RBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            if(playerPos == 0)
+            if(playerPos == 0){
               ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -131,8 +189,16 @@ function checkPowerUp(){
             LBoardSpeedMalus = true;
             break;
           case "randomBallMalus":
-            if(playerPos == 0)
+            if(playerPos == 0){
               ballDirection.y = (getRandomInt(100) - 50) / 15;
+              ws.send(JSON.stringify({
+                type: 'ball',
+                ball_posx: ball.position.x,
+                ball_posy: ball.position.y,
+                ball_dirx: ballDirection.x,
+                ball_diry: ballDirection.y,
+                ball_speed: ballSpeed
+            }));}
             break;
         }
       }
@@ -148,7 +214,6 @@ function checkPowerUp(){
 
 function createPowerUp(){
   const capsuleL = new THREE.SphereGeometry();
-  const capsuleR = new THREE.SphereGeometry();
   let powerUpMaterial;
   switch (getRandomInt(4)) {
       case 0:
@@ -169,13 +234,17 @@ function createPowerUp(){
         break;
   }
   const modelL = new THREE.Mesh( capsuleL, powerUpMaterial);
-  const modelR = new THREE.Mesh( capsuleR, powerUpMaterial);
+  const modelR = new THREE.Mesh( capsuleL, powerUpMaterial);
   powerUpLGroup.add(modelL);
   powerUpRGroup.add(modelR);
   let pos = getRandomInt(20) + 1;
   powerUpLGroup.position.set(0,pos,0);
   powerUpRGroup.position.set(0,-pos,0);
-
+  ws.send(JSON.stringify({
+    type: 'powerupgenerate',
+    poweruptype: powerUpType,
+    poweruppos: pos,
+  }));
   scene.add(powerUpLGroup);
   scene.add(powerUpRGroup);
 }
@@ -289,6 +358,8 @@ let textMenu;
 startGame();
 
 function startGame() {
+  var HideDiv = document.getElementById('LeaveQueue')
+  HideDiv.style.display = 'none';
   score[0] = 0;
   score[1] = 0;
   powerUpSpeed = 0.1;
@@ -341,7 +412,7 @@ function playerGameStarted(event) {
 }
 
 function onMouseClick(event) {
-  // Update the mouse position
+  /*// Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
@@ -359,8 +430,12 @@ function onMouseClick(event) {
     scene.add(ball);
     // Hide the "Start Game" button
     menu.remove(textMenu);
-    scoring();
-  }
+    scoring();*/
+    ws.send(JSON.stringify({
+      type: 'game_start',
+      game_id: game_id
+    }));
+  //}
 }
 
 document.addEventListener('mousedown', onMouseClick);
@@ -398,9 +473,15 @@ scene.add(pointLight, pointLight2);
 //Event listeners
 document.addEventListener('keydown', onKeyDown);
 document.addEventListener('keyup', onKeyUp)
+let id = (await getPseudo()).id;
 window.addEventListener('keydown', function (event) {
-  if (event.key === 'p')
+  if (event.key === 'p') {
     togglePause();
+    ws.send(JSON.stringify({
+      type: 'pause',
+      player: playerPos,
+    }));
+  }
 });
 
 //Speed and starting direction settings
@@ -417,78 +498,6 @@ function onKeyDown(event) {
 
 function onKeyUp(event) {
   keyState[event.keyCode] = false; 
-}
-
-//Ball data and timer for AI
-let currentPos = ball.position;
-let currentDir = ballDirection;
-let predictedNextDir = "none";
-let predictedNextPos = "none";
-let predictedFinalPos = "none";
-let timer = 0;
-let isBotPlaying = true;
-
-function predictNextDir(currentPos, currentDir) {
-  let delta_x = currentDir.x * ballSpeed;
-  let delta_y = currentDir.y * ballSpeed;
-  let predictedPosition = $.extend( true, {}, currentPos);
-  let predictedDir = $.extend( true, {}, currentDir);
-  predictedPosition.x += delta_x;
-  predictedPosition.y += delta_y;
-
-  // Mirror la direction y si la coordonnée verticale de la position sort de la map
-  if (predictedPosition.y > canvasBounds.top || predictedPosition.y < canvasBounds.bottom)
-    predictedDir.y *= -1;
-
-  // Mirror la direction x si la coordonnée horizontale de la position passe derrière la raquette adverse
-  if (predictedPosition.x < playerOne.position.x)
-    predictedDir.x *= -1;
-
-  return predictedDir;
-}
-
-function predictNextPos(currentPos, currentDir) {
-  let delta_x = currentDir.x * ballSpeed;
-  let delta_y = currentDir.y * ballSpeed;
-  let predictedPosition = $.extend( true, {}, currentPos);
-  predictedPosition.x += delta_x;
-  predictedPosition.y += delta_y;
-
-  // Mirror la composante y si la coordonnée verticale de la position sort de la map
-  if (predictedPosition.y > canvasBounds.top)
-    predictedPosition.y = canvasBounds.top - (predictedPosition.y - canvasBounds.top);
-  else if (predictedPosition.y < canvasBounds.bottom)
-    predictedPosition.y = canvasBounds.bottom - (predictedPosition.y - canvasBounds.bottom);
-
-  // Mirror la composante x si la coordonnée horizontale de la position passe derrière la raquette adverse
-  if (predictedPosition.x < playerOne.position.x)
-    predictedPosition.x = playerOne.position.x - (predictedPosition.x - playerOne.position.x);
-
-  // Corriger la position prédite si elle passe derrière la board de l'IA
-
-  if (predictedPosition.x > playerTwo.position.x + 1)
-  {
-    let slope = (predictedPosition.y - currentPos.y) / (predictedPosition.x - currentPos.x);
-    predictedPosition.x = playerTwo.position.x - 1;
-    predictedPosition.y = currentPos.y + slope * (predictedPosition.x - currentPos.y);
-  }
-
-  return predictedPosition;
-}
-
-function predictFinalPos(predictedNextPos, predictedNextDir) {
-  let predictedFinalPos = $.extend( true, {}, predictedNextPos);
-  let predictedFinalDir = $.extend( true, {}, predictedNextDir);
-
-  while (predictedFinalPos.x < playerTwo.position.x - 1)
-  {
-    predictedFinalPos = predictNextPos(predictedNextPos, predictedNextDir);
-    predictedFinalDir = predictNextDir(predictedNextPos, predictedNextDir)
-    predictedNextPos = $.extend( true, {}, predictedFinalPos);
-    predictedNextDir = $.extend( true, {}, predictedFinalDir);
-  }
-
-  return predictedFinalPos;
 }
 
 scoring();
@@ -523,6 +532,15 @@ function updated() {
   // Check for bottom and top boundary collisions
   if (ball.position.y  < canvasBounds.bottom || ball.position.y  > canvasBounds.top) {
     ballDirection.y *= -1; // reverse the Y direction of the ball
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerOne collision
@@ -532,6 +550,15 @@ function updated() {
       ball.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   // Check for playerTwo collision
@@ -541,106 +568,101 @@ function updated() {
       ball.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
     ballDirection.x *= -1; // reverse the X direction of the ball
     ballSpeed *= 1.1;
-    if (isBotPlaying == true)
-    {
-      predictedNextPos = "none";
-      predictedNextDir = "none";
-      predictedFinalPos = "none";
-      currentPos = "none";
-      currentDir = "none";
-    }
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //Check for top boundary collision for players
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   // Check for bottom boundary collision for players
   if (playerOne.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerOne.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y + boardHeight/2 > canvasBounds.top) {
     playerTwo.position.y = canvasBounds.top - boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
   if (playerTwo.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
+    if(playerPos == 0){
+      ws.send(JSON.stringify({
+        type: 'ball',
+        ball_posx: ball.position.x,
+        ball_posy: ball.position.y,
+        ball_dirx: ballDirection.x,
+        ball_diry: ballDirection.y,
+        ball_speed: ballSpeed
+    }));}
   }
 
   //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
 
-  // AI PART - Commented conditions are potentiel nerfs.
-  // -----------------------------------------------------------------------------
-  if (isBotPlaying == true)
-  {
-    if (timer % 60 == 0) // would timer % current fps count be more precise?
-    {
-      currentPos = $.extend( true, {}, ball.position);
-      currentDir = $.extend( true, {}, ballDirection);
-
-      // Si aucune prédiction n'est faite ou que la prédiction précédente est fausse, faire une prédiction
-      if (predictedFinalPos == "none" || predictedNextPos == "none"
-      || Math.trunc(predictedNextPos.x) != Math.trunc(currentPos.x)
-      || Math.trunc(predictedNextPos.y) != Math.trunc(currentPos.y))
-      {
-        console.log("predict");
-        predictedNextPos = predictNextPos(currentPos, currentDir);
-        predictedNextDir = predictNextDir(currentPos, currentDir)
-        predictedFinalPos = predictFinalPos(predictedNextPos, predictedNextDir);
-      }
-    }
-
-    if (powerRUp == true && (currentDir.x < 0 || (currentDir.x > 0 && currentPos.x <= -canvasBounds.right / 2)) && powerUpRGroup.position.x > playerTwo.position.x - canvasBounds.right / 6) // Si la balle s'éloigne et qu'un powerup s'approche, aller récup le powerup
-    {
-      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < powerUpRGroup.position.y)
-        // keyState[38] pour que le j2 aille vers le haut
-      keyState[38] = true;
-      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > powerUpRGroup.position.y)
-        // keyState[40] pour que le j2 aille vers le bas
-      keyState[40] = true;
-    }
-    else if (currentDir.x < 0 || currentPos.x <= -canvasBounds.right / 2) // Si la balle s'éloigne et qu'il n'y a pas de powerup, retourner au centre
-    {
-      if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < 0)
-        keyState[38] = true;
-      else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > 0)
-        keyState[40] = true;
-    }
-    else // Si la balle se rapproche, aller vers sa destination
-    {
-      if (predictedFinalPos != "none")
-      {
-        if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < predictedFinalPos.y)
-          keyState[38] = true;
-        else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > predictedFinalPos.y)
-          keyState[40] = true;
-      }
-      else
-      {
-        if (playerTwo.position.y + (boardHeight * playerTwo.scale.y * 0.5) / 2 < currentPos.y)
-          keyState[38] = true;
-        else if (playerTwo.position.y - (boardHeight * playerTwo.scale.y * 0.5) / 2 > currentPos.y)
-          keyState[40] = true;
-      }
-    }
-    timer++;
-  }
-  // -----------------------------------------------------------------------------
-
   //Moves the boards
-  if (keyState[87])
-    movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-  if (keyState[83])
-    movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-  if (keyState[38])
-    movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-  if (keyState[40])
-    movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-
-  if (isBotPlaying == true)
-  {
-    keyState[38] = false;
-    keyState[40] = false;
+  if (playerPos === 0) {
+    if (keyState[87])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
+  }
+  else {
+    if (keyState[87])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[83])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    if (keyState[38])
+      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+    if (keyState[40])
+      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+    ws.send(JSON.stringify({
+      type: 'input',
+      player_pos: playerPos,
+      input_value: playerTwo.position.y
+    }));
   }
 }
 
@@ -651,6 +673,11 @@ function movePong(mesh, targetY) {
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
+  let playerPos;
+  if(mesh === playerOne)
+    playerPos = 0;
+  else
+    playerPos = 1;
 }
 
 function togglePause() {
@@ -665,41 +692,41 @@ function togglePause() {
   }
 }
 
-// let pseudo = username.pseudo;
-// let pseudo2 = username.pseudo;
-// async function printPseudo(){
-//   console.log(pseudo2);
-//   if (pseudo.length > 8)
-//     pseudo = pseudo.substr(0,7) + '.';
-//   if (pseudo2.length > 8)
-//     pseudo2 = pseudo2.substr(0,7) + '.';
-//   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
-//     const cyberfont = loader.parse(json);
-//       const geometry = new TextGeometry( pseudo, {
-//         font: cyberfont,
-//         size: 2,
-//         height: 1,
-//       } );
-//       const geometry2 = new TextGeometry( pseudo2, {
-//         font: cyberfont,
-//         size: 2,
-//         height: 1,
-//       } );
-//       //var center = new THREE.Vector3();
-//       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
-//       const textMesh = new THREE.Mesh(geometry, textMaterial);
-//       textMesh.geometry.center();
-//       textMesh.position.set(canvasBounds.left + 20, 15, -2);
-//       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-//       textMesh2.geometry.center();
-//       textMesh2.position.set(canvasBounds.right - 20, 15, -2);
-//       scoreGrp.clear();
-//       scoreGrp.add(textMesh, textMesh2);
-//       scene.add(scoreGrp);
-//   });
-// }
-// //I AM CON, SCOREGRP NOT GOOD, TO FIX LATER
-// printPseudo();
+let pseudo = username.pseudo;
+let pseudo2 = username.pseudo;
+async function printPseudo(){
+  console.log(pseudo2);
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
+  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( pseudo2, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      //var center = new THREE.Vector3();
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.geometry.center();
+      textMesh.position.set(canvasBounds.left + 20, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.geometry.center();
+      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
+}
+//I AM CON, SCOREGRP NOT GOOD, TO FIX LATER
+printPseudo();
 
 function scoring(){
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
@@ -796,7 +823,42 @@ function lWin(){
   });
 }
 
+let winner;
+async function sendGameInfo(scene, score1, score2){
+  if (score1 == 2){
+    winner = 'player1';
+  }
+  if (score2 == 2){
+    winner = 'player2';
+  }
+
+  const user = await getPseudo();
+  const data = {
+    type: 'newGame',
+    player1: user.id,
+    pseudo_p1: user.pseudo,
+    winner: winner,
+  } 
+  $.ajax({
+    type: 'POST',
+    url: '/newGame/',
+    headers: { 'X-CSRFToken': token },
+    data: data,
+    success: function (data) {
+      console.log(data.errors);
+        if (data.success) {
+            console.log('new game created');
+        }
+        token = data.csrf_token;
+    },
+    error: function (error) {
+        console.log('Erreur lors de la creation d\'une partie.');
+    }
+  });
+}
+
 async function resetGame(){
+  await sendGameInfo(scene, score[0], score[1]);
   scene.remove(ball);
   score[0] = 0;
   score[1] = 0;
