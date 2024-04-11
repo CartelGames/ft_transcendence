@@ -8,8 +8,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //Initiating scene and camera
 let game_id = "";
 let playerPos = 0;
-let playerOneReady = false;
-let playerTwoReady = false;
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
@@ -675,6 +673,11 @@ function movePong(mesh, targetY) {
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
+  let playerPos;
+  if(mesh === playerOne)
+    playerPos = 0;
+  else
+    playerPos = 1;
 }
 
 function togglePause() {

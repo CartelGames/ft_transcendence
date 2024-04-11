@@ -88,7 +88,6 @@ def UserSendChat(request):
                 'username': request.user.username,
                 'email': request.user.email,
             }
-            MyConsumer.send_message_to_user(friend.id)
             return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Error', 'csrf_token': get_token(request)})
