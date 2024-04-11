@@ -341,7 +341,7 @@ window.addEventListener('keydown', function (event) {
 });
 
 //Speed and starting direction settings
-let ballSpeed = 0.5;
+let ballSpeed = 0.25;
 let ballDirection = { x: 1, y: 1 };
 
 //Making sure two players can play
@@ -439,7 +439,7 @@ function updated() {
 
   //Player2 gets a point
   if (ball.position.x < canvasBounds.left){
-    ballSpeed = 0.5;
+    ballSpeed = 0.25;
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
@@ -450,7 +450,7 @@ function updated() {
   }
   //Player1 gets a point
   if (ball.position.x > canvasBounds.right) {
-    ballSpeed = 0.5;
+    ballSpeed = 0.25;
     ball.position.set(0,0,0);
     score[0]++;
     if (score[0] == 10)
@@ -512,7 +512,7 @@ function updated() {
   // -----------------------------------------------------------------------------
   if (isBotPlaying == true)
   {
-    if (timer % 30 == 0) // would timer % current fps count be more precise?
+    if (timer % 60 == 0) // would timer % current fps count be more precise?
     {
       currentPos = $.extend( true, {}, ball.position);
       currentDir = $.extend( true, {}, ballDirection);
