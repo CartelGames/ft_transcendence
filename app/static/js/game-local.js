@@ -665,41 +665,41 @@ function togglePause() {
   }
 }
 
-let pseudo = username.pseudo;
-let pseudo2 = username.pseudo;
-async function printPseudo(){
-  console.log(pseudo2);
-  if (pseudo.length > 8)
-    pseudo = pseudo.substr(0,7) + '.';
-  if (pseudo2.length > 8)
-    pseudo2 = pseudo2.substr(0,7) + '.';
-  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
-    const cyberfont = loader.parse(json);
-      const geometry = new TextGeometry( pseudo, {
-        font: cyberfont,
-        size: 2,
-        height: 1,
-      } );
-      const geometry2 = new TextGeometry( pseudo2, {
-        font: cyberfont,
-        size: 2,
-        height: 1,
-      } );
-      //var center = new THREE.Vector3();
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
-      const textMesh = new THREE.Mesh(geometry, textMaterial);
-      textMesh.geometry.center();
-      textMesh.position.set(canvasBounds.left + 20, 15, -2);
-      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-      textMesh2.geometry.center();
-      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
-      scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2);
-      scene.add(scoreGrp);
-  });
-}
-//I AM CON, SCOREGRP NOT GOOD, TO FIX LATER
-printPseudo();
+// let pseudo = username.pseudo;
+// let pseudo2 = username.pseudo;
+// async function printPseudo(){
+//   console.log(pseudo2);
+//   if (pseudo.length > 8)
+//     pseudo = pseudo.substr(0,7) + '.';
+//   if (pseudo2.length > 8)
+//     pseudo2 = pseudo2.substr(0,7) + '.';
+//   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+//     const cyberfont = loader.parse(json);
+//       const geometry = new TextGeometry( pseudo, {
+//         font: cyberfont,
+//         size: 2,
+//         height: 1,
+//       } );
+//       const geometry2 = new TextGeometry( pseudo2, {
+//         font: cyberfont,
+//         size: 2,
+//         height: 1,
+//       } );
+//       //var center = new THREE.Vector3();
+//       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+//       const textMesh = new THREE.Mesh(geometry, textMaterial);
+//       textMesh.geometry.center();
+//       textMesh.position.set(canvasBounds.left + 20, 15, -2);
+//       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+//       textMesh2.geometry.center();
+//       textMesh2.position.set(canvasBounds.right - 20, 15, -2);
+//       scoreGrp.clear();
+//       scoreGrp.add(textMesh, textMesh2);
+//       scene.add(scoreGrp);
+//   });
+// }
+// //I AM CON, SCOREGRP NOT GOOD, TO FIX LATER
+// printPseudo();
 
 function scoring(){
   ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
