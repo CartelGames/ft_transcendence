@@ -374,7 +374,7 @@ function startGame() {
   boardUpscale = 1;
   powerUpType = "none";
   const ttfloader = new TTFLoader();
-    ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+    ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
       const cyberfont = loader.parse(json);
         const geometry = new TextGeometry( 'Start', {
           font: cyberfont,
@@ -700,7 +700,7 @@ async function printPseudo(){
     pseudo = pseudo.substr(0,7) + '.';
   if (pseudo2.length > 8)
     pseudo2 = pseudo2.substr(0,7) + '.';
-  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( pseudo, {
         font: cyberfont,
@@ -729,7 +729,7 @@ async function printPseudo(){
 printPseudo();
 
 function scoring(){
-  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( score[0].toString(), {
         font: cyberfont,
@@ -753,7 +753,7 @@ function scoring(){
 }
 
 function rWin(){ 
-  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( "LOSE", {
         font: cyberfont,
@@ -789,7 +789,7 @@ function rWin(){
 }
 
 function lWin(){
-  ttfloader.load('static/models/fonts/cyberFont.ttf', (json) => {
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
       const geometry = new TextGeometry( "WIN", {
         font: cyberfont,
