@@ -500,7 +500,8 @@ function updated() {
     if (score[1] == 2) {
       rWin();
       ended = true;
-      console.log('send');
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -520,6 +521,8 @@ function updated() {
     if (score[0] == 2) {
       lWin();
       ended = true;
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -641,6 +644,7 @@ function updated() {
       movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
     ws.send(JSON.stringify({
       type: 'input',
+      game_id: game_id,
       player_pos: playerPos,
       input_value: playerOne.position.y
     }));
@@ -656,6 +660,7 @@ function updated() {
       movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
     ws.send(JSON.stringify({
       type: 'input',
+      game_id: game_id,
       player_pos: playerPos,
       input_value: playerTwo.position.y
     }));
