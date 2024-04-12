@@ -39,7 +39,6 @@ a,
 p {
   margin: 0;
   padding: 0;
-  font-size: 2.5rem;
   text-align: center;
 }
 
@@ -63,7 +62,6 @@ h2 {
 }
 
 h3 {
-  font-size: 2rem;
   margin: 0;
   padding: 0;
 }
@@ -84,9 +82,10 @@ header {
   align-items: center;
   text-transform: uppercase;
   font-weight: 600;
-  height: 8rem;
+  max-height: 10rem;
   margin-bottom: 1.5rem;
   padding: 0;
+  flex-wrap: wrap;
 }
 
 nav {
@@ -118,7 +117,8 @@ nav {
   margin-right: 20px;
   font-family: "Honk", sans-serif;
   font-weight: 200;
-  font-size: 3em;
+  font-size: 3rem;
+  text-align: center;
 }
 
 header .header-items ul li a::after {
@@ -423,6 +423,42 @@ tbody td img {
   margin: 8px 0 0;
 }
 
+#home-page .card {
+  background-color: #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  margin: 20px auto;
+  width: 80%;
+  font-size: medium;
+}
+#home-page .home-profile-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+  border-bottom: 1px solid #e5e5e5;
+}
+#home-page .home-profile-card-title {
+  margin: 0;
+  color: #333;
+}
+#home-page .home-profile-card-image {
+  border-radius: 50%;
+  height: 80px;
+  width: 80px;
+  -o-object-fit: cover;
+     object-fit: cover;
+}
+#home-page .home-profile-card-body {
+  padding: 20px;
+}
+#home-page .home-profile-card-homename {
+  margin: 0;
+  color: #777;
+}
+#home-page .home-profile-card-description {
+  color: #999;
+}
+
 .error-form {
   margin-top: 20px;
   font-weight: 500;
@@ -451,6 +487,7 @@ tbody td img {
   background: url("../../images/neon.jpg");
   box-shadow: 0px 2px 2px 2px rgba(0, 0, 0, 0.9);
   font-family: "Honk", sans-serif;
+  font-size: 1.7rem;
 }
 
 .form-container h2 {

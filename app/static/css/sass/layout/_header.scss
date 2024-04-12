@@ -11,9 +11,10 @@ header {
 	align-items: center;
 	text-transform: uppercase;
 	font-weight: 600;
-	height: 8rem;
+	max-height: 10rem;
 	margin-bottom: 1.5rem;
 	padding: 0;
+	flex-wrap: wrap;
 }
 
 nav {
@@ -45,7 +46,8 @@ nav {
 	margin-right: 20px;
 	font-family: 'Honk', sans-serif;
 	font-weight: 200;
-	font-size: 3em;
+	font-size: 3rem;
+	text-align: center;
 }
 
 header .header-items ul li a::after {
