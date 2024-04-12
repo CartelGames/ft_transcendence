@@ -80,7 +80,7 @@ function updateGameInput(input_pos, input_value)
     playerOne.position.y = input_value;
   else
     playerTwo.position.y = input_value;
-  if(isPaused == true){
+  if(isPaused == true && score[0] != 0 && score [1] != 0){
     printPseudo();
   }
 }
@@ -390,7 +390,6 @@ function startGame() {
   });
 }
 
-
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
@@ -402,6 +401,7 @@ scene.add(zoneMesh);
 function playerGameStarted(event) {
   if (isPaused) {
     // Start the game
+    document.removeEventListener('mousedown', onMouseClick);
     isPaused = !isPaused;
     scene.remove(zoneMesh);
     scene.add(ball);
@@ -412,30 +412,10 @@ function playerGameStarted(event) {
 }
 
 function onMouseClick(event) {
-  /*// Update the mouse position
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  // Update the raycaster
-  raycaster.setFromCamera(mouse, camera);
-
-  // Get the list of intersecting objects
-  const intersects = raycaster.intersectObject(zoneMesh);
-
-  // Check if the "Start Game" button was clicked
-  if (intersects.length > 0 && isPaused) {
-    // Start the game
-    isPaused = !isPaused;
-    scene.remove(zoneMesh);
-    scene.add(ball);
-    // Hide the "Start Game" button
-    menu.remove(textMenu);
-    scoring();*/
-    ws.send(JSON.stringify({
-      type: 'game_start',
-      game_id: game_id
-    }));
-  //}
+  ws.send(JSON.stringify({
+    type: 'game_start',
+    game_id: game_id
+  }));
 }
 
 document.addEventListener('mousedown', onMouseClick);
