@@ -1,13 +1,18 @@
 import * as THREE from 'three';
 import { FontLoader } from 'three/addons/loaders/FontLoader.js'
+import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { TTFLoader } from 'three/addons/loaders/TTFLoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
 
 
 //SETUP
 let game_id = "";
 let playerPos = 0;
-let isPaused = 0;
+let isPaused = 1;
+let ttfloader;
+let loader = new FontLoader();
 const username = await getPseudo();
 let id = (await getPseudo()).id;
 let pseudo, pseudo2;
@@ -25,11 +30,11 @@ const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
-//camera.position.set(0, 0, 1) //initial camera position, once game starts, make it travel to final position using gsap
-//camera.lookAt(0, 1, 1);
+camera.position.set(0, -20, 2) //initial camera position, once game starts, make it travel to final position using gsap
+camera.lookAt(0, 0, 5);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.update();
-camera.position.z = 50; //camera final position
+//camera.position.z = 50; //camera final position
 
 renderer.setPixelRatio(canvas.width/canvas.height);
 renderer.setSize(canvas.width, canvas.height, false);
@@ -42,27 +47,6 @@ const canvasBounds = {
   bottom: -((canvas.height/2) * mConvert)* 50 * 9.3,
   top: ((canvas.height/2) * mConvert)* 50 * 9.3
 };
-
-//shader code, subject to change
-let vertex; 
-let fragment;
-async function fetchingfragShader(){
-  return fetch('static/js/shaders/fragmenttwo.glsl').then((response) => response.text()).then((text) => {fragment = text;});
-}
-await fetchingfragShader();
-async function fetchingvertShader(){
-  return fetch('static/js/shaders/vertextwo.glsl').then((response) => response.text()).then((text) => {vertex = text;});
-}
-await fetchingvertShader();
-
-const shaderMaterial = new THREE.ShaderMaterial({
-  uniforms: {
-    time: { value: 0.0 },
-    resolution: { value: new THREE.Vector2() }
-  },
-  vertexShader: vertex,
-  fragmentShader: fragment
-});
 
 const pointlight = new THREE.PointLight(0xffffff);
 const ambientlight = new THREE.AmbientLight(0xffffff);
@@ -90,36 +74,177 @@ function walls(){
   wallWest.position.x = canvasBounds.left;
 }
 walls();
+
+const menu = new THREE.Group();
+let textMenu;
+startGame();
+
+function startGame() {
+  const ttfloader = new TTFLoader();
+    ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+      const cyberfont = loader.parse(json);
+        const geometry = new TextGeometry( 'Start', {
+          font: cyberfont,
+          size: 3,
+          height: 1,
+        } );
+        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+        textMenu = new THREE.Mesh(geometry, textMaterial);
+        textMenu.geometry.center();
+        textMenu.position.set(0, 10, 3);
+        textMenu.rotateX(1.57);
+        menu.clear();
+        menu.add(textMenu);
+        scene.add(menu);
+  });
+}
+
+function startAnimation(){
+  gsap.to(camera.position, {
+    duration: 2, // Duration of the transition (in seconds)
+    x: 0, // Final x position
+    y: 0, // Final y position
+    z: 50, // Final z position
+    ease: 'power2.out', // Easing function
+    onUpdate: () => {
+      // Update the camera target during the transition
+      camera.lookAt(0, 0, 0);
+    },
+    onComplete: () => {
+      isPaused = !isPaused;
+    }
+  });
+  gsap.to(bikeOne.position, {
+      duration: 2, // Duration of the transition (in seconds)
+      x: -35, // Final x position
+      y: 0, // Final y position
+      z: 0, // Final z position
+      ease: 'power2.out' // Easing function
+  });
+    // Use gsap.to() to transition the bike two position
+  gsap.to(bikeTwo.position, {
+      duration: 2, // Duration of the transition (in seconds)
+      x: 35, // Final x position
+      y: 0, // Final y position
+      z: 0, // Final z position
+      ease: 'power2.out' // Easing function
+  });
+  rotateBikesAnimation(bikeOne);
+  rotateBikesAnimation(bikeTwo);
+}
+
+function rotateBikesAnimation(bike){
+  gsap.to(bike.rotation, {
+    duration: 2,
+    z: Math.PI,
+    ease: 'power2.out',
+  });
+}
+
+function rotateBikesGame(bike, x,y){
+  gsap.to(bike.rotation, {
+    duration: 0.5,
+    x: Math.PI * x,
+    y: Math.PI * y,
+    ease: 'power2.out',
+  });
+}
+
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+const zoneGeometry = new THREE.PlaneGeometry(50, 10);
+const zoneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.0 });
+const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
+zoneMesh.position.y = canvasBounds.top - 2;
+zoneMesh.position.z += 3; // Move the plane slightly behind the other objects
+zoneMesh.rotateX(1.57);
+scene.add(zoneMesh);
+
+function playerGameStarted(event) {
+  if (isPaused) {
+    // Start the game
+    isPaused = !isPaused;
+    scene.remove(zoneMesh);
+    // Hide the "Start Game" button
+    menu.remove(textMenu);
+  }
+}
+
+function onMouseClick(event) {
+  // Update the mouse position
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Update the raycaster
+  raycaster.setFromCamera(mouse, camera);
+
+  // Get the list of intersecting objects
+  const intersects = raycaster.intersectObject(zoneMesh);
+
+  // Check if the "Start Game" button was clicked
+  if (intersects.length > 0 && isPaused) {
+    // Start the game
+    startAnimation();
+    scene.remove(zoneMesh);
+    // Hide the "Start Game" button
+    menu.remove(textMenu);
+  }
+}
+document.addEventListener('mousedown', onMouseClick);
+
 //SETUP DONE
 
 //Player objects setup
 const bikeSpeed = 0.1;
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
-let bikeOne; //player1
-let bikeTwo; //player2
+let bikeOne = new THREE.Group(); //player1
+let bikeTwo = new THREE.Group(); //player2
 //when a player connects, create a bike
+
+new GLTFLoader().load( '/static/models/gltf/tronbike.glb', function ( gltf ) {
+
+  const model = gltf.scene;
+   model.scale.set(20, 20, 20);
+   model.rotation.set(Math.PI /2, Math.PI /2, 0);
+  
+  bikeOne.add(model);
+} );
+new GLTFLoader().load( '/static/models/gltf/tronbike.glb', function ( gltf ) {
+
+  const model = gltf.scene;
+   model.scale.set(20, 20, 20);
+   model.rotation.set(Math.PI /2, -Math.PI /2, 0);
+  
+  bikeTwo.add(model);
+} );
+
+
+
 function createPlayer(){
     const bike = new THREE.CapsuleGeometry(1,1,4,8);
     const material = new THREE.MeshStandardMaterial( {color: 0xffffff});
-    bikeOne = new THREE.Mesh(bike, material);
+    //bikeOne = new THREE.Mesh(bike, material);
     scene.add(bikeOne);
-    bikeOne.position.set(-35, 0, 1);
-    bikeOne.rotateX(1.57);
-    bikeTwo = new THREE.Mesh(bike, material);
+    bikeOne.position.set(-10, -10, 0);
+    bikeOne.rotateZ(1.57);
+    //bikeTwo = new THREE.Mesh(bike, material);
     scene.add(bikeTwo);
-    bikeTwo.position.set(35, 0, 1);
-    bikeTwo.rotateX(1.57);
+    bikeTwo.position.set(10, -10, 0);
+    bikeTwo.rotateZ(-1.57);
 }
 createPlayer();
 
 //movements (cant go backwards into your own trail, as thats cheating)
+//TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
 window.addEventListener('keydown', function (event) {
   if (event.key === 'p')
     togglePause();
   if (event.key === 'w')
-    if (bikeOneDir.y != -1)
+    if (bikeOneDir.y != -1){
+      rotateBikesGame(bikeOne, 0, 1);
       bikeOneDir = {x:0, y:1};
+    }
   if (event.key === 's')
     if (bikeOneDir.y != 1)
       bikeOneDir = {x:0, y:-1};
@@ -254,7 +379,10 @@ function checkCollision(player, trail){
 
     if (distance < 1) return true; // 1 is the radius of the trail
   }
-
+  if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
+      player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
+    return true;
+  }
   return false;
 }
 
@@ -296,9 +424,7 @@ function animate() {
     if (!isPaused){
       updated();
     }
-    shaderMaterial.uniforms.time.value += 0.005;
     renderer.render(scene, camera);
     controls.update();
-    shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
 }
 animate();
