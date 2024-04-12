@@ -80,7 +80,11 @@ function updateGameInput(input_pos, input_value)
     playerOne.position.y = input_value;
   else
     playerTwo.position.y = input_value;
+<<<<<<< HEAD
+  if(isPaused == true && score[0] != 0 && score [1] != 0){
+=======
   if(isPaused == true){
+>>>>>>> main
     printPseudo();
   }
 }
@@ -390,7 +394,10 @@ function startGame() {
   });
 }
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> main
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
@@ -402,6 +409,10 @@ scene.add(zoneMesh);
 function playerGameStarted(event) {
   if (isPaused) {
     // Start the game
+<<<<<<< HEAD
+    document.removeEventListener('mousedown', onMouseClick);
+=======
+>>>>>>> main
     isPaused = !isPaused;
     scene.remove(zoneMesh);
     scene.add(ball);
@@ -412,6 +423,12 @@ function playerGameStarted(event) {
 }
 
 function onMouseClick(event) {
+<<<<<<< HEAD
+  ws.send(JSON.stringify({
+    type: 'game_start',
+    game_id: game_id
+  }));
+=======
   /*// Update the mouse position
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -436,6 +453,7 @@ function onMouseClick(event) {
       game_id: game_id
     }));
   //}
+>>>>>>> main
 }
 
 document.addEventListener('mousedown', onMouseClick);
