@@ -187,7 +187,7 @@ function getTournamentList() {
                         alreadyIn = true;
                 });
                 friendsList.forEach(function (list) {
-                    var friendDiv =$('<li><span style="font-weight: bold; font-size: 24px">' + list.name + '</span> (' + list.players + ' players) - <i>created by ' + list.creator + '</i></li>');
+                    var friendDiv =$('<li>' + list.name + ' <span style="font-weight: bold; font-size: 24px">(' + list.players + ' players) - <i>created by ' + list.creator + '</span></i></li>');
                     
                     if (list.me != list.id && !alreadyIn) {
                         var clickableRow = $('<button type="submit" style="margin-left: 25px;">Join</button>');

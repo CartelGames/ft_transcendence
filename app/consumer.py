@@ -252,10 +252,10 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         'player_id': game.player1
                     })
         elif message == 'game_start':
-            found = False
             game = self.games[int(text_data_json['game_id'])][0]
-            if game[2] == 2:
+            if not game or game[2] == 2 or game[0] != self.user.id and game[1] != self.user.id:
                 return
+            found = False
             db_game = await database_sync_to_async(Game.objects.get)(id=int(text_data_json['game_id']))
             if not db_game or db_game.ended:
                 return
