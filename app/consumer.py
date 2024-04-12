@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
 from .models import UserProfil, Game
-from asgiref.sync import async_to_sync
+from asgiref.sync import async_to_sync, sync_to_async
 from channels.db import database_sync_to_async
 import json, asyncio
 
@@ -229,6 +229,11 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             self.room_name = str(text_data_json['game_id'])
             await self.channel_layer.group_add(self.room_name, self.channel_name)
             game = await database_sync_to_async(Game.objects.get)(id=int(text_data_json['game_id']))
+            if game.ended:
+                winner = await database_sync_to_async(Game.objects.get)(id=game.winner)
+                if winner:
+                    await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': winner.pseudo + ' is ready, waiting for the oponent..'})
+                    return
             if game.player1 == text_data_json['player_id']:
                 await self.channel_layer.group_send(self.room_name,
                     {
@@ -251,16 +256,35 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     {
                         'type': 'game_start'
                     })
-                    print('found for ', text_data_json['game_id'], ' by ', self.user.pseudo)
                     found = True
                     await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': 'Game is started good luck !'})
                     break
+                elif game[0] == text_data_json['game_id']:
+                    found = True
             if not found:
                 self.games.append((text_data_json['game_id'], self.user.pseudo))
-                print(self.games)
                 await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': self.user.pseudo + ' is ready, waiting for the oponent..'})
+        
+        elif message == 'game_ended':
+            print('test ', int(text_data_json['game_id']))
+            game = await database_sync_to_async(Game.objects.get)(id=int(text_data_json['game_id']))
+            p1 = await database_sync_to_async(UserProfil.objects.get)(id=game.player1)
+            p2 = await database_sync_to_async(UserProfil.objects.get)(id=game.player2)
+            if game and p1 and p2 and not game.ended:
+                print('in')
+                game.score1 = int(text_data_json['score1'])
+                game.score2 = int(text_data_json['score2'])
+                game.ended = True
+                if int(text_data_json['score1']) > int(text_data_json['score2']):
+                    game.winner = game.player1
+                    await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p1.pseudo + ' won the game !'})
+                else:
+                    game.winner = game.player2
+                    await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p2.pseudo + ' won the game !'})
+                await sync_to_async(game.save)()
+            else:
+                await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': 'An error occured, the game was not saved !'})
 
-           
         elif message == 'input':
             player_pos = text_data_json['player_pos']
             input_value = text_data_json['input_value']
