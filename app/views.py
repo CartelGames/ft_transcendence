@@ -148,7 +148,7 @@ def CreateTournament(request):
         exist_name = Tournaments.objects.filter(name=tourName)
         if exist_name:
             return JsonResponse({'success': False, 'errors': 'This tournament name is already exist !', 'csrf_token': get_token(request)})
-        exist_id = Tournaments.objects.filter(creator=request.user.id, ended=False)
+        exist_id = Tournaments.objects.filter(creator=request.user.id).exclude(state=2)
         if exist_id:
             return JsonResponse({'success': False, 'errors': 'You have already a tournament in progress !', 'csrf_token': get_token(request)})
         new_tournament = Tournaments.objects.create(name=tourName, creator=request.user.id)
@@ -164,6 +164,8 @@ def TournamentRegistration(request):
         
         exist_tour = Tournaments.objects.filter(id=request.POST.get('id')).first()
         if exist_tour:
+            if exist_tour.state != 0:
+                return JsonResponse({'success': False, 'errors': 'This tournament is already in progress !', 'csrf_token': get_token(request)})
             if request.POST.get('join') == 'true':
                 exist_tour.add_player(UserProfil.objects.get(id=request.user.id))
                 return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
@@ -291,7 +293,7 @@ def GetTournamentList(request):
         if isinstance(request.user, AnonymousUser):
             return JsonResponse({'success': False, 'csrf_token': get_token(request)})
         tournaments = Tournaments.objects.filter(ended=False)
-        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'me': request.user.tournament} for tourn in tournaments]
+        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'state': tourn.state, 'me': request.user.tournament} for tourn in tournaments]
         return JsonResponse({'success': True, 'tourList': tourList, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})

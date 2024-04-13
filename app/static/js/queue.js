@@ -76,8 +76,11 @@ function TournamentInfo(id) {
                 });
                 TournamentContainer.append(Players);
                 TournamentContainer.append(PlayersList);
-                if (TourInfo[0].state == 1) {
-                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>In progress</b></h1>');
+                if (TourInfo[0].state != 0) {
+                    var state = "In progress";
+                    if (TourInfo[0].state == 2)
+                        state = "Ended";
+                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>' + state + '</b></h1>');
                     TournamentContainer.append(TitleStatut);
                     var games = data.games;
                     if (games) {
@@ -128,6 +131,10 @@ function TournamentInfo(id) {
 
                             TournamentContainer.append(game_li);
                         });
+                        if (TourInfo[0].state == 2) {
+                            var game_wini =$('<span style="margin-top: 50px;"> Winner of the tournament : ' + games[games.length - 1].winner + '</span>');
+                            TournamentContainer.append(game_wini);
+                        }
                     }
                 }
                 else {
@@ -183,13 +190,19 @@ function getTournamentList() {
                 TournamentContainer.empty();
                 var friendsList = data.tourList;
                 friendsList.forEach(function (list) {
-                    if (list.me == list.id)
+                    if (list.me == list.id && list.state != 2)
                         alreadyIn = true;
                 });
                 friendsList.forEach(function (list) {
-                    var friendDiv =$('<li>' + list.name + ' <span style="font-weight: bold; font-size: 24px">(' + list.players + ' players) - <i>created by ' + list.creator + '</span></i></li>');
+                    var state = "[OPEN]";
+                    if (list.state == 1)
+                        state = "[IN PROGRESS]";
+                    else if (list.state == 2)
+                        state = "[ENDED]";
+
+                    var friendDiv =$('<li>' + list.name + ' <span style="font-weight: bold; font-size: 24px"> ' + state + ' (' + list.players + ' players) - <i>created by ' + list.creator + '</span></i></li>');
                     
-                    if (list.me != list.id && !alreadyIn) {
+                    if (list.me != list.id && list.state == 0 && !alreadyIn) {
                         var clickableRow = $('<button type="submit" style="margin-left: 25px;">Join</button>');
                         clickableRow.click(function () {
                             TournamentRegistration(list.id, true);
@@ -199,7 +212,7 @@ function getTournamentList() {
                         });
                     friendDiv.append(clickableRow[0]);
                     }
-                    else if (list.me == list.id) {
+                    else if (list.me == list.id && list.state == 0) {
                         var clickableRow = $('<button2 type="submit" style="margin-left: 25px;">Leave</button2>');
                         clickableRow.click(function (event) {
                             TournamentRegistration(list.id, false);

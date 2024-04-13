@@ -26,6 +26,7 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
+      console.log()
       play = data.play;
       resetGame()
     }
