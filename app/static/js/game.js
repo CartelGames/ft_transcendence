@@ -9,6 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 let game_id = "";
 let playerPos = 0;
 let ended = false;
+let play = false;
 
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
@@ -25,6 +26,7 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
+      play = data.play;
       resetGame()
     }
     else if (data.type === 'ball' && playerPos == 1){
@@ -633,37 +635,39 @@ function updated() {
     }));}
   }
   pointLight.position.set(ball.position.x,ball.position.y,10);
-  if (playerPos === 0) {
-    if (keyState[87])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-    ws.send(JSON.stringify({
-      type: 'input',
-      game_id: game_id,
-      player_pos: playerPos,
-      input_value: playerOne.position.y
-    }));
-  }
-  else {
-    if (keyState[87])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-    ws.send(JSON.stringify({
-      type: 'input',
-      game_id: game_id,
-      player_pos: playerPos,
-      input_value: playerTwo.position.y
-    }));
+  if (play) {
+    if (playerPos === 0) {
+      if (keyState[87])
+        movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[83])
+        movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        game_id: game_id,
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
+    }
+    else {
+      if (keyState[87])
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+      if (keyState[83])
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        game_id: game_id,
+        player_pos: playerPos,
+        input_value: playerTwo.position.y
+      }));
+    }
   }
 }
 
