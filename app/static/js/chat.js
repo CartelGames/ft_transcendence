@@ -6,7 +6,12 @@ const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
 const websocket = new WebSocket(wsEndpoint);
 
 websocket.onopen = () => {
-    console.log('WebSocket connected');
+    console.log('WebSocket chat connected');
+    websocket.send(
+        JSON.stringify({
+            action: 'checkTournament'
+        })
+    );
 };
 
 websocket.onmessage = function(event) {
@@ -16,15 +21,61 @@ websocket.onmessage = function(event) {
         console.log('GetMessage');
         getMessages();
     }
+    else if (data.type === 'add_tour_chat') {
+        openTournamentChat(data.name);
+    }
 };
 
-function openChat(pseudo) {
+function openTournamentChat(pseudo) {
+    var chatDiv = document.createElement('div');
+    chatDiv.id = 'chat-box-' + chatCounter;
+    chatDiv.id = pseudo;
+    chatDiv.className = 'chat-box';
+    chatDiv.style.left = 20 * chatCounter + 'vh';
+    var toggleDiv = document.createElement('div');
+    toggleDiv.className = 'chat-box-toggle';
 
+    var titleP = document.createElement('p');
+    titleP.textContent = 'Tournament: ' + pseudo;
+    titleP.style.fontSize = '14px';
+    toggleDiv.appendChild(titleP);
+    chatDiv.appendChild(toggleDiv);
+
+    var contentDiv = document.createElement('div');
+    contentDiv.id = 'chat-box-content';
+    contentDiv.className = 'chat-box-content';
+    var chatP = document.createElement('p');
+    chatP.textContent = pseudo;
+    contentDiv.appendChild(chatP);
+
+    var formHTML = `
+        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <input type="hidden" name="type" value="sendChat">
+        <input type="hidden" name="id_to" value="${pseudo}">
+        <input type="hidden" name="tournament" value="True">
+        <input type="hidden" name="csrfmiddlewaretoken" value="">
+        <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
+        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div id="error-form" class="error-form"></div>
+        </form>
+    `;
+    contentDiv.innerHTML = formHTML;
+    chatDiv.appendChild(contentDiv);
+
+    toggleDiv.addEventListener('click', function () {
+        chatDiv.classList.toggle('chat-box-open');
+        getMessages(); //Delete this later to setInterval
+        contentDiv.scrollTop = contentDiv.scrollHeight;
+    });
+    document.body.appendChild(chatDiv);
+    chatCounter++;
+}
+
+function openChat(pseudo) {
     if (chatCounter >= 5) {
         alert("You have already 5 chat box !");
         return;
     }
-
     var chatDiv = document.createElement('div');
     chatDiv.id = 'chat-box-' + chatCounter;
     chatDiv.id = pseudo;
@@ -55,8 +106,8 @@ function openChat(pseudo) {
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="csrfmiddlewaretoken" value="">
-        <input type="text" id="content" name="content" required>
-        <div class="hide"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)">Login</button></div>
+        <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
+        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -223,6 +274,7 @@ function getMessages() {
         headers: { 'X-CSRFToken': token },
         success: function (data) {
             var messages = data.messages;
+            var messages_tour = data.message_tour;
  
             var chatBoxContents = document.querySelectorAll('.chat-box-content');
             chatBoxContents.forEach(function (chatBoxContent) {
@@ -239,7 +291,28 @@ function getMessages() {
                     if (!chatBoxContent)
                         return;
                     var messageElement = document.createElement('p');
-                    
+                    messageElement.style.color = "black";
+                    messageElement.style.fontSize = "16px";
+                    messageElement.style.textAlign = "left";
+
+                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
+                    messageElement.innerHTML = from + message.content;
+
+                    chatBoxContent.appendChild(messageElement);
+                    chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
+                });
+                messages_tour.forEach(function (message) {
+                    var chatDiv = document.getElementById(message.pseudo_to);
+                    if (!chatDiv)
+                        return;
+                    var chatBoxContent = chatDiv.querySelector('.chat-box-content');
+                    if (!chatBoxContent)
+                        return;
+                    var messageElement = document.createElement('p');
+                    messageElement.style.color = "black";
+                    messageElement.style.fontSize = "16px";
+                    messageElement.style.textAlign = "left";
+
                     var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
                     messageElement.innerHTML = from + message.content;
 

@@ -1,6 +1,6 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.layers import get_channel_layer
-from .models import UserProfil, Game, TournamentsGame, Tournaments
+from .models import UserProfil, Game, TournamentsGame, Tournaments, MessageTournaments
 from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from channels.db import database_sync_to_async
@@ -28,7 +28,11 @@ class MyConsumer(AsyncWebsocketConsumer):
 
         if action == 'sendChat':
             await self.send_message_to_user(data["pseudo"])
-        pass
+        elif action == 'checkTournament':
+            player = await UserProfil.objects.aget(id=self.user.id)
+            if player.tournament != 0:
+                tour = await Tournaments.objects.aget(id=player.tournament)
+                await self.channel_layer.group_send(self.group_name, {'type': 'add_tour_chat', 'name': tour.name})
 
     @staticmethod
     async def send_message_to_user(id_to):
@@ -40,6 +44,11 @@ class MyConsumer(AsyncWebsocketConsumer):
         message = event['message']
         # Envoyer le message au client WebSocket
         await self.send(text_data=json.dumps({'type': 'chat_message', 'message': message}))
+
+    async def add_tour_chat(self, event):
+        name = event['name']
+        # Envoyer le message au client WebSocket
+        await self.send(text_data=json.dumps({'type': 'add_tour_chat', 'name': name}))
 
 
 class MyQueueConsumer(AsyncWebsocketConsumer):
@@ -300,7 +309,8 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                 await sync_to_async(game.save)()
                 try:
                     tournament = await database_sync_to_async(TournamentsGame.objects.get)(game_id=int(text_data_json['game_id']))
-                    if tournament:
+                    tour = await database_sync_to_async(Tournaments.objects.get)(id=tournament.tournament_id)
+                    if tournament and tour:
                         tournament.state = 3
                         await sync_to_async(tournament.save)()
                         if tournament.phase != 0:
@@ -319,25 +329,41 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                                 next_game = await database_sync_to_async(next_games.first)()
                                 next_game.state = 2
                                 await sync_to_async(next_game.save)()
+                                await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
+                                    content='Next match is ' + UserProfil.objects.get(id=next_game.player1).pseudo + ' VS ' + UserProfil.objects.get(id=next_game.player2).pseudo + ' !')
+
                             else:
-                                
-                                    next_phase = await database_sync_to_async(TournamentsGame.objects.filter)(tournament_id=tournament.tournament_id, phase=(tournament.phase - 1))
-                                    if await sync_to_async(next_phase.exists)():
-                                        async for phase_game in next_phase:
-                                            phase_game.state = 1
-                                            await sync_to_async(phase_game.save)()
-                                        phase_game = await database_sync_to_async(next_phase.first)()
-                                        phase_game.state = 2
+                                next_phase = await database_sync_to_async(TournamentsGame.objects.filter)(tournament_id=tournament.tournament_id, phase=(tournament.phase - 1))
+                                if await sync_to_async(next_phase.exists)():
+                                    async for phase_game in next_phase:
+                                        phase_game.state = 1
                                         await sync_to_async(phase_game.save)()
+                                    phase_game = await database_sync_to_async(next_phase.first)()
+                                    phase_game.state = 2
+                                    await sync_to_async(phase_game.save)()
+                                    await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
+                                    content='Next match is ' + UserProfil.objects.get(id=phase_game.player1).pseudo + ' VS ' + UserProfil.objects.get(id=phase_game.player2).pseudo + ' !')
                         else:
-                            tour = await database_sync_to_async(Tournaments.objects.get)(id=tournament.tournament_id)
                             if tour:
                                 tour.state = 2
                                 await sync_to_async(tour.save)()
+                            clear_tour = await database_sync_to_async(UserProfil.objects.filter)(tournament=tournament.tournament_id)
+                            if await sync_to_async(clear_tour.exists)():
+                                async for clear_user in clear_tour:
+                                    clear_user.tournament = 0
+                                    await sync_to_async(clear_user.save)()
                             if int(text_data_json['score1']) > int(text_data_json['score2']):
                                 await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p1.pseudo + ' won the tournament !'})
+                                await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
+                                        content='And the winner of this tournament is ' + p1.pseudo + ', congratulation !')
                             else:
                                 await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p2.pseudo + ' won the tournament !'})
+                                await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
+                                        content='And the winner of this tournament is ' + p2.pseudo + ', congratulation !')
+
+                        players = await database_sync_to_async(list)(tour.players.all())
+                        for player in players:
+                            await MyConsumer.send_message_to_user(player.pseudo)
                 except ObjectDoesNotExist:
                     pass
             else:

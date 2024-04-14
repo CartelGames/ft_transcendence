@@ -58,6 +58,15 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
+class MessageTournaments(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    id_from = models.IntegerField(null=False)
+    id_to = models.IntegerField(null=False)
+    pseudo_from = models.CharField(max_length=32, default="")
+    pseudo_to = models.CharField(max_length=32, default="")
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 class Game(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     player1 = models.IntegerField(blank=True, null=True)
