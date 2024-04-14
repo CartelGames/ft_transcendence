@@ -262,6 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (chat && chatToggle) {
         chatToggle.addEventListener('click', function () {
             chat.classList.toggle('chat-open');
+            loadFriends()
         });
     }
 });

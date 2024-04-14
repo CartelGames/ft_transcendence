@@ -318,6 +318,7 @@ def GetTournamentList(request):
         if isinstance(request.user, AnonymousUser):
             return JsonResponse({'success': False, 'csrf_token': get_token(request)})
         tournaments = Tournaments.objects.filter(ended=False)
+        tournaments = tournaments.order_by('state')
         tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'state': tourn.state, 'me': request.user.tournament} for tourn in tournaments]
         return JsonResponse({'success': True, 'tourList': tourList, 'csrf_token': get_token(request)})
     else:

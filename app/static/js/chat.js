@@ -24,6 +24,27 @@ websocket.onmessage = function(event) {
     else if (data.type === 'add_tour_chat') {
         openTournamentChat(data.name);
     }
+    else if (data.type == 'returnPing') {
+        var divData = document.querySelectorAll('div[friend-pseudo]');
+        divData.forEach(function (div) {
+            var id = div.getAttribute('friend-pseudo');
+            if (id == data.pseudo) {
+                div.removeChild(div.firstChild);
+                var statut_text = $('<i style="color: green;">(online)</i>');
+                div.append(statut_text[0]);
+            }
+        });
+    }
+    else if (data.type == 'sendPing') {
+        console.log("Ping received");
+        websocket.send(
+            JSON.stringify({
+                action: 'returnPing',
+                from_pseudo: data.from_pseudo,
+                to_pseudo: data.to_pseudo
+            })
+        );
+    }
 };
 
 function openTournamentChat(pseudo) {
@@ -64,7 +85,6 @@ function openTournamentChat(pseudo) {
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
-        getMessages(); //Delete this later to setInterval
         contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     document.body.appendChild(chatDiv);
@@ -116,7 +136,6 @@ function openChat(pseudo) {
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
-        getMessages(); //Delete this later to setInterval
         contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     closeIcon.addEventListener('click', function (event) {
@@ -153,6 +172,9 @@ function loadFriends() {
                             getMessages();
                         }
                     });
+                    var statut = $('<div class="clickable-row name" style="font-size: 14px;" friend-pseudo="' + friend.pseudo + '"></div>');
+                    var statut_text = $('<i style="color: red;">(offline)</i>');
+                    statut.append(statut_text[0]);
                     var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
                     BlockRow.click(function (event) {
                         blockFriend(friend.pseudo, false);
@@ -162,9 +184,16 @@ function loadFriends() {
                         deleteFriend(friend.pseudo);
                     });
                     friendDiv.append(clickableRow[0]);
+                    friendDiv.append(statut[0]);
                     friendDiv.append(BlockRow[0]);
                     friendDiv.append(deleteRow[0]);
                     friendsContainer.append(friendDiv);
+                    websocket.send(
+                        JSON.stringify({
+                            action: 'getStatut',
+                            pseudo: friend.pseudo
+                        })
+                    );
                 });
             }
             token = data.csrf_token;

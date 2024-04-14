@@ -209,6 +209,7 @@ function getTournamentList() {
                             setTimeout(function() {
                                 getTournamentList();
                             }, 300);
+                            openTournamentChat(list.name)
                         });
                     friendDiv.append(clickableRow[0]);
                     }
@@ -219,6 +220,14 @@ function getTournamentList() {
                             setTimeout(function() {
                                 getTournamentList();
                             }, 300);
+                            var chatTour = document.getElementById(list.name);
+                            var parent = chatTour.parentElement;
+                            parent.removeChild(chatTour);
+                            chatCounter--;
+                            var chatBoxes = document.getElementsByClassName('chat-box');
+                            for (var i = 0; i < chatBoxes.length; i++) {
+                                chatBoxes[i].style.left = 20 * i + 'vh';
+                            }
                         });
                     friendDiv.append(clickableRow[0]);
                     }

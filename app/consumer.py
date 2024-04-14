@@ -33,6 +33,11 @@ class MyConsumer(AsyncWebsocketConsumer):
             if player.tournament != 0:
                 tour = await Tournaments.objects.aget(id=player.tournament)
                 await self.channel_layer.group_send(self.group_name, {'type': 'add_tour_chat', 'name': tour.name})
+        elif action == 'getStatut':
+            await self.channel_layer.group_send(data["pseudo"], {'type': 'sendPing', 'from_pseudo': self.group_name, 'to_pseudo': data["pseudo"]})
+        elif action == 'returnPing':
+            await self.channel_layer.group_send(data["from_pseudo"], {'type': 'returnPing', 'pseudo': data["to_pseudo"]})
+
 
     @staticmethod
     async def send_message_to_user(id_to):
@@ -42,14 +47,20 @@ class MyConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         message = event['message']
-        # Envoyer le message au client WebSocket
         await self.send(text_data=json.dumps({'type': 'chat_message', 'message': message}))
 
     async def add_tour_chat(self, event):
         name = event['name']
-        # Envoyer le message au client WebSocket
         await self.send(text_data=json.dumps({'type': 'add_tour_chat', 'name': name}))
 
+    async def sendPing(self, event):
+        from_pseudo = event['from_pseudo']
+        to_pseudo = event['to_pseudo']
+        await self.send(text_data=json.dumps({'type': 'sendPing', 'from_pseudo': from_pseudo, 'to_pseudo': to_pseudo}))
+
+    async def returnPing(self, event):
+        pseudo = event['pseudo']
+        await self.send(text_data=json.dumps({'type': 'returnPing', 'pseudo': pseudo}))
 
 class MyQueueConsumer(AsyncWebsocketConsumer):
     queue = []
