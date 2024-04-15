@@ -4,6 +4,9 @@ import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { TTFLoader } from 'three/addons/loaders/TTFLoader.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
 
@@ -12,6 +15,7 @@ let game_id = "";
 let playerPos = 0;
 let isPaused = 1;
 let ttfloader;
+const clock = new THREE.Clock();
 let loader = new FontLoader();
 const username = await getPseudo();
 let id = (await getPseudo()).id;
@@ -129,14 +133,18 @@ function startAnimation(){
       z: 0, // Final z position
       ease: 'power2.out' // Easing function
   });
-  rotateBikesAnimation(bikeOne);
-  rotateBikesAnimation(bikeTwo);
+  rotateBikesAnimation(bikeOne, bikeTwo);
 }
 
-function rotateBikesAnimation(bike){
-  gsap.to(bike.rotation, {
+function rotateBikesAnimation(bike1, bike2){
+  gsap.to(bike1.rotation, {
     duration: 2,
     z: Math.PI,
+    ease: 'power2.out',
+  });
+  gsap.to(bike2.rotation, {
+    duration: 2,
+    z: Math.PI*2,
     ease: 'power2.out',
   });
 }
@@ -206,9 +214,10 @@ new GLTFLoader().load( '/static/models/gltf/tronbike.glb', function ( gltf ) {
 
   const model = gltf.scene;
    model.scale.set(20, 20, 20);
-   model.rotation.set(Math.PI /2, -Math.PI /2, 0);
+   model.rotation.set(Math.PI /2, Math.PI /2, 0);
   
   bikeTwo.add(model);
+  bikeTwo.rotateZ(-Math.PI); //pour garder la meme orientation de model pour les animations
 } );
 
 
@@ -227,11 +236,29 @@ function createPlayer(){
 }
 createPlayer();
 
-function rotateBikesGame(bike, x,y){
+
+function rotateBikesGame(bike, key) {
+  let targetRotation = 0;
+
+  if (key === 'up') {
+    targetRotation = -Math.PI / 2; // North (90 degrees)
+  } else if (key === 'down') {
+    targetRotation = Math.PI / 2; // South (270 degrees)
+  } else if (key === 'left') {
+    targetRotation = 0; // East (0 degrees) inverted for player one
+  } else if (key === 'right') 
+    targetRotation = Math.PI; // West (180 degrees) inverted for player one
+
+  // Add the difference between the target rotation and the current rotation to the current rotation value
+  let rotationDifference = targetRotation - bike.rotation.z;
+  if (rotationDifference > Math.PI) {
+    rotationDifference -= Math.PI * 2;
+  } else if (rotationDifference < -Math.PI) {
+    rotationDifference += Math.PI * 2;
+  }
   gsap.to(bike.rotation, {
     duration: 0.5,
-    x: Math.PI * x,
-    y: Math.PI * y,
+    z: bike.rotation.z + rotationDifference,
     ease: 'power2.out',
   });
 }
@@ -243,32 +270,46 @@ window.addEventListener('keydown', function (event) {
     togglePause();
   if (event.key === 'w')
     if (bikeOneDir.y != -1){
-      rotateBikesGame(bikeOne, 0, 1);
+      rotateBikesGame(bikeOne, 'up');
       bikeOneDir = {x:0, y:1};
     }
   if (event.key === 's')
-    if (bikeOneDir.y != 1)
+    if (bikeOneDir.y != 1){
+      rotateBikesGame(bikeOne, 'down');
       bikeOneDir = {x:0, y:-1};
+    }
   if (event.key === 'a')
-    if (bikeOneDir.x != 1)
+    if (bikeOneDir.x != 1){
+      rotateBikesGame(bikeOne, 'left');
       bikeOneDir = {x:-1, y:0};
+    }
   if (event.key === 'd')
-    if (bikeOneDir.x != -1)
+    if (bikeOneDir.x != -1){
+      rotateBikesGame(bikeOne, 'right');
       bikeOneDir = {x:1, y:0};
+    }
 
 
   if (event.key === 'ArrowUp')
-    if (bikeTwoDir.y != -1)
+    if (bikeTwoDir.y != -1){
+      rotateBikesGame(bikeTwo, 'up');
       bikeTwoDir = {x:0, y:1};
+    }
   if (event.key === 'ArrowDown')
-    if (bikeTwoDir.y != 1)
+    if (bikeTwoDir.y != 1){
+      rotateBikesGame(bikeTwo, 'down');
       bikeTwoDir = {x:0, y:-1};
+    }
   if (event.key === 'ArrowLeft')
-    if (bikeTwoDir.x != 1)
+    if (bikeTwoDir.x != 1){
+      rotateBikesGame(bikeTwo, 'left');
       bikeTwoDir = {x:-1, y:0};
+    }
   if (event.key === 'ArrowRight')
-    if (bikeTwoDir.x != -1)
+    if (bikeTwoDir.x != -1){
+      rotateBikesGame(bikeTwo, 'right');
       bikeTwoDir = {x:1, y:0};
+    }
 });
 
 function togglePause() {
@@ -284,8 +325,13 @@ function togglePause() {
 }
 const positionsOne = [];
 const positionsTwo = [];
-
+const traildelta = 1;
+let trailTimer = 0;
+let prevBikeOnePosition = bikeOne.position.clone();
+let prevBikeTwoPosition = bikeTwo.position.clone();
 function updated(){
+  const delta = clock.getDelta();
+  trailTimer += delta;
   bikeOne.position.x += bikeOneDir.x * bikeSpeed;
   bikeTwo.position.x += bikeTwoDir.x * bikeSpeed;
   bikeOne.position.y += bikeOneDir.y * bikeSpeed;
@@ -294,22 +340,27 @@ function updated(){
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
 
-  if (!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne)) {
-    positionsOne.push(newPosOne);
-  }
-  if (!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo)) {
-    positionsTwo.push(newPosTwo);
-  }
+  //if (trailTimer > traildelta){
+    if (!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne)) {
+      positionsOne.push(newPosOne);
+    }
+    if (!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo)) {
+      positionsTwo.push(newPosTwo);
+    }
+  //}
 
-  trails();
+  //if (trailTimer > traildelta)
+    trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  if (playerOneCollided){
+  //const playerOneSuicided = checkCollision(bikeOne, trailOne);
+  //const playerTwoSuicided = checkCollision(bikeTwo, trailTwo);|| playerOneSuicided|| playerTwoSuicided
+  if (playerOneCollided ){
     console.log("playerone collided");
     isPaused = 1;
   }
-  if (playerTwoCollided)
+  if (playerTwoCollided )
   {
     console.log("playetwo collided");
     isPaused = 1;
@@ -326,7 +377,33 @@ function updateGameState(p1, p2){
   pseudo2 = p2;
 }
 
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+bloomPass.threshold = 0.1;
+bloomPass.strength = 1.5;
+bloomPass.radius = 1.0;
 
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+composer.addPass(bloomPass);
+
+const trailMaterial1 = new THREE.MeshStandardMaterial({
+  color: 0x00ffff, // Neon blue color
+  emissive: 0x00ffff, // Neon blue emissive color
+  emissiveIntensity: 1.0, // Emissive intensity
+  roughness: 0.5, // Roughness
+  metalness: 0.0, // Metalness
+  transparent: true, // Enable transparency
+  opacity: 0.5, // Opacity
+});
+const trailMaterial2 = new THREE.MeshStandardMaterial({
+  color: 0xffff00, // Neon blue color
+  emissive: 0xffff00, // Neon blue emissive color
+  emissiveIntensity: 1.0, // Emissive intensity
+  roughness: 0.5, // Roughness
+  metalness: 0, // Metalness
+  transparent: true, // Enable transparency
+  opacity: 0.5, // Opacity
+});
 let trailOne; //player1 trail
 let trailTwo; //player2 trail
 
@@ -345,16 +422,16 @@ function trails(){
     const geometry = new THREE.TubeGeometry(curve, 64, 1, 8, false);
     const geometry2 = new THREE.TubeGeometry(curve2, 64, 1, 8, false);
 
-    const materialOne = new THREE.MeshStandardMaterial({color: 0xff00ff});
-    const materialTwo = new THREE.MeshStandardMaterial({color: 0xffff00});
+    const materialOne = new THREE.MeshStandardMaterial({color: 0xffffff});
 
-    trailOne = new THREE.Mesh(geometry, materialOne);
-    trailTwo = new THREE.Mesh(geometry2, materialTwo);
+    const materialTwo = new THREE.MeshStandardMaterial({color: 0xffffff});
+
+    trailOne = new THREE.Mesh(geometry, trailMaterial1);
+    trailTwo = new THREE.Mesh(geometry2, trailMaterial2);
 
     scene.add(trailOne, trailTwo);
   }
 }
-
 
 //Player objects setup done
 
@@ -425,7 +502,8 @@ function animate() {
     if (!isPaused){
       updated();
     }
+    composer.render();
     renderer.render(scene, camera);
-    controls.update();
+    //controls.update();
 }
 animate();
