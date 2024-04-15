@@ -141,14 +141,6 @@ function rotateBikesAnimation(bike){
   });
 }
 
-function rotateBikesGame(bike, x,y){
-  gsap.to(bike.rotation, {
-    duration: 0.5,
-    x: Math.PI * x,
-    y: Math.PI * y,
-    ease: 'power2.out',
-  });
-}
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -234,6 +226,15 @@ function createPlayer(){
     bikeTwo.rotateZ(-1.57);
 }
 createPlayer();
+
+function rotateBikesGame(bike, x,y){
+  gsap.to(bike.rotation, {
+    duration: 0.5,
+    x: Math.PI * x,
+    y: Math.PI * y,
+    ease: 'power2.out',
+  });
+}
 
 //movements (cant go backwards into your own trail, as thats cheating)
 //TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
