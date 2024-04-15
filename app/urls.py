@@ -23,7 +23,6 @@ urlpatterns = [
     path('getStats/', views.GetStats, name='getStats'),
     path('getTournamentList/', views.GetTournamentList, name='getTournamentList'),
     path('getTournamentInfo/', views.GetTournamentInfo, name='getTournamentInfo'),
-    path('newGame/', views.NewGame, name='newGame'),
 ]
 
 if settings.DEBUG:
