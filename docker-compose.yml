@@ -18,18 +18,20 @@ services:
 
   web:
     build: .
-    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000 && daphne -u /tmp/daphne.sock djang.asgi:application"
     volumes:
       - .:/code
-    ports:
-      - "8000:8000"
 
     depends_on:
       - db
 
-  # nginx:
-  #   image: nginx
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     - web
+  nginx:
+    build:
+      context: .
+    volumes:
+      - .:/code
+    ports:
+      - 80:80
+      - 8443:8443
+    depends_on:
+      - web
