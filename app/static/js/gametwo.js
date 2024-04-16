@@ -56,7 +56,30 @@ const pointlight = new THREE.PointLight(0xffffff);
 const ambientlight = new THREE.AmbientLight(0xffffff);
 scene.add(pointlight);//, ambientlight
 pointlight.position.set(0, 0, 10);
-const background = new THREE.PlaneGeometry(144, 81);
+
+
+let vertex; 
+let fragment;
+async function fetchingfragShader(){
+  return fetch('static/js/shaders/fragmenttwo.glsl').then((response) => response.text()).then((text) => {fragment = text;});
+}
+await fetchingfragShader();
+async function fetchingvertShader(){
+  return fetch('static/js/shaders/vertex.glsl').then((response) => response.text()).then((text) => {vertex = text;});
+}
+await fetchingvertShader();
+
+const shaderMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    time: { value: 0.0 },
+    resolution: { value: new THREE.Vector2(180,120) },
+    cameraPosition: {value: camera.position},
+  },
+  vertexShader: vertex,
+  fragmentShader: fragment
+});
+
+const background = new THREE.PlaneGeometry(180, 120);
 const texture = new THREE.TextureLoader().load('static/images/tron.jpg' ); 
 const backmat = new THREE.MeshBasicMaterial( { map:texture } );
 const back = new THREE.Mesh(background, backmat);
@@ -65,8 +88,8 @@ scene.add(back);
 //Walls for 3D scene
 function walls(){
   const wallMat = new THREE.MeshStandardMaterial( { color: 0x808080 } );
-  const wallNS = new THREE.BoxGeometry(canvas.width, 1, 30);
-  const wallEW = new THREE.BoxGeometry(1, canvas.height, 30);
+  const wallNS = new THREE.BoxGeometry(canvas.width, 1, 110);
+  const wallEW = new THREE.BoxGeometry(1, canvas.height, 100);
   const wallNorth = new THREE.Mesh(wallNS, wallMat);
   const wallSouth = new THREE.Mesh(wallNS, wallMat);
   const wallEast = new THREE.Mesh(wallEW, wallMat);
@@ -134,6 +157,8 @@ function startAnimation(){
       ease: 'power2.out' // Easing function
   });
   rotateBikesAnimation(bikeOne, bikeTwo);
+  
+  //scene.add(wallNorth, wallSouth, wallEast, wallWest);
 }
 
 function rotateBikesAnimation(bike1, bike2){
@@ -155,8 +180,7 @@ const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
 const zoneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.0 });
 const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
-zoneMesh.position.y = canvasBounds.top - 2;
-zoneMesh.position.z += 3; // Move the plane slightly behind the other objects
+zoneMesh.position.y = 11; // Move the plane slightly behind the start text
 zoneMesh.rotateX(1.57);
 scene.add(zoneMesh);
 
@@ -195,7 +219,7 @@ document.addEventListener('mousedown', onMouseClick);
 //SETUP DONE
 
 //Player objects setup
-const bikeSpeed = 0.1;
+const bikeSpeed = 0.28;
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
 let bikeOne = new THREE.Group(); //player1
@@ -325,13 +349,8 @@ function togglePause() {
 }
 const positionsOne = [];
 const positionsTwo = [];
-const traildelta = 1;
-let trailTimer = 0;
-let prevBikeOnePosition = bikeOne.position.clone();
-let prevBikeTwoPosition = bikeTwo.position.clone();
+
 function updated(){
-  const delta = clock.getDelta();
-  trailTimer += delta;
   bikeOne.position.x += bikeOneDir.x * bikeSpeed;
   bikeTwo.position.x += bikeTwoDir.x * bikeSpeed;
   bikeOne.position.y += bikeOneDir.y * bikeSpeed;
@@ -339,18 +358,13 @@ function updated(){
   
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
-
-  //if (trailTimer > traildelta){
-    if (!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne)) {
-      positionsOne.push(newPosOne);
-    }
-    if (!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo)) {
-      positionsTwo.push(newPosTwo);
-    }
-  //}
-
-  //if (trailTimer > traildelta)
-    trails();
+  if (!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne)) {
+    positionsOne.push(newPosOne);
+  }
+  if (!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo)) {
+    positionsTwo.push(newPosTwo);
+  }
+  trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
@@ -503,7 +517,10 @@ function animate() {
       updated();
     }
     composer.render();
+    shaderMaterial.uniforms.time.value += 0.005;
+    shaderMaterial.uniforms.cameraPosition.value.copy(camera.position);
     renderer.render(scene, camera);
+    shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
     //controls.update();
 }
 animate();
