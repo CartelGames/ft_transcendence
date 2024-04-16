@@ -18,7 +18,6 @@ websocket.onmessage = function(event) {
     var data = JSON.parse(event.data);
     console.log('Event Socket : ' + data.type);
     if (data.type === 'chat_message') {
-        console.log('GetMessage');
         getMessages();
     }
     else if (data.type === 'add_tour_chat') {
@@ -36,7 +35,6 @@ websocket.onmessage = function(event) {
         });
     }
     else if (data.type == 'sendPing') {
-        console.log("Ping received");
         websocket.send(
             JSON.stringify({
                 action: 'returnPing',
@@ -255,9 +253,6 @@ function deleteFriend(pseudo) {
         contentType: false,
         data: formData,
         success: function (data) {
-            if (data.success) {
-                console.log('friend deleted');
-            }
             loadFriends();
             token = data.csrf_token;
         },
