@@ -320,46 +320,6 @@ def GetTournamentInfo(request):
             return JsonResponse({'success': False, 'errors': 'Wrong tournament id !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
-
-def NewGame(request):
-    if request.method == 'POST' and request.POST.get('type') == 'newGame':
-        if isinstance(request.user, AnonymousUser):
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged out !', 'csrf_token': get_token(request)})
-        player1 = int(request.POST.get('player1'))
-        
-        if player1 == request.user.id:
-            try:
-                player1 = get_object_or_404(UserProfil, id=player1)
-            except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
-        else:
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged in !', 'csrf_token': get_token(request)})
-        if request.POST.get('player2') is not None:
-            try:
-                player2 = get_object_or_404(UserProfil, id=request.POST.get('player2'))
-            except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
-            player2.nb_games += 1
-        player2 = player1
-        player1.nb_games += 1
-        if request.POST.get('winner') == 'player1':
-            player1.mmr += 10
-            player2.mmr -= 10
-        elif request.POST.get('winner') == 'player2':
-            player1.mmr -= 10
-            player2.mmr += 10
-        else:
-            player1.mmr -= 5
-        # new_game = Game.objects.create(
-        #     player1=request.user.id,
-        #     player2=player2.id,
-        #     pseudo_p1=request.user.pseudo,
-        #     pseudo_p2=player2.pseudo,
-        #     winner=request.POST.get('winner')
-        # )
-        return JsonResponse({'success': True, 'errors': 'The stats game was correctly created !', 'csrf_token': get_token(request)})
-    else:
-        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
    
 def index(request):
     return render(request, 'index.html')
