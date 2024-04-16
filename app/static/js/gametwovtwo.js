@@ -9,7 +9,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 let game_id = "";
 let playerPos = 0;
 let ended = false;
-let play = false;
 
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
@@ -26,18 +25,16 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
-      console.log()
-      play = data.play;
       resetGame()
     }
-    else if (data.type === 'ball' && playerPos == 1){
+    else if (data.type === 'ball' && playerPos != 0){
       ball.position.x = data.ball_posx,
       ball.position.y = data.ball_posy,
       ballDirection.x = data.ball_dirx;
       ballDirection.y = data.ball_diry;
       ballSpeed = data.ball_speed;
     }
-    else if (data.type === 'powerupgenerate' && playerPos == 1){
+    else if (data.type === 'powerupgenerate' && playerPos != 0){
       receivePowerUp(data.poweruptype, data.poweruppos);
     }
     else if (data.type === 'game_start'){
@@ -372,6 +369,21 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   playerOne.add(model);
 } );
 
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
+  const model = gltf.scene;
+  model.scale.set(0.02, 0.02, 0.02);
+  model.rotation.set(Math.PI /2, 0,Math.PI /2);
+  playerFour.add(model);
+} );
+
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
+  const model = gltf.scene;
+  model.scale.set(0.02, 0.02, 0.02);
+  model.position.x -= 4;
+  model.rotation.set(Math.PI /2, 0,-Math.PI /2);
+  playerThree.add(model);
+} );
+
 let vertex; 
 let fragment;
 async function fetchingfragShader(){
@@ -537,8 +549,7 @@ function updated() {
     if (score[1] == 2) {
       rWin();
       ended = true;
-      var BackButt = document.getElementById('BackMenu')
-      BackButt.style.display = 'block';
+      console.log('send');
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -558,8 +569,6 @@ function updated() {
     if (score[0] == 2) {
       lWin();
       ended = true;
-      var BackButt = document.getElementById('BackMenu')
-      BackButt.style.display = 'block';
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -620,6 +629,40 @@ function updated() {
         ball_speed: ballSpeed
     }));}
   }
+  // Check for playerThree collision
+  if (ball.position.x < playerThree.position.x + 1 &&
+    ball.position.x > playerThree.position.x - 1 &&
+    ball.position.y < playerThree.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
+    ball.position.y > playerThree.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
+  ballDirection.x *= -1; // reverse the X direction of the ball
+  ballSpeed *= 1.1;
+  if(playerPos == 0){
+    ws.send(JSON.stringify({
+      type: 'ball',
+      ball_posx: ball.position.x,
+      ball_posy: ball.position.y,
+      ball_dirx: ballDirection.x,
+      ball_diry: ballDirection.y,
+      ball_speed: ballSpeed
+  }));}
+}
+// Check for playerFour collision
+if (ball.position.x < playerFour.position.x + 1 &&
+    ball.position.x > playerFour.position.x - 1 &&
+    ball.position.y < playerFour.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
+    ball.position.y > playerFour.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
+  ballDirection.x *= -1; // reverse the X direction of the ball
+  ballSpeed *= 1.1;
+  if(playerPos == 0){
+    ws.send(JSON.stringify({
+      type: 'ball',
+      ball_posx: ball.position.x,
+      ball_posy: ball.position.y,
+      ball_dirx: ballDirection.x,
+      ball_diry: ballDirection.y,
+      ball_speed: ballSpeed
+  }));}
+}
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
     if(playerPos == 0){
@@ -642,8 +685,8 @@ function updated() {
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
   }
   pointLight.position.set(ball.position.x,ball.position.y,10);
-  if (play) {
-    if (playerPos === 0) {
+  switch(playerPos){
+    case(0):
       if (keyState[87])
         movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
       if (keyState[83])
@@ -654,27 +697,55 @@ function updated() {
         movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
-        game_id: game_id,
         player_pos: playerPos,
         input_value: playerOne.position.y
       }));
-    }
-    else {
+      break;
+    case(1):
       if (keyState[87])
-        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y + (4 - LBoardSpeedMalus));
       if (keyState[83])
-        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y - (4 - LBoardSpeedMalus));
       if (keyState[38])
-        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y + (4 - LBoardSpeedMalus));
       if (keyState[40])
-        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
-        game_id: game_id,
         player_pos: playerPos,
-        input_value: playerTwo.position.y
+        input_value: playerOne.position.y
       }));
-    }
+      break;
+    case(2):
+      if (keyState[87])
+        movePong(playerThree, playerThree.position.y + (4 - LBoardSpeedMalus));
+     if (keyState[83])
+       movePong(playerThree, playerThree.position.y - (4 - LBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerThree, playerThree.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerThree, playerThree.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
+      break;
+    case(3):
+      if (keyState[87])
+        movePong(playerFour, playerFour.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[83])
+        movePong(playerFour, playerFour.position.y - (4 - LBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerFour, playerFour.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerFour, playerFour.position.y - (4 - LBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        player_pos: playerPos,
+        input_value: playerOne.position.y
+      }));
+      break;
   }
 }
 
@@ -790,6 +861,10 @@ function rWin(){
       scoreGrp.clear();
       scoreGrp.add(textMesh3);
       scene.add(scoreGrp);
+      playerOne.position.set(canvasBounds.left + 2, -35, 0);
+      playerTwo.position.set(canvasBounds.right - 2, -35, 0);
+      playerThree.position.set(canvasBounds.left + 10, -35, 0);
+      playerFour.position.set(canvasBounds.right - 12, -35, 0);
       resetGame();
       togglePause();
   });
@@ -808,7 +883,7 @@ function lWin(){
       size: 3,
       height: 1,
     } );
-    let winText = pseudo + " WIN"
+    let winText = pseudo + "'S TEAM WIN"
     console.log(winText)
     const geometry3 = new TextGeometry(winText, {
       font: cyberfont,
@@ -825,6 +900,10 @@ function lWin(){
     scoreGrp.clear();
     scoreGrp.add(textMesh, textMesh2, textMesh3);
     scene.add(scoreGrp);
+    playerOne.position.set(canvasBounds.left + 2, -35, 0);
+    playerTwo.position.set(canvasBounds.right - 2, -35, 0);
+    playerThree.position.set(canvasBounds.left + 10, -35, 0);
+    playerFour.position.set(canvasBounds.right - 12, -35, 0);
     resetGame();
     togglePause();
   });
