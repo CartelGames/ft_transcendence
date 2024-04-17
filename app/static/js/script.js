@@ -234,15 +234,6 @@ function printStats(user) {
     statCont.appendChild(list);
 }
 
-// function clearCanvas() {
-//     const canvas = document.getElementById("game");
-//     const parent = canvas.parentNode;
-    
-//     parent.removeChild(canvas);
-//     var div = $('<canvas id="game" class="game"></canvas>');
-//     parent.append(div[0]);
-// }
-
 window.addEventListener('hashchange', function () {
 	var divId = location.hash.slice(1) || 'index';
 	upHist = true;
@@ -270,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('profil-img').addEventListener('change', function (event) {
     sendForm('profilImg', event)
 });
-
 
 function displayDiv(hide, show) {
     var hideDiv = document.getElementById(hide);

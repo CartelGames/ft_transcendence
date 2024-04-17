@@ -25,16 +25,18 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
+      console.log()
+      play = data.play;
       resetGame()
     }
-    else if (data.type === 'ball' && playerPos != 0){
+    else if (data.type === 'ball' && playerPos == 1){
       ball.position.x = data.ball_posx,
       ball.position.y = data.ball_posy,
       ballDirection.x = data.ball_dirx;
       ballDirection.y = data.ball_diry;
       ballSpeed = data.ball_speed;
     }
-    else if (data.type === 'powerupgenerate' && playerPos != 0){
+    else if (data.type === 'powerupgenerate' && playerPos == 1){
       receivePowerUp(data.poweruptype, data.poweruppos);
     }
     else if (data.type === 'game_start'){
@@ -54,9 +56,9 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame(set_game_id, p1, p2) {
+export function reloadGame(set_game_id, data) {
   game_id = set_game_id;
-  updateGameState(p1, p2);
+  updateGameState(data.p1_pseudo, data.p2_pseudo, data.p3_pseudo, data.p4_pseudo);
   ws.send(JSON.stringify({
     type: 'game_info',
     game_id: game_id,
@@ -82,10 +84,6 @@ function updateGameState(p1, p2, p3, p4)
       playerPos = 3;
       break;
   }
-  if (username.pseudo === p1)
-    playerPos = 0;
-  else
-    playerPos = 1;
   pseudo = p1;
   pseudo2 = p2;
   pseudo3 = p3;
@@ -713,7 +711,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
       ws.send(JSON.stringify({
         type: 'input',
         player_pos: playerPos,
-        input_value: playerOne.position.y
+        input_value: playerTwo.position.y
       }));
       break;
     case(2):
@@ -728,7 +726,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
       ws.send(JSON.stringify({
         type: 'input',
         player_pos: playerPos,
-        input_value: playerOne.position.y
+        input_value: playerThree.position.y
       }));
       break;
     case(3):
@@ -743,7 +741,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
       ws.send(JSON.stringify({
         type: 'input',
         player_pos: playerPos,
-        input_value: playerOne.position.y
+        input_value: playerFour.position.y
       }));
       break;
   }

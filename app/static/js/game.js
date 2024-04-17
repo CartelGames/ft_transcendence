@@ -71,50 +71,23 @@ export function reloadGame(set_game_id, p1, p2) {
 
 function updateGameState(p1, p2, p3, p4)
 {
-  switch(username.pseudo){
-    case p1:
-      playerPos = 0;
-      break;
-    case p2:
-      playerPos = 1;
-      break;
-    case p3:
-      playerPos = 2;
-      break;
-    case p4:
-      playerPos = 3;
-      break;
-  }
   if (username.pseudo === p1)
     playerPos = 0;
   else
     playerPos = 1;
   pseudo = p1;
   pseudo2 = p2;
-  pseudo3 = p3;
-  pseudo4 = p4;
   printPseudo();
 }
 
 function updateGameInput(input_pos, input_value)
 {
-  console.log(input_pos);
   if (playerPos === input_pos)
     return;
-  switch(input_pos){
-    case 0:
-      playerOne.position.y = input_value;
-      break;
-    case 1:
-      playerTwo.position.y = input_value;
-      break;
-    case 2:
-      playerThree.position.y = input_value;
-      break;
-    case 0:
-      playerFour.position.y = input_value;
-      break;
-  }
+  if (playerPos === 1)
+    playerOne.position.y = input_value;
+  else
+    playerTwo.position.y = input_value;
   if(isPaused == true){
     printPseudo();
   }
@@ -171,11 +144,7 @@ function checkPowerUp(){
       if ((powerUpLGroup.position.x < playerOne.position.x + 1 &&
           powerUpLGroup.position.x > playerOne.position.x - 1 &&
           powerUpLGroup.position.y < playerOne.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)))
-          || (powerUpLGroup.position.x < playerThree.position.x + 1 &&
-          powerUpLGroup.position.x > playerThree.position.x - 1 &&
-          powerUpLGroup.position.y < playerThree.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-          powerUpLGroup.position.y > playerThree.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))))
+          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))))
         {
         scene.remove(powerUpLGroup);
         powerLUp = false;
@@ -215,11 +184,7 @@ function checkPowerUp(){
       if ((powerUpRGroup.position.x < playerTwo.position.x + 1 &&
           powerUpRGroup.position.x > playerTwo.position.x - 1 &&
           powerUpRGroup.position.y < playerTwo.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))
-        ||(powerUpRGroup.position.x < playerFour.position.x + 1 &&
-          powerUpRGroup.position.x > playerFour.position.x - 1 &&
-          powerUpRGroup.position.y < playerFour.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-          powerUpRGroup.position.y > playerFour.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))) {
+          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))) {
         scene.remove(powerUpRGroup);
         powerRUp = false;
         switch (powerUpType){
@@ -354,8 +319,6 @@ renderer.setSize(canvas.width, canvas.height, false);
 
 const playerOne = new THREE.Group();
 const playerTwo = new THREE.Group();
-const playerThree = new THREE.Group();
-const playerFour = new THREE.Group();
 
 new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   const model = gltf.scene;
@@ -468,7 +431,7 @@ const background = new THREE.PlaneGeometry(144, 81);
 //const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, shaderMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
-scene.add( playerOne , playerTwo, playerThree, playerFour, back);
+scene.add( playerOne , playerTwo, back);
 const canvasBounds = {
   left: -((canvas.width/2) * mConvert) * (camera.position.z * 9.3),
   right: ((canvas.width/2) * mConvert)* (camera.position.z * 9.3),
@@ -480,8 +443,6 @@ back.position.set(0,0,-10);
 ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
-playerThree.position.set(canvasBounds.left + 10, 0, 0);
-playerFour.position.set(canvasBounds.right - 12, 0, 0);
 let time = 0;
 
 //Light settings

@@ -11,14 +11,7 @@ websocket.onmessage = function(event) {
     if (data.type === 'game_start') {
         var HideDiv = document.getElementById('LeaveQueue');
         HideDiv.style.display = 'none';
-        import('/static/js/game.js?ver=${Math.random()}')
-        .then(module => {
-            const { reloadGame } = module;
-            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
-        })
-        .catch(error => {
-            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
-        });
+        launchGame(data, data.game_type);
         console.log(data.message);
         $('#Msg').text('Message: ' + data.message);
     }
@@ -27,10 +20,46 @@ websocket.onmessage = function(event) {
     }
 };
 
-function LaunchQueue() {
+function launchGame(data, num) {
+    console.log(num);
+    if (num === 0) {
+        import('/static/js/game.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+    else if (num === 1) {
+        import('/static/js/gametwovtwo.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            console.log('GAME ID 2V2 ' + data.game_id)
+            reloadGame(data.game_id, data);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+    else {
+        import('/static/js/gametwo.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+}
+
+function LaunchQueue(num) {
     websocket.send(
         JSON.stringify({
             action: 'join_queue',
+            num: num
         })
     );
     var HideDiv = document.getElementById('ChooseGame');
@@ -248,7 +277,10 @@ function getTournamentList() {
     });
 }
 
-document.getElementById('JoinQueue').addEventListener('click', LaunchQueue);
+document.getElementById('JoinQueue').addEventListener('click', function() {LaunchQueue(0);});
+document.getElementById('2v2').addEventListener('click', function() {LaunchQueue(1);});
+document.getElementById('TronQueue').addEventListener('click', function() {LaunchQueue(2);});
+
 document.getElementById('LeaveQueue').addEventListener('click', LeaveQueue);
 document.getElementById('refreshTourList').addEventListener('click', getTournamentList);
 document.getElementById('Tournament').addEventListener('click', getTournamentList);
