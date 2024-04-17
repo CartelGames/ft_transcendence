@@ -49,6 +49,7 @@
 		<div class="game">
 			<div id="ChooseGame">
 				<h1>Pong</h1>
+				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local-1v1.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local 1v1</button></div>
 				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local vs IA</button></div>
 				<div id="JoinQueue" class="butt"><button type="button">1 v 1</button></div>
 				<div id="2v2" class="butt"><button type="button">2 v 2</button></div>
