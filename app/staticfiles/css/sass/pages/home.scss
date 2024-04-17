@@ -1,0 +1,42 @@
+#home-page {
+  .card {
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    margin: 20px auto;
+    width: 80%;
+    font-size: medium;
+  }
+
+  .home-profile-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  
+  .home-profile-card-title {
+    margin: 0;
+    color: #333;
+  }
+  
+  .home-profile-card-image {
+    border-radius: 50%;
+    height: 80px;
+    width: 80px;
+    object-fit: cover;
+  }
+  
+  .home-profile-card-body {
+    padding: 20px;
+  }
+  
+  .home-profile-card-homename {
+    margin: 0;
+    color: #777;
+  }
+  
+  .home-profile-card-description {
+    color: #999;
+  }
+}
