@@ -271,8 +271,6 @@ def GetChat(request):
             messages_tour = MessageTournaments.objects.filter(id_to=request.user.tournament)
             messages_tour = messages_tour.order_by('timestamp')
             messages_list_tour = [{'content': msg.content, 'timestamp': msg.timestamp, 'me': request.user.pseudo, 'pseudo_from': msg.pseudo_from, 'pseudo_to': msg.pseudo_to} for msg in messages_tour]
-            print(messages_list)
-            print(messages_list_tour)
             return JsonResponse({'success': True,  'messages': messages_list, 'message_tour': messages_list_tour, 'csrf_token': get_token(request)})
         return JsonResponse({'success': True,  'messages': messages_list, 'csrf_token': get_token(request)})
     else:

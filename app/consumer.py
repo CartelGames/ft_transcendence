@@ -291,7 +291,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': winner.pseudo + ' is ready, waiting for the oponent..'})
                     return
             self.games[int(text_data_json['game_id'])] = []
-            self.games[int(text_data_json['game_id'])].append([game.player1, game.player2, 0, 0])
+            self.games[int(text_data_json['game_id'])].append([game.player1, game.player2, 0, 0, game.player3, game.player4])
             print(self.user.id, ' - ' ,self.games)
             if game.player1 == self.user.id or game.player2 == self.user.id or game.player3 == self.user.id or game.player4 == self.user.id:
                 if game.player1 == text_data_json['player_id']:
@@ -417,7 +417,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
 
         elif message == 'input':
             game = self.games[int(text_data_json['game_id'])][0]
-            if not game or game[0] != self.user.id and game[1] != self.user.id:
+            if not game or game[0] != self.user.id and game[1] != self.user.id and game[4] != self.user.id and game[5] != self.user.id:
                 return
             player_pos = text_data_json['player_pos']
             input_value = text_data_json['input_value']
