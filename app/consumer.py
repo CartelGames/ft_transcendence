@@ -287,7 +287,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
             self.games[int(text_data_json['game_id'])] = []
             self.games[int(text_data_json['game_id'])].append([game.player1, game.player2, 0, 0])
             print(self.user.id, ' - ' ,self.games)
-            if game.player1 == self.user.id or game.player2 == self.user.id:
+            if game.player1 == self.user.id or game.player2 == self.user.id or game.player3 == self.user.id or game.player4 == self.user.id:
                 if game.player1 == text_data_json['player_id']:
                     await self.channel_layer.group_send(self.room_name,
                         {

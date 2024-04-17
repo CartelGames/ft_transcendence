@@ -25,7 +25,6 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
-      console.log()
       play = data.play;
       resetGame()
     }
@@ -70,6 +69,8 @@ export function reloadGame(set_game_id, data) {
 
 function updateGameState(p1, p2, p3, p4)
 {
+  console.log(username.pseudo);
+  console.log(p1 + ' ' + p2 + ' ' + p3 + ' ' + p4)
   switch(username.pseudo){
     case p1:
       playerPos = 0;
@@ -84,6 +85,7 @@ function updateGameState(p1, p2, p3, p4)
       playerPos = 3;
       break;
   }
+  console.log(playerPos);
   pseudo = p1;
   pseudo2 = p2;
   pseudo3 = p3;
