@@ -22,6 +22,7 @@ websocket.onmessage = function(event) {
     }
     else if (data.type === 'add_tour_chat') {
         openTournamentChat(data.name);
+        getMessages();
     }
     else if (data.type == 'returnPing') {
         var divData = document.querySelectorAll('div[friend-pseudo]');
@@ -68,13 +69,12 @@ function openTournamentChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <form id="${pseudo + chatCounter}" enctype="multipart/form-data" action="/sendChat/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="tournament" value="True">
-        <input type="hidden" name="csrfmiddlewaretoken" value="">
         <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
-        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div style="display: none;"><button type="submit" onclick="sendForm('${pseudo + chatCounter}', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -120,12 +120,11 @@ function openChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <form id="${pseudo + chatCounter}" enctype="multipart/form-data" action="/sendChat/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
-        <input type="hidden" name="csrfmiddlewaretoken" value="">
         <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
-        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div style="display: none;"><button type="submit" onclick="sendForm('${pseudo + chatCounter}', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -299,7 +298,6 @@ function getMessages() {
         success: function (data) {
             var messages = data.messages;
             var messages_tour = data.message_tour;
- 
             var chatBoxContents = document.querySelectorAll('.chat-box-content');
             chatBoxContents.forEach(function (chatBoxContent) {
                 var paragraphs = chatBoxContent.querySelectorAll('p');
@@ -325,6 +323,8 @@ function getMessages() {
                     chatBoxContent.appendChild(messageElement);
                     chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
                 });
+            });
+            if (messages_tour) {
                 messages_tour.forEach(function (message) {
                     var chatDiv = document.getElementById(message.pseudo_to);
                     if (!chatDiv)
@@ -343,7 +343,7 @@ function getMessages() {
                     chatBoxContent.appendChild(messageElement);
                     chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
                 });
-            });
+            }
             token = data.csrf_token;
         },
         error: function (error) {

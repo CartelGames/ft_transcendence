@@ -70,13 +70,14 @@ def UserSendChat(request):
     if request.method == 'POST' and request.POST.get('type') == 'sendChat':
         id_to = request.POST.get('id_to', None)
         content = request.POST.get('content', None)
+        print(id_to + ' ' + content)
         if content and id_to:
             tournament = request.POST.get('tournament', None)
             if tournament:
                 try:
                     tour = get_object_or_404(Tournaments, name=id_to)
                 except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo !', 'csrf_token': get_token(request)})
                 new_message = MessageTournaments.objects.create(
                     id_from=request.user.id,
                     id_to=tour.id,
@@ -270,6 +271,8 @@ def GetChat(request):
             messages_tour = MessageTournaments.objects.filter(id_to=request.user.tournament)
             messages_tour = messages_tour.order_by('timestamp')
             messages_list_tour = [{'content': msg.content, 'timestamp': msg.timestamp, 'me': request.user.pseudo, 'pseudo_from': msg.pseudo_from, 'pseudo_to': msg.pseudo_to} for msg in messages_tour]
+            print(messages_list)
+            print(messages_list_tour)
             return JsonResponse({'success': True,  'messages': messages_list, 'message_tour': messages_list_tour, 'csrf_token': get_token(request)})
         return JsonResponse({'success': True,  'messages': messages_list, 'csrf_token': get_token(request)})
     else:

@@ -27,7 +27,13 @@ class MyConsumer(AsyncWebsocketConsumer):
         action = data["action"]
 
         if action == 'sendChat':
-            await self.send_message_to_user(data["pseudo"])
+            if data["tournament"]:
+                tour = await Tournaments.objects.aget(name=data["pseudo"])
+                players = await database_sync_to_async(list)(tour.players.all())
+                for player in players:
+                    await self.send_message_to_user(player.pseudo)
+            else:
+                await self.send_message_to_user(data["pseudo"])
         elif action == 'checkTournament':
             player = await UserProfil.objects.aget(id=self.user.id)
             if player.tournament != 0:

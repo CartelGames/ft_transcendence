@@ -49,6 +49,7 @@ function sendForm(id, event) {
                     websocket.send(
                         JSON.stringify({
                             action: 'sendChat',
+                            tournament: formData.get('tournament'),
                             pseudo: formData.get('id_to')
                         })
                     );
