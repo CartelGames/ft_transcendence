@@ -34,7 +34,7 @@ const camera = new THREE.PerspectiveCamera(75, canvas.width/canvas.height, 0.1, 
 const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
-camera.position.set(0, -20, 2) //initial camera position, once game starts, make it travel to final position using gsap
+camera.position.set(0, -20, 5) //initial camera position, once game starts, make it travel to final position using gsap
 camera.lookAt(0, 0, 5);
 const controls = new OrbitControls( camera, renderer.domElement );
 controls.update();
@@ -56,26 +56,58 @@ const pointlight = new THREE.PointLight(0xffffff);
 const ambientlight = new THREE.AmbientLight(0xffffff);
 scene.add(pointlight);//, ambientlight
 pointlight.position.set(0, 0, 10);
-const background = new THREE.PlaneGeometry(144, 81);
-const texture = new THREE.TextureLoader().load('static/images/tron.jpg' ); 
-const backmat = new THREE.MeshBasicMaterial( { map:texture } );
+
+
+let vertex; 
+let fragment;
+async function fetchingfragShader(){
+  return fetch('static/js/shaders/fragmenttwo.glsl').then((response) => response.text()).then((text) => {fragment = text;});
+}
+await fetchingfragShader();
+async function fetchingvertShader(){
+  return fetch('static/js/shaders/vertex.glsl').then((response) => response.text()).then((text) => {vertex = text;});
+}
+await fetchingvertShader();
+
+const shaderMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    time: { value: 0.0 },
+    resolution: { value: new THREE.Vector2(180,120) },
+    cameraPosition: {value: camera.position},
+  },
+  vertexShader: vertex,
+  fragmentShader: fragment
+});
+
+const background = new THREE.PlaneGeometry(180, 120);
+const texture = new THREE.TextureLoader().load('static/images/tron1.jpg'); 
+const texturewall = new THREE.TextureLoader().load('static/images/outrun.jpg');
+const wallNMat = new THREE.MeshBasicMaterial( {map: texturewall});
+const backmat = new THREE.MeshStandardMaterial( { map:texture } );
 const back = new THREE.Mesh(background, backmat);
 scene.add(back);
 
 //Walls for 3D scene
 function walls(){
-  const wallMat = new THREE.MeshStandardMaterial( { color: 0x808080 } );
-  const wallNS = new THREE.BoxGeometry(canvas.width, 1, 30);
-  const wallEW = new THREE.BoxGeometry(1, canvas.height, 30);
-  const wallNorth = new THREE.Mesh(wallNS, wallMat);
-  const wallSouth = new THREE.Mesh(wallNS, wallMat);
-  const wallEast = new THREE.Mesh(wallEW, wallMat);
-  const wallWest = new THREE.Mesh(wallEW, wallMat);
+  const wallMat = new THREE.MeshStandardMaterial( { color: 0x000000 } );
+  const wallNS = new THREE.BoxGeometry(canvas.width/5, 1, 110);
+  const wallEW = new THREE.BoxGeometry(1, canvas.height/5, 100);
+  const wallNorth = new THREE.Mesh(wallNS, wallNMat);
+  const wallSouth = new THREE.Mesh(wallNS, wallNMat);
+  const wallEast = new THREE.Mesh(wallEW, wallNMat);
+  const wallWest = new THREE.Mesh(wallEW, wallNMat);
   scene.add(wallNorth, wallSouth, wallEast, wallWest);//
   wallNorth.position.y = canvasBounds.top;
   wallSouth.position.y = canvasBounds.bottom;
   wallEast.position.x = canvasBounds.right;
   wallWest.position.x = canvasBounds.left;
+  wallNorth.position.z += 14;
+  wallEast.position.z += 15;
+  wallWest.position.z += 15;
+  wallSouth.position.z += 15;
+  wallEast.rotateX(1.57);
+  wallWest.rotateX(1.57);
+  wallSouth.rotateY(Math.PI);
 }
 walls();
 
@@ -133,7 +165,7 @@ function startAnimation(){
       z: 0, // Final z position
       ease: 'power2.out' // Easing function
   });
-  rotateBikesAnimation(bikeOne, bikeTwo);
+  rotateBikesAnimation(bikeOne, bikeTwo);  
 }
 
 function rotateBikesAnimation(bike1, bike2){
@@ -155,8 +187,7 @@ const mouse = new THREE.Vector2();
 const zoneGeometry = new THREE.PlaneGeometry(50, 10);
 const zoneMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.0 });
 const zoneMesh = new THREE.Mesh(zoneGeometry, zoneMaterial);
-zoneMesh.position.y = canvasBounds.top - 2;
-zoneMesh.position.z += 3; // Move the plane slightly behind the other objects
+zoneMesh.position.y = 11; // Move the plane slightly behind the start text
 zoneMesh.rotateX(1.57);
 scene.add(zoneMesh);
 
@@ -195,7 +226,7 @@ document.addEventListener('mousedown', onMouseClick);
 //SETUP DONE
 
 //Player objects setup
-const bikeSpeed = 0.1;
+const bikeSpeed = 0.35; // if you want to up this speed, update the distance check in checkCollisions
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
 let bikeOne = new THREE.Group(); //player1
@@ -245,9 +276,9 @@ function rotateBikesGame(bike, key) {
   } else if (key === 'down') {
     targetRotation = Math.PI / 2; // South (270 degrees)
   } else if (key === 'left') {
-    targetRotation = 0; // East (0 degrees) inverted for player one
+    targetRotation = 0; // West (0 degrees) inverted bcs plane is weird
   } else if (key === 'right') 
-    targetRotation = Math.PI; // West (180 degrees) inverted for player one
+    targetRotation = Math.PI; // East (180 degrees) inverted bcs plane is weird
 
   // Add the difference between the target rotation and the current rotation to the current rotation value
   let rotationDifference = targetRotation - bike.rotation.z;
@@ -325,13 +356,10 @@ function togglePause() {
 }
 const positionsOne = [];
 const positionsTwo = [];
-const traildelta = 1;
-let trailTimer = 0;
-let prevBikeOnePosition = bikeOne.position.clone();
-let prevBikeTwoPosition = bikeTwo.position.clone();
+const bufferOne = [];
+const bufferTwo = [];
+
 function updated(){
-  const delta = clock.getDelta();
-  trailTimer += delta;
   bikeOne.position.x += bikeOneDir.x * bikeSpeed;
   bikeTwo.position.x += bikeTwoDir.x * bikeSpeed;
   bikeOne.position.y += bikeOneDir.y * bikeSpeed;
@@ -339,23 +367,22 @@ function updated(){
   
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
+  const currentTime = Date.now();
 
-  //if (trailTimer > traildelta){
-    if (!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne)) {
-      positionsOne.push(newPosOne);
-    }
-    if (!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo)) {
-      positionsTwo.push(newPosTwo);
-    }
-  //}
-
-  //if (trailTimer > traildelta)
-    trails();
+  if ((!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne))) {
+    positionsOne.push(newPosOne);
+    bufferOne.push(currentTime);
+  }
+  if ((!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo))) {
+    positionsTwo.push(newPosTwo);
+    bufferTwo.push(currentTime);
+  }
+  trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  //const playerOneSuicided = checkCollision(bikeOne, trailOne);
-  //const playerTwoSuicided = checkCollision(bikeTwo, trailTwo);|| playerOneSuicided|| playerTwoSuicided
+  //const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);|| playerOneSuicided
+  //const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);|| playerTwoSuicided
   if (playerOneCollided ){
     console.log("playerone collided");
     isPaused = 1;
@@ -377,15 +404,15 @@ function updateGameState(p1, p2){
   pseudo2 = p2;
 }
 
-const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.1;
-bloomPass.strength = 1.5;
-bloomPass.radius = 1.0;
 
+//neon effect
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.25, 0.5);
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 composer.addPass(bloomPass);
 
+
+//trail code
 const trailMaterial1 = new THREE.MeshStandardMaterial({
   color: 0x00ffff, // Neon blue color
   emissive: 0x00ffff, // Neon blue emissive color
@@ -396,8 +423,8 @@ const trailMaterial1 = new THREE.MeshStandardMaterial({
   opacity: 0.5, // Opacity
 });
 const trailMaterial2 = new THREE.MeshStandardMaterial({
-  color: 0xffff00, // Neon blue color
-  emissive: 0xffff00, // Neon blue emissive color
+  color: 0xff00ff, // Neon purple color
+  emissive: 0xff00ff, // Neon purple emissive color
   emissiveIntensity: 1.0, // Emissive intensity
   roughness: 0.5, // Roughness
   metalness: 0, // Metalness
@@ -414,17 +441,12 @@ function trails(){
 
   const cleanPositionsOne = positionsOne.filter(p => p !== undefined);
   const cleanPositionsTwo = positionsTwo.filter(p => p !== undefined);
-
   if (cleanPositionsOne.length > 1 && cleanPositionsTwo.length > 1) { 
     const curve = new THREE.CatmullRomCurve3(cleanPositionsOne.map(p => new THREE.Vector3(p.x, p.y, p.z)));
     const curve2 = new THREE.CatmullRomCurve3(cleanPositionsTwo.map(p => new THREE.Vector3(p.x, p.y, p.z)));
 
-    const geometry = new THREE.TubeGeometry(curve, 64, 1, 8, false);
-    const geometry2 = new THREE.TubeGeometry(curve2, 64, 1, 8, false);
-
-    const materialOne = new THREE.MeshStandardMaterial({color: 0xffffff});
-
-    const materialTwo = new THREE.MeshStandardMaterial({color: 0xffffff});
+    const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
+    const geometry2 = new THREE.TubeGeometry(curve2, 64, 0.5, 8, false);
 
     trailOne = new THREE.Mesh(geometry, trailMaterial1);
     trailTwo = new THREE.Mesh(geometry2, trailMaterial2);
@@ -432,14 +454,6 @@ function trails(){
     scene.add(trailOne, trailTwo);
   }
 }
-
-//Player objects setup done
-
-//GAME CODE
-
-//trailOne and trailTwo stay behind bikes and grows over time
-
-//inputs to maneuver inside the square map
 
 //if trailOne intersects with bikeTwo => bikeOne wins etc...
 function checkCollision(player, trail){
@@ -455,12 +469,43 @@ function checkCollision(player, trail){
 
     const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
 
-    if (distance < 1) return true; // 1 is the radius of the trail
+    if (distance < 1.5) return true; // if speed goes up, this goes up too or the check wont work
   }
   if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
       player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
     return true;
   }
+  return false;
+}
+
+function checkSuicide(player, trail, trailCreationTimes, currentTime) {
+  if (!trail) return false;
+
+  const points = trail.geometry.attributes.position.array;
+
+  // Ignore trail segments created within the last 2000 milliseconds (2 seconds)
+  const trailCreationCutoff = currentTime - 2000;
+
+  // Check the distance between the player and each point on the trail
+  for (let i = 0; i < points.length; i += 3) {
+    const x = points[i];
+    const y = points[i + 1];
+    const z = points[i + 2];
+
+    // Check if the trail segment was created before the cutoff time
+    if (trailCreationTimes[i / 3] > trailCreationCutoff) continue;
+
+    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
+
+    if (distance < 1) return true;
+  }
+
+  // Check if the player is outside the canvas bounds
+  if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
+      player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
+    return true;
+  }
+
   return false;
 }
 
@@ -503,7 +548,13 @@ function animate() {
       updated();
     }
     composer.render();
-    renderer.render(scene, camera);
+    shaderMaterial.uniforms.time.value += 0.005;
+    shaderMaterial.uniforms.cameraPosition.value.copy(camera.position);
+    //renderer.render(scene, camera);
+    shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
     //controls.update();
 }
 animate();
+
+
+//FIX SUICIDE PUIS PLAYER NAMES ET WIN MSG PUIS C'EST GG
