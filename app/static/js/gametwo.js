@@ -267,6 +267,38 @@ function createPlayer(){
 }
 createPlayer();
 
+async function printPseudo(){
+  console.log(pseudo2);
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( pseudo2, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      //var center = new THREE.Vector3();
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.geometry.center();
+      textMesh.position.set(canvasBounds.left + 20, 15, -2);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.geometry.center();
+      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
+}
+printPseudo();
 
 function rotateBikesGame(bike, key) {
   let targetRotation = 0;
@@ -368,26 +400,27 @@ function updated(){
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
   const currentTime = Date.now();
-
+  bufferOne.push(currentTime);
+  bufferTwo.push(currentTime);
   if ((!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne))) {
     positionsOne.push(newPosOne);
-    bufferOne.push(currentTime);
+    
   }
   if ((!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo))) {
     positionsTwo.push(newPosTwo);
-    bufferTwo.push(currentTime);
+    
   }
   trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  //const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);|| playerOneSuicided
-  //const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);|| playerTwoSuicided
-  if (playerOneCollided ){
+  const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);
+  const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);
+  if (playerOneCollided || playerOneSuicided){
     console.log("playerone collided");
     isPaused = 1;
   }
-  if (playerTwoCollided )
+  if (playerTwoCollided || playerTwoSuicided)
   {
     console.log("playetwo collided");
     isPaused = 1;
@@ -482,22 +515,28 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
   if (!trail) return false;
 
   const points = trail.geometry.attributes.position.array;
+  //console.log(points);
+  //console.log(trailCreationTimes.length);
 
   // Ignore trail segments created within the last 2000 milliseconds (2 seconds)
-  const trailCreationCutoff = currentTime - 2000;
+  const trailCreationCutoff = currentTime - 1000;
 
   // Check the distance between the player and each point on the trail
   for (let i = 0; i < points.length; i += 3) {
     const x = points[i];
     const y = points[i + 1];
     const z = points[i + 2];
+    //console.log(player, i, trailCreationTimes[i/3] - currentTime)
 
     // Check if the trail segment was created before the cutoff time
-    if (trailCreationTimes[i / 3] > trailCreationCutoff) continue;
-
-    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-
-    if (distance < 1) return true;
+    if (trailCreationTimes[i / 3] < trailCreationCutoff){
+      const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
+      if (player === bikeOne)
+        console.log('distance:', distance);
+      if (distance < 1.5) return true;
+    }
+    else
+      return false;
   }
 
   // Check if the player is outside the canvas bounds
@@ -510,7 +549,7 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
 }
 
 //GAME DONE
-const ws = new WebSocket("ws://" + window.location.host + "/ws/gametwo/");
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 
 ws.onopen = function(event) {
     console.log("Coucou la zone"); 
