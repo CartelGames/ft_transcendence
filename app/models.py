@@ -58,15 +58,30 @@ class Message(models.Model):
     content = models.TextField()
     timestamp = models.DateTimeField(auto_now_add=True)
 
+class MessageTournaments(models.Model):
+    id = models.AutoField(primary_key=True, unique=True)
+    id_from = models.IntegerField(null=False)
+    id_to = models.IntegerField(null=False)
+    pseudo_from = models.CharField(max_length=32, default="")
+    pseudo_to = models.CharField(max_length=32, default="")
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
 class Game(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     player1 = models.IntegerField(blank=True, null=True)
     player2 = models.IntegerField(blank=True, null=True)
+    player3 = models.IntegerField(blank=True, null=True)
+    player4 = models.IntegerField(blank=True, null=True)
+    game_type = models.IntegerField(blank=True, null=True, default=0)
+    score1 = models.IntegerField(blank=True, null=True, default=0)
+    score2 = models.IntegerField(blank=True, null=True, default=0)
     pseudo_p1 = models.CharField(max_length=32, default="")
     pseudo_p2 = models.CharField(max_length=32, default="")
     winner = models.IntegerField(blank=True, null=True, default=0)
     tournament = models.IntegerField(null=True, default=0)
     timestamp = models.DateTimeField(auto_now_add=True)
+    ended = models.BooleanField(default=False)
 
     def set_players(self, p1, p2, state):
         self.player1 = p1

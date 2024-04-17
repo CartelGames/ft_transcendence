@@ -1,11 +1,12 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import LoginForm, SignupForm, ProfilImgForm
 from django.contrib.auth.models import AnonymousUser
-from .models import UserProfil, Message, Game, Tournaments, TournamentsGame
+from .models import UserProfil, Message, Game, Tournaments, TournamentsGame, MessageTournaments
 from django.http import JsonResponse, Http404
 from django.contrib.auth import authenticate, login, logout
 from django.middleware.csrf import get_token
 from app.consumer import MyConsumer
+from asgiref.sync import async_to_sync
 # Create your views here.
 
 
@@ -70,24 +71,33 @@ def UserSendChat(request):
         id_to = request.POST.get('id_to', None)
         content = request.POST.get('content', None)
         if content and id_to:
-            try:
-                friend = get_object_or_404(UserProfil, pseudo=id_to)
-            except Http404 as e:
-                return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
-            if request.user.blocked_friends.filter(id=friend.id).exists():
-                return JsonResponse({'success': False, 'errors': 'This user is blocked !', 'csrf_token': get_token(request)})
-            new_message = Message.objects.create(
-                id_from=request.user.id,
-                id_to=friend.id,
-                pseudo_from=request.user.pseudo,
-                pseudo_to=friend.pseudo,
-                content=content
-            )
-            sender_info = {
-                'id_from': new_message.id_from,
-                'username': request.user.username,
-                'email': request.user.email,
-            }
+            tournament = request.POST.get('tournament', None)
+            if tournament:
+                try:
+                    tour = get_object_or_404(Tournaments, name=id_to)
+                except Http404 as e:
+                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+                new_message = MessageTournaments.objects.create(
+                    id_from=request.user.id,
+                    id_to=tour.id,
+                    pseudo_from=request.user.pseudo,
+                    pseudo_to=tour.name,
+                    content=content
+                )
+            else:
+                try:
+                    friend = get_object_or_404(UserProfil, pseudo=id_to)
+                except Http404 as e:
+                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+                if request.user.blocked_friends.filter(id=friend.id).exists():
+                    return JsonResponse({'success': False, 'errors': 'This user is blocked !', 'csrf_token': get_token(request)})
+                new_message = Message.objects.create(
+                    id_from=request.user.id,
+                    id_to=friend.id,
+                    pseudo_from=request.user.pseudo,
+                    pseudo_to=friend.pseudo,
+                    content=content
+                )
             return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Error', 'csrf_token': get_token(request)})
@@ -148,7 +158,7 @@ def CreateTournament(request):
         exist_name = Tournaments.objects.filter(name=tourName)
         if exist_name:
             return JsonResponse({'success': False, 'errors': 'This tournament name is already exist !', 'csrf_token': get_token(request)})
-        exist_id = Tournaments.objects.filter(creator=request.user.id, ended=False)
+        exist_id = Tournaments.objects.filter(creator=request.user.id).exclude(state=2)
         if exist_id:
             return JsonResponse({'success': False, 'errors': 'You have already a tournament in progress !', 'csrf_token': get_token(request)})
         new_tournament = Tournaments.objects.create(name=tourName, creator=request.user.id)
@@ -164,6 +174,8 @@ def TournamentRegistration(request):
         
         exist_tour = Tournaments.objects.filter(id=request.POST.get('id')).first()
         if exist_tour:
+            if exist_tour.state != 0:
+                return JsonResponse({'success': False, 'errors': 'This tournament is already in progress !', 'csrf_token': get_token(request)})
             if request.POST.get('join') == 'true':
                 exist_tour.add_player(UserProfil.objects.get(id=request.user.id))
                 return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
@@ -184,7 +196,6 @@ def TournamentUpdate(request):
             if exist_tour.creator != request.user.id:
                 return JsonResponse({'success': False, 'errors': 'You are not the creator !', 'csrf_token': get_token(request)})
             if request.POST.get('statut') == 'start':
-
                 players_count = exist_tour.players.count()
                 if players_count < 2:
                     return JsonResponse({'success': False, 'errors': 'You need atleast 2 players', 'csrf_token': get_token(request)})
@@ -214,7 +225,18 @@ def TournamentUpdate(request):
                     find_tour.set_state(1)
                     i += 2
                 exist_tour.update_state(1)
-                TournamentsGame.objects.filter(tournament_id=exist_tour.id, phase=phase, state=1).first().set_state(2)
+                first_game = TournamentsGame.objects.filter(tournament_id=exist_tour.id, phase=phase, state=1).first()
+                first_game.set_state(2)
+                game = Game.objects.get(id=first_game.game_id)
+                new_message = MessageTournaments.objects.create(
+                    id_from='0',
+                    id_to=exist_tour.id,
+                    pseudo_from='Server',
+                    pseudo_to=exist_tour.name,
+                    content='The tournament is launched ! First match is ' + UserProfil.objects.get(id=game.player1).pseudo + ' VS ' + UserProfil.objects.get(id=game.player2).pseudo + ' !'
+                )
+                for player in players:
+                    async_to_sync(MyConsumer.send_message_to_user)(player.pseudo)
                 return JsonResponse({'success': True, 'errors': '', 'csrf_token': get_token(request)})
             elif request.POST.get('statut') == 'delete':
                 exist_tour.clear_players()
@@ -244,6 +266,11 @@ def GetChat(request):
         messages = messages_sent | messages_received
         messages = messages.order_by('timestamp')
         messages_list = [{'content': msg.content, 'timestamp': msg.timestamp, 'me': request.user.pseudo, 'pseudo_from': msg.pseudo_from, 'pseudo_to': msg.pseudo_to} for msg in messages]
+        if request.user.tournament != 0:
+            messages_tour = MessageTournaments.objects.filter(id_to=request.user.tournament)
+            messages_tour = messages_tour.order_by('timestamp')
+            messages_list_tour = [{'content': msg.content, 'timestamp': msg.timestamp, 'me': request.user.pseudo, 'pseudo_from': msg.pseudo_from, 'pseudo_to': msg.pseudo_to} for msg in messages_tour]
+            return JsonResponse({'success': True,  'messages': messages_list, 'message_tour': messages_list_tour, 'csrf_token': get_token(request)})
         return JsonResponse({'success': True,  'messages': messages_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
@@ -291,7 +318,8 @@ def GetTournamentList(request):
         if isinstance(request.user, AnonymousUser):
             return JsonResponse({'success': False, 'csrf_token': get_token(request)})
         tournaments = Tournaments.objects.filter(ended=False)
-        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'me': request.user.tournament} for tourn in tournaments]
+        tournaments = tournaments.order_by('state')
+        tourList = [{'id': tourn.id, 'name': tourn.name, 'creator':  UserProfil.objects.get(id=tourn.creator).pseudo, 'players': tourn.players.count(), 'state': tourn.state, 'me': request.user.tournament} for tourn in tournaments]
         return JsonResponse({'success': True, 'tourList': tourList, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
@@ -314,50 +342,13 @@ def GetTournamentInfo(request):
                     player1_profile = UserProfil.objects.filter(id=game.player1).first()
                     player2_profile = UserProfil.objects.filter(id=game.player2).first()
                     if player1_profile and player2_profile:
-                        games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2':  UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'phase': match.phase, 'winner': UserProfil.objects.filter(id=game.winner).first()})
+                        if game.winner != 0:
+                            games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2': UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'phase': match.phase, 'winner': UserProfil.objects.get(id=game.winner).pseudo})
+                        else:
+                            games.append({'id': game.id, 'p1': UserProfil.objects.get(id=game.player1).pseudo, 'p2': UserProfil.objects.get(id=game.player2).pseudo, 'state': match.state, 'phase': match.phase, 'winner': 0})
             return JsonResponse({'success': True, 'tourList': tourList, 'player': players_list, 'games': games, 'owner': tournament.creator == request.user.id, 'csrf_token': get_token(request)})
         else:
             return JsonResponse({'success': False, 'errors': 'Wrong tournament id !', 'csrf_token': get_token(request)})
-    else:
-        return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
-
-def NewGame(request):
-    if request.method == 'POST' and request.POST.get('type') == 'newGame':
-        if isinstance(request.user, AnonymousUser):
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged out !', 'csrf_token': get_token(request)})
-        player1 = int(request.POST.get('player1'))
-        
-        if player1 == request.user.id:
-            try:
-                player1 = get_object_or_404(UserProfil, id=player1)
-            except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
-        else:
-            return JsonResponse({'success': False, 'errors': 'You\'re not logged in !', 'csrf_token': get_token(request)})
-        if request.POST.get('player2') is not None:
-            try:
-                player2 = get_object_or_404(UserProfil, id=request.POST.get('player2'))
-            except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'This user does not exist', 'csrf_token': get_token(request)})
-            player2.nb_games += 1
-        player2 = player1
-        player1.nb_games += 1
-        if request.POST.get('winner') == 'player1':
-            player1.mmr += 10
-            player2.mmr -= 10
-        elif request.POST.get('winner') == 'player2':
-            player1.mmr -= 10
-            player2.mmr += 10
-        else:
-            player1.mmr -= 5
-        # new_game = Game.objects.create(
-        #     player1=request.user.id,
-        #     player2=player2.id,
-        #     pseudo_p1=request.user.pseudo,
-        #     pseudo_p2=player2.pseudo,
-        #     winner=request.POST.get('winner')
-        # )
-        return JsonResponse({'success': True, 'errors': 'The stats game was correctly created !', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
    

@@ -48,13 +48,16 @@
 		{% if user.is_authenticated %}
 		<div class="game">
 			<div id="ChooseGame">
-				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local</button></div>
+				<h1>Pong</h1>
+				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local vs IA</button></div>
+				<div id="JoinQueue" class="butt"><button type="button">1 v 1</button></div>
 				<div id="2v2" class="butt"><button type="button">2 v 2</button></div>
-				<div id="JoinQueue" class="butt"><button type="button">Go in queue</button></div>
-				<div id="Tournament" class="butt"><button type="button" onclick="displayDiv('ChooseGame', 'ChooseTour');">Tournois</button></div>
+				<div id="Tournament" class="butt"><button type="button" onclick="displayDiv('ChooseGame', 'ChooseTour');">Tournament</button></div>
+				<h1>Tron</h1>
+				<div id="TronQueue" class="butt"><button type="button" onclick="displayDiv('ChooseGame');">1 v 1</button></div>
 			</div>
 			<div id="BackMenu" style="display:none;">
-				<div class="butt"><button2 type="submit" onclick="displayDiv('BackMenu', 'ChooseGame')">Back</button></div>
+				<div class="butt"><button2 type="submit" onclick="window.location.reload();">Back to menu</button></div>
 			</div>
 			<div id="LeaveQueue" class="butt" style="display:none;"><button type="button">Leave the queue</button></div>
 			<div id="ChooseTour" style="display:none;">

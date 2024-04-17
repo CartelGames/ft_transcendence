@@ -8,6 +8,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 //Initiating scene and camera
 let game_id = "";
 let playerPos = 0;
+let ended = false;
+let play = false;
+
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
@@ -18,31 +21,36 @@ ws.onopen = function(event) {
 
 ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
-  if (data.type === 'game_state'){
-    updateGameInput(data.player_pos, data.input_value);
+  if (!ended) {
+    if (data.type === 'game_state'){
+      updateGameInput(data.player_pos, data.input_value);
+    }
+    else if (data.type === 'game_info'){
+      console.log()
+      play = data.play;
+      resetGame()
+    }
+    else if (data.type === 'ball' && playerPos == 1){
+      ball.position.x = data.ball_posx,
+      ball.position.y = data.ball_posy,
+      ballDirection.x = data.ball_dirx;
+      ballDirection.y = data.ball_diry;
+      ballSpeed = data.ball_speed;
+    }
+    else if (data.type === 'powerupgenerate' && playerPos == 1){
+      receivePowerUp(data.poweruptype, data.poweruppos);
+    }
+    else if (data.type === 'game_start'){
+      playerGameStarted();
+    }
+    else if(data.type === 'pause' && playerPos != data.player){
+      togglePause()
+    }
+    else if (data.type === 'msg')
+      $('#Msg').text('Message: ' + data.message);
   }
-  else if (data.type === 'game_info'){
-    resetGame()
-  }
-  else if (data.type === 'ball' && playerPos == 1){
-    ball.position.x = data.ball_posx,
-    ball.position.y = data.ball_posy,
-    ballDirection.x = data.ball_dirx;
-    ballDirection.y = data.ball_diry;
-    ballSpeed = data.ball_speed;
-  }
-  else if (data.type === 'powerupgenerate' && playerPos == 1){
-    receivePowerUp(data.poweruptype, data.poweruppos);
-  }
-  else if (data.type === 'game_start'){
-    playerGameStarted();
-  }
-  else if(data.type === 'pause' && playerPos != data.player){
-    togglePause()
-  }
-  else if (data.type === 'msg') {
+  if (data.type === 'msg')
     $('#Msg').text('Message: ' + data.message);
-}
 };
 
 ws.onclose = function(event) {
@@ -61,7 +69,7 @@ export function reloadGame(set_game_id, p1, p2) {
   // fonction appelé via queue.js pour lancer des nouvelles games
 }
 
-function updateGameState(p1, p2)
+function updateGameState(p1, p2, p3, p4)
 {
   if (username.pseudo === p1)
     playerPos = 0;
@@ -133,10 +141,11 @@ function checkPowerUp(){
   else{
     if (powerLUp == true){
       powerUpLGroup.position.x += powerUpLDirection.x * powerUpSpeed;
-      if (powerUpLGroup.position.x < playerOne.position.x + 1 &&
+      if ((powerUpLGroup.position.x < playerOne.position.x + 1 &&
           powerUpLGroup.position.x > playerOne.position.x - 1 &&
           powerUpLGroup.position.y < playerOne.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))) {
+          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))))
+        {
         scene.remove(powerUpLGroup);
         powerLUp = false;
         switch (powerUpType){
@@ -172,10 +181,10 @@ function checkPowerUp(){
     if (powerRUp == true)
     {
       powerUpRGroup.position.x += powerUpRDirection.x * powerUpSpeed;
-      if (powerUpRGroup.position.x < playerTwo.position.x + 1 &&
+      if ((powerUpRGroup.position.x < playerTwo.position.x + 1 &&
           powerUpRGroup.position.x > playerTwo.position.x - 1 &&
           powerUpRGroup.position.y < playerTwo.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale))) {
+          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))) {
         scene.remove(powerUpRGroup);
         powerRUp = false;
         switch (powerUpType){
@@ -208,8 +217,6 @@ function checkPowerUp(){
       }
     }
   }
-  playerOne.scale.y = 1 + LBoardUpscale;
-  playerTwo.scale.y = 1 + RBoardUpscale;
 }
 
 function createPowerUp(){
@@ -256,7 +263,7 @@ function receivePowerUp(poweruptype, poweruppos)
   switch (poweruptype){
     case "boardUpscale":
       powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0x76e64a} );
-      powerUpType = "boardUpscale";       
+      powerUpType = "randomBallMalus";       
       break;
     case "ballSpeedMalus":
       powerUpMaterial = new THREE.MeshStandardMaterial( {color: 0xe6e6fa} );
@@ -312,24 +319,20 @@ renderer.setSize(canvas.width, canvas.height, false);
 
 const playerOne = new THREE.Group();
 const playerTwo = new THREE.Group();
-new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   const model = gltf.scene;
   model.scale.set(0.02, 0.02, 0.02);
   model.rotation.set(Math.PI /2, 0,Math.PI /2);
-  
   playerTwo.add(model);
-
 } );
-new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
+new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   const model = gltf.scene;
   model.scale.set(0.02, 0.02, 0.02);
   model.position.x -= 4;
   model.rotation.set(Math.PI /2, 0,-Math.PI /2);
-  
   playerOne.add(model);
-
 } );
 
 let vertex; 
@@ -358,6 +361,7 @@ let textMenu;
 startGame();
 
 function startGame() {
+  document.removeEventListener('mousedown', onMouseClick)
   var HideDiv = document.getElementById('LeaveQueue')
   HideDiv.style.display = 'none';
   score[0] = 0;
@@ -374,22 +378,21 @@ function startGame() {
   boardUpscale = 1;
   powerUpType = "none";
   const ttfloader = new TTFLoader();
-    ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
-      const cyberfont = loader.parse(json);
-        const geometry = new TextGeometry( 'Start', {
-          font: cyberfont,
-          size: 3,
-          height: 1,
-        } );
-        const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
-        textMenu = new THREE.Mesh(geometry, textMaterial);
-        textMenu.position.set(-15, 0, 0);
-        menu.clear();
-        menu.add(textMenu);
-        scene.add(menu);
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+    const geometry = new TextGeometry( 'Start', {
+      font: cyberfont,
+      size: 3,
+      height: 1,
+    } );
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+    textMenu = new THREE.Mesh(geometry, textMaterial);
+    textMenu.position.set(-15, 0, 0);
+    menu.clear();
+    menu.add(textMenu);
+    scene.add(menu);
   });
 }
-
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
@@ -412,30 +415,10 @@ function playerGameStarted(event) {
 }
 
 function onMouseClick(event) {
-  /*// Update the mouse position
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-  // Update the raycaster
-  raycaster.setFromCamera(mouse, camera);
-
-  // Get the list of intersecting objects
-  const intersects = raycaster.intersectObject(zoneMesh);
-
-  // Check if the "Start Game" button was clicked
-  if (intersects.length > 0 && isPaused) {
-    // Start the game
-    isPaused = !isPaused;
-    scene.remove(zoneMesh);
-    scene.add(ball);
-    // Hide the "Start Game" button
-    menu.remove(textMenu);
-    scoring();*/
-    ws.send(JSON.stringify({
-      type: 'game_start',
-      game_id: game_id
-    }));
-  //}
+  ws.send(JSON.stringify({
+    type: 'game_start',
+    game_id: game_id
+  }));
 }
 
 document.addEventListener('mousedown', onMouseClick);
@@ -460,7 +443,6 @@ back.position.set(0,0,-10);
 ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
-
 let time = 0;
 
 //Light settings
@@ -513,8 +495,19 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 2)
+    if (score[1] == 2) {
       rWin();
+      ended = true;
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: score[0],
+        score2: score[1],
+      }));
+      return ;
+    }
     else
       scoring();
   }
@@ -523,8 +516,19 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 2)
+    if (score[0] == 2) {
       lWin();
+      ended = true;
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: score[0],
+        score2: score[1],
+      }));
+      return ;
+    }
     else
       scoring();
   }
@@ -560,7 +564,6 @@ function updated() {
         ball_speed: ballSpeed
     }));}
   }
-
   // Check for playerTwo collision
   if (ball.position.x < playerTwo.position.x + 1 &&
       ball.position.x > playerTwo.position.x - 1 &&
@@ -578,8 +581,6 @@ function updated() {
         ball_speed: ballSpeed
     }));}
   }
-
-  //Check for top boundary collision for players
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
     if(playerPos == 0){
@@ -592,97 +593,62 @@ function updated() {
         ball_speed: ballSpeed
     }));}
   }
-  // Check for bottom boundary collision for players
   if (playerOne.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerOne.position.y = canvasBounds.bottom + boardHeight/2;
-    if(playerPos == 0){
-      ws.send(JSON.stringify({
-        type: 'ball',
-        ball_posx: ball.position.x,
-        ball_posy: ball.position.y,
-        ball_dirx: ballDirection.x,
-        ball_diry: ballDirection.y,
-        ball_speed: ballSpeed
-    }));}
   }
   if (playerTwo.position.y + boardHeight/2 > canvasBounds.top) {
     playerTwo.position.y = canvasBounds.top - boardHeight/2;
-    if(playerPos == 0){
-      ws.send(JSON.stringify({
-        type: 'ball',
-        ball_posx: ball.position.x,
-        ball_posy: ball.position.y,
-        ball_dirx: ballDirection.x,
-        ball_diry: ballDirection.y,
-        ball_speed: ballSpeed
-    }));}
   }
   if (playerTwo.position.y - boardHeight/2 < canvasBounds.bottom) {
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
-    if(playerPos == 0){
-      ws.send(JSON.stringify({
-        type: 'ball',
-        ball_posx: ball.position.x,
-        ball_posy: ball.position.y,
-        ball_dirx: ballDirection.x,
-        ball_diry: ballDirection.y,
-        ball_speed: ballSpeed
-    }));}
   }
-
-  //To make the light follow the ball
   pointLight.position.set(ball.position.x,ball.position.y,10);
-
-  //Moves the boards
-  if (playerPos === 0) {
-    if (keyState[87])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+  if (play) {
+    if (playerPos === 0) {
+      if (keyState[87])
+        movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[83])
+        movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerOne.position.y
       }));
-  }
-  else {
-    if (keyState[87])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[83])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-    if (keyState[38])
-      movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
-    if (keyState[40])
-      movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
-    ws.send(JSON.stringify({
-      type: 'input',
-      player_pos: playerPos,
-      input_value: playerTwo.position.y
-    }));
+    }
+    else {
+      if (keyState[87])
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+      if (keyState[83])
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+      if (keyState[38])
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
+      if (keyState[40])
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
+      ws.send(JSON.stringify({
+        type: 'input',
+        game_id: game_id,
+        player_pos: playerPos,
+        input_value: playerTwo.position.y
+      }));
+    }
   }
 }
 
-//Moves smoothly
 function movePong(mesh, targetY) {
   gsap.to(mesh.position, {
     duration: 1, // duration of the animation in seconds
     ease: "power2.out", // easing function to use
     y: targetY, // target y-axis position
   });
-  let playerPos;
-  if(mesh === playerOne)
-    playerPos = 0;
-  else
-    playerPos = 1;
 }
 
 function togglePause() {
   isPaused = !isPaused;
-
   if (isPaused) {
     // Pause the animation loop
     cancelAnimationFrame(renderer.setAnimationLoop(null));
@@ -694,6 +660,9 @@ function togglePause() {
 
 let pseudo = username.pseudo;
 let pseudo2 = username.pseudo;
+let pseudo3 = username.pseudo;
+let pseudo4 = username.pseudo;
+
 async function printPseudo(){
   console.log(pseudo2);
   if (pseudo.length > 8)
@@ -765,7 +734,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      let winText = pseudo2 + " WIN"
+      let winText = pseudo2 + "'S TEAM WIN"
       console.log(winText)
       const geometry3 = new TextGeometry( winText, {
         font: cyberfont,
@@ -780,9 +749,8 @@ function rWin(){
       const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
       textMesh3.geometry.center();
       scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2, textMesh3);
+      scoreGrp.add(textMesh3);
       scene.add(scoreGrp);
-      //WE ADD THE SCORE TO PLAYERTWO LOGS
       resetGame();
       togglePause();
   });
@@ -791,74 +759,39 @@ function rWin(){
 function lWin(){
   ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
-      const geometry = new TextGeometry( "WIN", {
-        font: cyberfont,
-        size: 3,
-        height: 1,
-      } );
-      const geometry2 = new TextGeometry( "LOSE", {
-        font: cyberfont,
-        size: 3,
-        height: 1,
-      } );
-      let winText = pseudo + " WIN"
-      console.log(winText)
-      const geometry3 = new TextGeometry(winText, {
-        font: cyberfont,
-        size: 3,
-        height: 1,
-      } );
-      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
-      const textMesh = new THREE.Mesh(geometry, textMaterial);
-      textMesh.position.set(-30, 15, -2);
-      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
-      textMesh2.position.set(10, 15, -2);
-      const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
-      textMesh3.geometry.center();
-      scoreGrp.clear();
-      scoreGrp.add(textMesh, textMesh2, textMesh3);
-      scene.add(scoreGrp);
-      resetGame();
-      togglePause();
-  });
-}
-
-let winner;
-async function sendGameInfo(scene, score1, score2){
-  if (score1 == 2){
-    winner = 'player1';
-  }
-  if (score2 == 2){
-    winner = 'player2';
-  }
-
-  const user = await getPseudo();
-  const data = {
-    type: 'newGame',
-    player1: user.id,
-    pseudo_p1: user.pseudo,
-    winner: winner,
-  } 
-  $.ajax({
-    type: 'POST',
-    url: '/newGame/',
-    headers: { 'X-CSRFToken': token },
-    data: data,
-    success: function (data) {
-      console.log(data.errors);
-        if (data.success) {
-            console.log('new game created');
-        }
-        token = data.csrf_token;
-    },
-    error: function (error) {
-        console.log('Erreur lors de la creation d\'une partie.');
-    }
+    const geometry = new TextGeometry( "WIN", {
+      font: cyberfont,
+      size: 3,
+      height: 1,
+    } );
+    const geometry2 = new TextGeometry( "LOSE", {
+      font: cyberfont,
+      size: 3,
+      height: 1,
+    } );
+    let winText = pseudo + " WIN"
+    console.log(winText)
+    const geometry3 = new TextGeometry(winText, {
+      font: cyberfont,
+      size: 3,
+      height: 1,
+    } );
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+    const textMesh = new THREE.Mesh(geometry, textMaterial);
+    textMesh.position.set(-30, 15, -2);
+    const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+    textMesh2.position.set(10, 15, -2);
+    const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+    textMesh3.geometry.center();
+    scoreGrp.clear();
+    scoreGrp.add(textMesh, textMesh2, textMesh3);
+    scene.add(scoreGrp);
+    resetGame();
+    togglePause();
   });
 }
 
 async function resetGame(){
-  await sendGameInfo(scene, score[0], score[1]);
   scene.remove(ball);
   score[0] = 0;
   score[1] = 0;
@@ -877,8 +810,6 @@ async function resetGame(){
   powerUpType = "none";
   powerUpLGroup.clear;
   powerUpRGroup.clear;
-  playerOne.position.set(canvasBounds.left + 2, 0, 0);
-  playerTwo.position.set(canvasBounds.right - 2, 0, 0);
 }
 
 function animate() {
@@ -890,6 +821,5 @@ function animate() {
 		stats.update();
     renderer.render(scene, camera);
     shaderMaterial.uniforms.resolution.value.set(renderer.domElement.width, renderer.domElement.height);
-
 }
 animate();
