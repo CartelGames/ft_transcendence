@@ -4,6 +4,7 @@ from .models import UserProfil, Game, TournamentsGame, Tournaments, MessageTourn
 from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from channels.db import database_sync_to_async
+from web3 import Web3
 import json, asyncio
 
 class MyConsumer(AsyncWebsocketConsumer):
@@ -359,6 +360,48 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     if tournament and tour:
                         tournament.state = 3
                         await sync_to_async(tournament.save)()
+                        web3 = Web3(Web3.HTTPProvider('https://eth-sepolia.g.alchemy.com/v2/uJPnF7_0i25At5GkyyCy8EnBx_vsWV8T'))
+                        contract_abi = [
+                            {
+                                "constant": False,
+                                "inputs": [
+                                    {"name": "tournamentID", "type": "uint256"},
+                                    {"name": "player1", "type": "uint256"},
+                                    {"name": "player2", "type": "uint256"},
+                                    {"name": "phase", "type": "uint256"},
+                                    {"name": "winner", "type": "uint256"}
+                                ],
+                                "name": "saveResult",
+                                "outputs": [],
+                                "payable": False,
+                                "stateMutability": "nonpayable",
+                                "type": "function"
+                            }
+                        ]
+                        contract = web3.eth.contract(address='0xd3Ba8D2B3Ee9C0768be93F0b101456d790e2d232', abi=contract_abi)
+                        account_address = '0x41a112483a5428e5d694aB56073874A8CB94b550'
+                        private_key = 'ADD_PRIVATE'
+                        tournamentID = tournament.tournament_id
+                        player1 = game.player1
+                        player2 = game.player2
+                        phase = tournament.phase
+                        winner = game.winner
+                        transaction = contract.functions.saveResult(tournamentID, player1, player2, phase, winner).build_transaction({
+                            'chainId': 11155111,
+                            'gas': 2000000,
+                            'gasPrice': web3.to_wei('50', 'gwei'),
+                            'nonce': web3.eth.get_transaction_count(account_address),
+                        })
+                        # Signer la transaction avec votre clé privée
+                        signed_txn = web3.eth.account.sign_transaction(transaction, private_key)
+
+                        # Envoyer la transaction signée
+                        tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
+
+                        # Attendre que la transaction soit confirmée
+                        tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
+                        print("Transaction envoyée. Hash de transaction:", tx_hash.hex())
+
                         if tournament.phase != 0:
                             update_win = await database_sync_to_async(TournamentsGame.objects.filter)(tournament_id=tournament.tournament_id, phase=(tournament.phase - 1), state=0)
                             if await database_sync_to_async(update_win.exists)():
