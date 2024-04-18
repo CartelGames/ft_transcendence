@@ -372,22 +372,22 @@ window.addEventListener('keydown', function (event) {
   else {
     if (event.key === 'w' || event.key === 'ArrowUp')
       if (bikeTwoDir.y != -1){
-        rotateBikesGame(bikeTwo, 'up');
+        rotateBikesGame(bikeTwo, 'up', 0, 1);
         bikeTwoDir = {x:0, y:1};
       }
     if (event.key === 'w' || event.key === 'ArrowDown')
       if (bikeTwoDir.y != 1){
-        rotateBikesGame(bikeTwo, 'down');
+        rotateBikesGame(bikeTwo, 'down', 0, -1);
         bikeTwoDir = {x:0, y:-1};
       }
     if (event.key === 'w' || event.key === 'ArrowLeft')
       if (bikeTwoDir.x != 1){
-        rotateBikesGame(bikeTwo, 'left');
+        rotateBikesGame(bikeTwo, 'left', -1, 0);
         bikeTwoDir = {x:-1, y:0};
       }
     if (event.key === 'w' || event.key === 'ArrowRight')
       if (bikeTwoDir.x != -1){
-        rotateBikesGame(bikeTwo, 'right');
+        rotateBikesGame(bikeTwo, 'right', 1, 0);
         bikeTwoDir = {x:1, y:0};
       }
   }
