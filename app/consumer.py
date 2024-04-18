@@ -469,6 +469,26 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'input_value': input_value,
                 }
             )
+
+        elif message == 'input_tron':
+            game = self.games[int(text_data_json['game_id'])][0]
+            if not game or game[0] != self.user.id and game[1] != self.user.id and game[4] != self.user.id and game[5] != self.user.id:
+                return
+            player_pos = text_data_json['player_pos']
+            rotationX = text_data_json['rotationX']
+            rotationY = text_data_json['rotationY']
+            move = text_data_json['move']
+            await self.channel_layer.group_send(
+                self.room_name,
+                {
+                    'type': 'game_send_tron',
+                    'player_pos': player_pos,
+                    'rotationX': rotationX,
+                    'rotationY': rotationY,
+                    'move': move,
+                }
+            )
+
         elif message == 'ball':
             ball_posx = text_data_json['ball_posx']
             ball_posy = text_data_json['ball_posy']
@@ -515,7 +535,20 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                     'player': player,
                 }
             )
-        
+
+    async def game_send_tron(self, event):
+        player_pos = event['player_pos']
+        rotationX = event['rotationX']
+        rotationY = event['rotationY']
+        move = event['move']
+        await self.send(text_data=json.dumps({
+            'type': 'game_send_tron',
+            'player_pos': player_pos,
+            'rotationX': rotationX,
+            'rotationY': rotationY,
+            'move': move,
+        }))
+
     async def game_state(self, event):
         player_pos = event['player_pos']
         input_value = event['input_value']

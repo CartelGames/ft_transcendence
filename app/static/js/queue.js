@@ -43,7 +43,7 @@ function launchGame(data, num) {
         });
     }
     else {
-        import('/static/js/gametwo.js?ver=${Math.random()}')
+        import('/static/js/gametwo.js?ver=200')
         .then(module => {
             const { reloadGame } = module;
             reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
