@@ -14,7 +14,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 let game_id = "";
 let playerPos = 0;
 let isPaused = 1;
-let ttfloader;
+let ttfloader = new TTFLoader();
+const scoreGrp = new THREE.Group();
 const clock = new THREE.Clock();
 let loader = new FontLoader();
 const username = await getPseudo();
@@ -195,7 +196,7 @@ function playerGameStarted(event) {
   if (isPaused) {
     // Start the game
     isPaused = !isPaused;
-    scene.remove(zoneMesh);
+    scene.remove(zoneMesh, scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
   }
@@ -217,6 +218,7 @@ function onMouseClick(event) {
     // Start the game
     startAnimation();
     scene.remove(zoneMesh);
+    scene.remove(scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
   }
@@ -267,6 +269,41 @@ function createPlayer(){
 }
 createPlayer();
 
+pseudo = username.pseudo;
+pseudo2 = username.pseudo;
+async function printPseudo(){
+  console.log(pseudo2);
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( pseudo2, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.geometry.center();
+      textMesh.position.set(25, 15, 10);
+      textMesh.rotateX(1.57);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.geometry.center();
+      textMesh2.position.set(-25, 15, 10);
+      textMesh2.rotateX(1.57);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
+}
+printPseudo();
 
 function rotateBikesGame(bike, key) {
   let targetRotation = 0;
@@ -368,30 +405,71 @@ function updated(){
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
   const currentTime = Date.now();
-
+  bufferOne.push(currentTime);
+  bufferTwo.push(currentTime);
   if ((!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne))) {
     positionsOne.push(newPosOne);
-    bufferOne.push(currentTime);
+    
   }
   if ((!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo))) {
     positionsTwo.push(newPosTwo);
-    bufferTwo.push(currentTime);
+    
   }
   trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  //const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);|| playerOneSuicided
-  //const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);|| playerTwoSuicided
-  if (playerOneCollided ){
+  const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);
+  const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);
+  if (playerOneCollided || playerOneSuicided){
     console.log("playerone collided");
     isPaused = 1;
+    winAnimation(bikeTwo);
   }
-  if (playerTwoCollided )
+  if (playerTwoCollided || playerTwoSuicided)
   {
     console.log("playetwo collided");
     isPaused = 1;
+    winAnimation(bikeOne);
   }
+}
+
+function winAnimation(player){
+  gsap.to(camera.position, {
+    duration: 1,
+    x: player.position.x,
+    y: player.position.y - 5,
+    z: player.position.z + 5,
+    ease: 'power2.out',
+  });
+  camera.lookAt(0, 50, 5);
+  printWinMsg(player);
+}
+
+function printWinMsg(player){
+  let name;
+  if (player == bikeTwo)
+    name = pseudo;
+  else
+    name = pseudo2; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+    let winText = name + " WINS"
+    console.log(winText)
+    const geometry3 = new TextGeometry(winText, {
+      font: cyberfont,
+      size: 0.5,
+      height: 0.5,
+    } );
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+    const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+    textMesh3.geometry.center();
+    textMesh3.rotateX(1);
+    textMesh3.position.set(player.position.x, player.position.y + 1, player.position.z + 3);
+    scoreGrp.clear();
+    scoreGrp.add(textMesh3);
+    scene.add(scoreGrp);
+  });
 }
 
 function updateGameState(p1, p2){
@@ -482,22 +560,28 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
   if (!trail) return false;
 
   const points = trail.geometry.attributes.position.array;
+  //console.log(points);
+  //console.log(trailCreationTimes.length);
 
   // Ignore trail segments created within the last 2000 milliseconds (2 seconds)
-  const trailCreationCutoff = currentTime - 2000;
+  const trailCreationCutoff = currentTime - 1000;
 
   // Check the distance between the player and each point on the trail
   for (let i = 0; i < points.length; i += 3) {
     const x = points[i];
     const y = points[i + 1];
     const z = points[i + 2];
+    //console.log(player, i, trailCreationTimes[i/3] - currentTime)
 
     // Check if the trail segment was created before the cutoff time
-    if (trailCreationTimes[i / 3] > trailCreationCutoff) continue;
-
-    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-
-    if (distance < 1) return true;
+    if (trailCreationTimes[i / 3] < trailCreationCutoff){
+      const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
+      // if (player === bikeOne)
+      //   console.log('distance:', distance);
+      if (distance < 1.5) return true;
+    }
+    else
+      return false;
   }
 
   // Check if the player is outside the canvas bounds
@@ -510,7 +594,7 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
 }
 
 //GAME DONE
-const ws = new WebSocket("ws://" + window.location.host + "/ws/gametwo/");
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 
 ws.onopen = function(event) {
     console.log("Coucou la zone"); 
@@ -529,7 +613,7 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame2(set_game_id, p1, p2) {
+export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
   console.log("id de la game : " + game_id);
   updateGameState(p1, p2);
