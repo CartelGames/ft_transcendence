@@ -9,6 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 let game_id = "";
 let playerPos = 0;
 let ended = false;
+let play = false;
 
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
@@ -25,6 +26,7 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
+      console.log()
       play = data.play;
       resetGame()
     }
@@ -55,9 +57,9 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame(set_game_id, data) {
+export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
-  updateGameState(data.p1_pseudo, data.p2_pseudo, data.p3_pseudo, data.p4_pseudo);
+  updateGameState(p1, p2);
   ws.send(JSON.stringify({
     type: 'game_info',
     game_id: game_id,
@@ -69,49 +71,23 @@ export function reloadGame(set_game_id, data) {
 
 function updateGameState(p1, p2, p3, p4)
 {
-  console.log(username.pseudo);
-  console.log(p1 + ' ' + p2 + ' ' + p3 + ' ' + p4)
-  switch(username.pseudo){
-    case p1:
-      playerPos = 0;
-      break;
-    case p2:
-      playerPos = 1;
-      break;
-    case p3:
-      playerPos = 2;
-      break;
-    case p4:
-      playerPos = 3;
-      break;
-  }
-  console.log(playerPos);
+  if (username.pseudo === p1)
+    playerPos = 0;
+  else
+    playerPos = 1;
   pseudo = p1;
   pseudo2 = p2;
-  pseudo3 = p3;
-  pseudo4 = p4;
   printPseudo();
 }
 
 function updateGameInput(input_pos, input_value)
 {
-  console.log(input_pos);
   if (playerPos === input_pos)
     return;
-  switch(input_pos){
-    case 0:
-      playerOne.position.y = input_value;
-      break;
-    case 1:
-      playerTwo.position.y = input_value;
-      break;
-    case 2:
-      playerThree.position.y = input_value;
-      break;
-    case 0:
-      playerFour.position.y = input_value;
-      break;
-  }
+  if (playerPos === 1)
+    playerOne.position.y = input_value;
+  else
+    playerTwo.position.y = input_value;
   if(isPaused == true){
     printPseudo();
   }
@@ -168,11 +144,7 @@ function checkPowerUp(){
       if ((powerUpLGroup.position.x < playerOne.position.x + 1 &&
           powerUpLGroup.position.x > playerOne.position.x - 1 &&
           powerUpLGroup.position.y < playerOne.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)))
-          || (powerUpLGroup.position.x < playerThree.position.x + 1 &&
-          powerUpLGroup.position.x > playerThree.position.x - 1 &&
-          powerUpLGroup.position.y < playerThree.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-          powerUpLGroup.position.y > playerThree.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))))
+          powerUpLGroup.position.y > playerOne.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale))))
         {
         scene.remove(powerUpLGroup);
         powerLUp = false;
@@ -212,11 +184,7 @@ function checkPowerUp(){
       if ((powerUpRGroup.position.x < playerTwo.position.x + 1 &&
           powerUpRGroup.position.x > playerTwo.position.x - 1 &&
           powerUpRGroup.position.y < playerTwo.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))
-        ||(powerUpRGroup.position.x < playerFour.position.x + 1 &&
-          powerUpRGroup.position.x > playerFour.position.x - 1 &&
-          powerUpRGroup.position.y < playerFour.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-          powerUpRGroup.position.y > playerFour.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))) {
+          powerUpRGroup.position.y > playerTwo.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)))) {
         scene.remove(powerUpRGroup);
         powerRUp = false;
         switch (powerUpType){
@@ -351,8 +319,6 @@ renderer.setSize(canvas.width, canvas.height, false);
 
 const playerOne = new THREE.Group();
 const playerTwo = new THREE.Group();
-const playerThree = new THREE.Group();
-const playerFour = new THREE.Group();
 
 new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   const model = gltf.scene;
@@ -367,21 +333,6 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   model.position.x -= 4;
   model.rotation.set(Math.PI /2, 0,-Math.PI /2);
   playerOne.add(model);
-} );
-
-new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
-  const model = gltf.scene;
-  model.scale.set(0.02, 0.02, 0.02);
-  model.rotation.set(Math.PI /2, 0,Math.PI /2);
-  playerFour.add(model);
-} );
-
-new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
-  const model = gltf.scene;
-  model.scale.set(0.02, 0.02, 0.02);
-  model.position.x -= 4;
-  model.rotation.set(Math.PI /2, 0,-Math.PI /2);
-  playerThree.add(model);
 } );
 
 let vertex; 
@@ -480,7 +431,7 @@ const background = new THREE.PlaneGeometry(144, 81);
 //const backgroundMaterial = new THREE.MeshStandardMaterial( {map: videoTexture});
 const back = new THREE.Mesh(background, shaderMaterial);
 const material = new THREE.MeshStandardMaterial( {color: 0x0000ff} ); 
-scene.add( playerOne , playerTwo, playerThree, playerFour, back);
+scene.add( playerOne , playerTwo, back);
 const canvasBounds = {
   left: -((canvas.width/2) * mConvert) * (camera.position.z * 9.3),
   right: ((canvas.width/2) * mConvert)* (camera.position.z * 9.3),
@@ -492,8 +443,6 @@ back.position.set(0,0,-10);
 ball.position.set(0,0,0);
 playerOne.position.set(canvasBounds.left + 2, 0, 0);
 playerTwo.position.set(canvasBounds.right - 2, 0, 0);
-playerThree.position.set(canvasBounds.left + 10, 0, 0);
-playerFour.position.set(canvasBounds.right - 12, 0, 0);
 let time = 0;
 
 //Light settings
@@ -549,7 +498,8 @@ function updated() {
     if (score[1] == 2) {
       rWin();
       ended = true;
-      console.log('send');
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -569,6 +519,8 @@ function updated() {
     if (score[0] == 2) {
       lWin();
       ended = true;
+      var BackButt = document.getElementById('BackMenu')
+      BackButt.style.display = 'block';
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -629,40 +581,6 @@ function updated() {
         ball_speed: ballSpeed
     }));}
   }
-  // Check for playerThree collision
-  if (ball.position.x < playerThree.position.x + 1 &&
-    ball.position.x > playerThree.position.x - 1 &&
-    ball.position.y < playerThree.position.y + (boardHeight/2 * (boardUpscale + LBoardUpscale)) &&
-    ball.position.y > playerThree.position.y - (boardHeight/2 * (boardUpscale + LBoardUpscale)) && ballDirection.x < 0) {
-  ballDirection.x *= -1; // reverse the X direction of the ball
-  ballSpeed *= 1.1;
-  if(playerPos == 0){
-    ws.send(JSON.stringify({
-      type: 'ball',
-      ball_posx: ball.position.x,
-      ball_posy: ball.position.y,
-      ball_dirx: ballDirection.x,
-      ball_diry: ballDirection.y,
-      ball_speed: ballSpeed
-  }));}
-}
-// Check for playerFour collision
-if (ball.position.x < playerFour.position.x + 1 &&
-    ball.position.x > playerFour.position.x - 1 &&
-    ball.position.y < playerFour.position.y + (boardHeight/2 * (boardUpscale + RBoardUpscale)) &&
-    ball.position.y > playerFour.position.y - (boardHeight/2 * (boardUpscale + RBoardUpscale)) && ballDirection.x > 0) {
-  ballDirection.x *= -1; // reverse the X direction of the ball
-  ballSpeed *= 1.1;
-  if(playerPos == 0){
-    ws.send(JSON.stringify({
-      type: 'ball',
-      ball_posx: ball.position.x,
-      ball_posy: ball.position.y,
-      ball_dirx: ballDirection.x,
-      ball_diry: ballDirection.y,
-      ball_speed: ballSpeed
-  }));}
-}
   if (playerOne.position.y + boardHeight /2 > canvasBounds.top) {
     playerOne.position.y = canvasBounds.top - boardHeight/2;
     if(playerPos == 0){
@@ -685,8 +603,8 @@ if (ball.position.x < playerFour.position.x + 1 &&
     playerTwo.position.y = canvasBounds.bottom + boardHeight/2;
   }
   pointLight.position.set(ball.position.x,ball.position.y,10);
-  switch(playerPos){
-    case(0):
+  if (play) {
+    if (playerPos === 0) {
       if (keyState[87])
         movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
       if (keyState[83])
@@ -697,55 +615,27 @@ if (ball.position.x < playerFour.position.x + 1 &&
         movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerOne.position.y
       }));
-      break;
-    case(1):
+    }
+    else {
       if (keyState[87])
-        movePong(playerTwo, playerTwo.position.y + (4 - LBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
       if (keyState[83])
-        movePong(playerTwo, playerTwo.position.y - (4 - LBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
       if (keyState[38])
-        movePong(playerTwo, playerTwo.position.y + (4 - LBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
       if (keyState[40])
-        movePong(playerTwo, playerTwo.position.y - (4 - LBoardSpeedMalus));
+        movePong(playerTwo, playerTwo.position.y - (4 - RBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerTwo.position.y
       }));
-      break;
-    case(2):
-      if (keyState[87])
-        movePong(playerThree, playerThree.position.y + (4 - LBoardSpeedMalus));
-     if (keyState[83])
-       movePong(playerThree, playerThree.position.y - (4 - LBoardSpeedMalus));
-      if (keyState[38])
-        movePong(playerThree, playerThree.position.y + (4 - LBoardSpeedMalus));
-      if (keyState[40])
-        movePong(playerThree, playerThree.position.y - (4 - LBoardSpeedMalus));
-      ws.send(JSON.stringify({
-        type: 'input',
-        player_pos: playerPos,
-        input_value: playerThree.position.y
-      }));
-      break;
-    case(3):
-      if (keyState[87])
-        movePong(playerFour, playerFour.position.y + (4 - LBoardSpeedMalus));
-      if (keyState[83])
-        movePong(playerFour, playerFour.position.y - (4 - LBoardSpeedMalus));
-      if (keyState[38])
-        movePong(playerFour, playerFour.position.y + (4 - LBoardSpeedMalus));
-      if (keyState[40])
-        movePong(playerFour, playerFour.position.y - (4 - LBoardSpeedMalus));
-      ws.send(JSON.stringify({
-        type: 'input',
-        player_pos: playerPos,
-        input_value: playerFour.position.y
-      }));
-      break;
+    }
   }
 }
 
@@ -861,10 +751,6 @@ function rWin(){
       scoreGrp.clear();
       scoreGrp.add(textMesh3);
       scene.add(scoreGrp);
-      playerOne.position.set(canvasBounds.left + 2, -35, 0);
-      playerTwo.position.set(canvasBounds.right - 2, -35, 0);
-      playerThree.position.set(canvasBounds.left + 10, -35, 0);
-      playerFour.position.set(canvasBounds.right - 12, -35, 0);
       resetGame();
       togglePause();
   });
@@ -883,7 +769,7 @@ function lWin(){
       size: 3,
       height: 1,
     } );
-    let winText = pseudo + "'S TEAM WIN"
+    let winText = pseudo + " WIN"
     console.log(winText)
     const geometry3 = new TextGeometry(winText, {
       font: cyberfont,
@@ -900,10 +786,6 @@ function lWin(){
     scoreGrp.clear();
     scoreGrp.add(textMesh, textMesh2, textMesh3);
     scene.add(scoreGrp);
-    playerOne.position.set(canvasBounds.left + 2, -35, 0);
-    playerTwo.position.set(canvasBounds.right - 2, -35, 0);
-    playerThree.position.set(canvasBounds.left + 10, -35, 0);
-    playerFour.position.set(canvasBounds.right - 12, -35, 0);
     resetGame();
     togglePause();
   });

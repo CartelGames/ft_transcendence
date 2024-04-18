@@ -250,7 +250,6 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   model.rotation.set(Math.PI /2, 0,Math.PI /2);
   
   playerTwo.add(model);
-
 } );
 new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
 
@@ -260,7 +259,6 @@ new GLTFLoader().load( '/static/models/gltf/hoverboard.glb', function ( gltf ) {
   model.rotation.set(Math.PI /2, 0,-Math.PI /2);
   
   playerOne.add(model);
-
 } );
 
 let vertex; 
