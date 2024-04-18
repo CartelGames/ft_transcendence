@@ -279,7 +279,7 @@ function getTournamentList() {
 
 document.getElementById('JoinQueue').addEventListener('click', function() {LaunchQueue(0);});
 document.getElementById('2v2').addEventListener('click', function() {LaunchQueue(1);});
-//document.getElementById('TronQueue').addEventListener('click', function() {LaunchQueue(2);});
+document.getElementById('TronQueue').addEventListener('click', function() {LaunchQueue(2);});
 
 document.getElementById('LeaveQueue').addEventListener('click', LeaveQueue);
 document.getElementById('refreshTourList').addEventListener('click', getTournamentList);

@@ -14,7 +14,8 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 let game_id = "";
 let playerPos = 0;
 let isPaused = 1;
-let ttfloader;
+let ttfloader = new TTFLoader();
+const scoreGrp = new THREE.Group();
 const clock = new THREE.Clock();
 let loader = new FontLoader();
 const username = await getPseudo();
@@ -195,7 +196,7 @@ function playerGameStarted(event) {
   if (isPaused) {
     // Start the game
     isPaused = !isPaused;
-    scene.remove(zoneMesh);
+    scene.remove(zoneMesh, scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
   }
@@ -217,6 +218,7 @@ function onMouseClick(event) {
     // Start the game
     startAnimation();
     scene.remove(zoneMesh);
+    scene.remove(scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
   }
@@ -267,6 +269,8 @@ function createPlayer(){
 }
 createPlayer();
 
+pseudo = username.pseudo;
+pseudo2 = username.pseudo;
 async function printPseudo(){
   console.log(pseudo2);
   if (pseudo.length > 8)
@@ -285,14 +289,15 @@ async function printPseudo(){
         size: 2,
         height: 1,
       } );
-      //var center = new THREE.Vector3();
       const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
       const textMesh = new THREE.Mesh(geometry, textMaterial);
       textMesh.geometry.center();
-      textMesh.position.set(canvasBounds.left + 20, 15, -2);
+      textMesh.position.set(25, 15, 10);
+      textMesh.rotateX(1.57);
       const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
       textMesh2.geometry.center();
-      textMesh2.position.set(canvasBounds.right - 20, 15, -2);
+      textMesh2.position.set(-25, 15, 10);
+      textMesh2.rotateX(1.57);
       scoreGrp.clear();
       scoreGrp.add(textMesh, textMesh2);
       scene.add(scoreGrp);
@@ -419,12 +424,52 @@ function updated(){
   if (playerOneCollided || playerOneSuicided){
     console.log("playerone collided");
     isPaused = 1;
+    winAnimation(bikeTwo);
   }
   if (playerTwoCollided || playerTwoSuicided)
   {
     console.log("playetwo collided");
     isPaused = 1;
+    winAnimation(bikeOne);
   }
+}
+
+function winAnimation(player){
+  gsap.to(camera.position, {
+    duration: 1,
+    x: player.position.x,
+    y: player.position.y - 5,
+    z: player.position.z + 5,
+    ease: 'power2.out',
+  });
+  camera.lookAt(0, 50, 5);
+  printWinMsg(player);
+}
+
+function printWinMsg(player){
+  let name;
+  if (player == bikeTwo)
+    name = pseudo;
+  else
+    name = pseudo2; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+    let winText = name + " WINS"
+    console.log(winText)
+    const geometry3 = new TextGeometry(winText, {
+      font: cyberfont,
+      size: 0.5,
+      height: 0.5,
+    } );
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+    const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+    textMesh3.geometry.center();
+    textMesh3.rotateX(1);
+    textMesh3.position.set(player.position.x, player.position.y + 1, player.position.z + 3);
+    scoreGrp.clear();
+    scoreGrp.add(textMesh3);
+    scene.add(scoreGrp);
+  });
 }
 
 function updateGameState(p1, p2){
@@ -531,8 +576,8 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
     // Check if the trail segment was created before the cutoff time
     if (trailCreationTimes[i / 3] < trailCreationCutoff){
       const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-      if (player === bikeOne)
-        console.log('distance:', distance);
+      // if (player === bikeOne)
+      //   console.log('distance:', distance);
       if (distance < 1.5) return true;
     }
     else
@@ -568,7 +613,7 @@ ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame2(set_game_id, p1, p2) {
+export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
   console.log("id de la game : " + game_id);
   updateGameState(p1, p2);
