@@ -49,6 +49,9 @@ class UserProfil(AbstractUser):
                 self.save()
                 friend.save()
 
+    def change_pseudo(self, new_pseudo):
+        self.pseudo = new_pseudo
+        
 class Message(models.Model):
     id = models.AutoField(primary_key=True, unique=True)
     id_from = models.IntegerField(null=False)
