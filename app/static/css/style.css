@@ -50,3 +50,20 @@ canvas {
 	width: 75% !important;
 	height: 75% !important;
 }
+
+.invitation-box {
+	position: fixed;
+    bottom: 50%;
+    right: 0;
+    color: #fff;
+	background-color: #00011a;
+	font-size: 24 px;
+	text-align: center;
+    cursor: pointer;
+    overflow: hidden;
+	align-items: center;
+}
+
+.invitation-box .invitation {
+	display: flex;
+}

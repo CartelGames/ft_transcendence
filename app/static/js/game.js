@@ -733,7 +733,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      let winText = pseudo2 + "'S TEAM WIN"
+      let winText = pseudo2 + " WIN"
       console.log(winText)
       const geometry3 = new TextGeometry( winText, {
         font: cyberfont,

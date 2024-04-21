@@ -44,7 +44,26 @@ class MyConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(data["pseudo"], {'type': 'sendPing', 'from_pseudo': self.group_name, 'to_pseudo': data["pseudo"]})
         elif action == 'returnPing':
             await self.channel_layer.group_send(data["from_pseudo"], {'type': 'returnPing', 'pseudo': data["to_pseudo"]})
-
+        elif action == 'versusInvitation':
+            await self.channel_layer.group_send(data["pseudo"], {'type': 'sendInvitation', 'pseudo': self.user.pseudo, 'channel': self.channel_name})
+        elif action == 'acceptInvitation':
+            player1M = await UserProfil.objects.aget(pseudo=data["to_pseudo"])
+            game = await database_sync_to_async(Game.objects.create)(player1=player1M.id, player2=self.user.id, pseudo_p1=player1M.pseudo, pseudo_p2=self.user.pseudo, game_type=-1)
+            game_id = game.id
+            group_name = f"{player1M.pseudo}-{self.user.pseudo}"
+            self.group_name = group_name
+            print(data["channel"])
+            await self.channel_layer.group_add(group_name, data["channel"])
+            await self.channel_layer.group_add(group_name, self.channel_name)
+            await self.channel_layer.group_send(group_name, {
+                    'type': 'game_start',
+                    'game_id': str(game_id),
+                    'p1_pseudo': player1M.pseudo,
+                    'p2_pseudo': self.user.pseudo,
+                    'game_type': 0,
+                    'message': 'Opponent found. Game starting...'
+                }
+            )
 
     @staticmethod
     async def send_message_to_user(id_to):
@@ -68,6 +87,26 @@ class MyConsumer(AsyncWebsocketConsumer):
     async def returnPing(self, event):
         pseudo = event['pseudo']
         await self.send(text_data=json.dumps({'type': 'returnPing', 'pseudo': pseudo}))
+
+    async def sendInvitation(self, event):
+        pseudo = event['pseudo']
+        channel = event['channel']
+        await self.send(text_data=json.dumps({'type': 'sendInvitation', 'pseudo': pseudo, 'channel': channel}))
+
+    async def game_start(self, event):
+            game_id = event['game_id']
+            p1_pseudo = event['p1_pseudo']
+            p2_pseudo = event['p2_pseudo']
+            game_type = event['game_type']
+            message = event['message']
+            await self.send(text_data=json.dumps({
+                'type': 'game_start',
+                'game_id': game_id,
+                'p1_pseudo': p1_pseudo,
+                'p2_pseudo': p2_pseudo,
+                'game_type': game_type,
+                'message': message
+            }))
 
 class MyQueueConsumer(AsyncWebsocketConsumer):
     queue1v1 = []
@@ -149,30 +188,32 @@ class MyQueueConsumer(AsyncWebsocketConsumer):
                 self.type = -1
 
     async def create_game(self):
-        for i in range(0, len(self.queue1v1), 2):
-            p1_channel, p1_mmr, p1_pseudo = self.queue1v1[i]
-            p2_channel, p2_mmr, p2_pseudo = self.queue1v1[i + 1]
-            player1M = await UserProfil.objects.aget(pseudo=p1_pseudo)
-            player2M = await UserProfil.objects.aget(pseudo=p2_pseudo)
+        for i in range(len(self.queue1v1)):
+            for y in range(i + 1, len(self.queue1v1)):
+                p1_channel, p1_mmr, p1_pseudo = self.queue1v1[i]
+                p2_channel, p2_mmr, p2_pseudo = self.queue1v1[y]
+                if abs(p1_mmr - p2_mmr) <= 20:
+                    player1M = await UserProfil.objects.aget(pseudo=p1_pseudo)
+                    player2M = await UserProfil.objects.aget(pseudo=p2_pseudo)
 
-            game = await database_sync_to_async(Game.objects.create)(player1=player1M.id, player2=player2M.id, pseudo_p1=player1M.pseudo, pseudo_p2=player2M.pseudo, game_type=0)
-            game_id = game.id
-            group_name = f"{p1_pseudo}-{p2_pseudo}"
-            self.group_name = group_name
-            await self.channel_layer.group_add(group_name, p1_channel)
-            await self.channel_layer.group_add(group_name, p2_channel)
-            for queue_item in self.queue1v1:
-                    if queue_item[0] == p1_channel or queue_item[0] == p2_channel:
-                        self.queue1v1.remove(queue_item)
-            await self.channel_layer.group_send(group_name, {
-                    'type': 'game_start',
-                    'game_id': str(game_id),
-                    'p1_pseudo': p1_pseudo,
-                    'p2_pseudo': p2_pseudo,
-                    'game_type': 0,
-                    'message': 'Opponent found. Game starting...'
-                }
-            )
+                    game = await database_sync_to_async(Game.objects.create)(player1=player1M.id, player2=player2M.id, pseudo_p1=player1M.pseudo, pseudo_p2=player2M.pseudo, game_type=0)
+                    game_id = game.id
+                    group_name = f"{p1_pseudo}-{p2_pseudo}"
+                    self.group_name = group_name
+                    await self.channel_layer.group_add(group_name, p1_channel)
+                    await self.channel_layer.group_add(group_name, p2_channel)
+                    for queue_item in self.queue1v1:
+                            if queue_item[0] == p1_channel or queue_item[0] == p2_channel:
+                                self.queue1v1.remove(queue_item)
+                    await self.channel_layer.group_send(group_name, {
+                            'type': 'game_start',
+                            'game_id': str(game_id),
+                            'p1_pseudo': p1_pseudo,
+                            'p2_pseudo': p2_pseudo,
+                            'game_type': 0,
+                            'message': 'Opponent found. Game starting...'
+                        }
+                    )
         if len(self.queue2v2) >= 4:
             for i in range(0, len(self.queue2v2), 4):
                 p1_channel, p1_mmr, p1_pseudo = self.queue2v2[i]
@@ -349,9 +390,21 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                 game.ended = True
                 if int(text_data_json['score1']) > int(text_data_json['score2']):
                     game.winner = game.player1
+                    if game.game_type == 0:
+                        p1.mmr += 10
+                        if p2.mmr > 9:
+                            p2.mmr -= 10
+                        await sync_to_async(p1.save)()
+                        await sync_to_async(p2.save)()
                     await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p1.pseudo + ' won the game !'})
                 else:
                     game.winner = game.player2
+                    if game.game_type == 0:
+                        p2.mmr += 10
+                        if p1.mmr > 9:
+                            p1.mmr -= 10
+                            await sync_to_async(p1.save)()
+                            await sync_to_async(p2.save)()
                     await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p2.pseudo + ' won the game !'})
                 await sync_to_async(game.save)()
                 try:
