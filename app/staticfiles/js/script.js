@@ -253,6 +253,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (chat && chatToggle) {
         chatToggle.addEventListener('click', function () {
             chat.classList.toggle('chat-open');
+            loadFriends()
         });
     }
 });
@@ -260,7 +261,6 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('profil-img').addEventListener('change', function (event) {
     sendForm('profilImg', event)
 });
-
 
 function displayDiv(hide, show) {
     var hideDiv = document.getElementById(hide);

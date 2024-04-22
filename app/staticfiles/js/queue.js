@@ -11,14 +11,7 @@ websocket.onmessage = function(event) {
     if (data.type === 'game_start') {
         var HideDiv = document.getElementById('LeaveQueue');
         HideDiv.style.display = 'none';
-        import('/static/js/game.js?ver=${Math.random()}')
-        .then(module => {
-            const { reloadGame } = module;
-            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
-        })
-        .catch(error => {
-            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
-        });
+        launchGame(data, data.game_type);
         console.log(data.message);
         $('#Msg').text('Message: ' + data.message);
     }
@@ -27,10 +20,46 @@ websocket.onmessage = function(event) {
     }
 };
 
-function LaunchQueue() {
+function launchGame(data, num) {
+    console.log(num);
+    if (num === 0) {
+        import('/static/js/game.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+    else if (num === 1) {
+        import('/static/js/gametwovtwo.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            console.log('GAME ID 2V2 ' + data.game_id)
+            reloadGame(data.game_id, data);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+    else {
+        import('/static/js/gametwo.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+    }
+}
+
+function LaunchQueue(num) {
     websocket.send(
         JSON.stringify({
             action: 'join_queue',
+            num: num
         })
     );
     var HideDiv = document.getElementById('ChooseGame');
@@ -76,8 +105,11 @@ function TournamentInfo(id) {
                 });
                 TournamentContainer.append(Players);
                 TournamentContainer.append(PlayersList);
-                if (TourInfo[0].state == 1) {
-                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>In progress</b></h1>');
+                if (TourInfo[0].state != 0) {
+                    var state = "In progress";
+                    if (TourInfo[0].state == 2)
+                        state = "Ended";
+                    var TitleStatut = $('<h1 style="font-size: 20px; margin-top:40px; margin-bottom:40px">Tournament statut : <b>' + state + '</b></h1>');
                     TournamentContainer.append(TitleStatut);
                     var games = data.games;
                     if (games) {
@@ -128,6 +160,10 @@ function TournamentInfo(id) {
 
                             TournamentContainer.append(game_li);
                         });
+                        if (TourInfo[0].state == 2) {
+                            var game_wini =$('<span style="margin-top: 50px;"> Winner of the tournament : ' + games[games.length - 1].winner + '</span>');
+                            TournamentContainer.append(game_wini);
+                        }
                     }
                 }
                 else {
@@ -183,29 +219,44 @@ function getTournamentList() {
                 TournamentContainer.empty();
                 var friendsList = data.tourList;
                 friendsList.forEach(function (list) {
-                    if (list.me == list.id)
+                    if (list.me == list.id && list.state != 2)
                         alreadyIn = true;
                 });
                 friendsList.forEach(function (list) {
-                    var friendDiv =$('<li><span style="font-weight: bold; font-size: 24px">' + list.name + '</span> (' + list.players + ' players) - <i>created by ' + list.creator + '</i></li>');
+                    var state = "[OPEN]";
+                    if (list.state == 1)
+                        state = "[IN PROGRESS]";
+                    else if (list.state == 2)
+                        state = "[ENDED]";
+
+                    var friendDiv =$('<li>' + list.name + ' <span style="font-weight: bold; font-size: 24px"> ' + state + ' (' + list.players + ' players) - <i>created by ' + list.creator + '</span></i></li>');
                     
-                    if (list.me != list.id && !alreadyIn) {
+                    if (list.me != list.id && list.state == 0 && !alreadyIn) {
                         var clickableRow = $('<button type="submit" style="margin-left: 25px;">Join</button>');
                         clickableRow.click(function () {
                             TournamentRegistration(list.id, true);
                             setTimeout(function() {
                                 getTournamentList();
                             }, 300);
+                            openTournamentChat(list.name)
                         });
                     friendDiv.append(clickableRow[0]);
                     }
-                    else if (list.me == list.id) {
+                    else if (list.me == list.id && list.state == 0) {
                         var clickableRow = $('<button2 type="submit" style="margin-left: 25px;">Leave</button2>');
                         clickableRow.click(function (event) {
                             TournamentRegistration(list.id, false);
                             setTimeout(function() {
                                 getTournamentList();
                             }, 300);
+                            var chatTour = document.getElementById(list.name);
+                            var parent = chatTour.parentElement;
+                            parent.removeChild(chatTour);
+                            chatCounter--;
+                            var chatBoxes = document.getElementsByClassName('chat-box');
+                            for (var i = 0; i < chatBoxes.length; i++) {
+                                chatBoxes[i].style.left = 20 * i + 'vh';
+                            }
                         });
                     friendDiv.append(clickableRow[0]);
                     }
@@ -226,7 +277,10 @@ function getTournamentList() {
     });
 }
 
-document.getElementById('JoinQueue').addEventListener('click', LaunchQueue);
+document.getElementById('JoinQueue').addEventListener('click', function() {LaunchQueue(0);});
+document.getElementById('2v2').addEventListener('click', function() {LaunchQueue(1);});
+document.getElementById('TronQueue').addEventListener('click', function() {LaunchQueue(2);});
+
 document.getElementById('LeaveQueue').addEventListener('click', LeaveQueue);
 document.getElementById('refreshTourList').addEventListener('click', getTournamentList);
 document.getElementById('Tournament').addEventListener('click', getTournamentList);

@@ -6,25 +6,94 @@ const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
 const websocket = new WebSocket(wsEndpoint);
 
 websocket.onopen = () => {
-    console.log('WebSocket connected');
+    console.log('WebSocket chat connected');
+    websocket.send(
+        JSON.stringify({
+            action: 'checkTournament'
+        })
+    );
 };
 
 websocket.onmessage = function(event) {
     var data = JSON.parse(event.data);
     console.log('Event Socket : ' + data.type);
     if (data.type === 'chat_message') {
-        console.log('GetMessage');
         getMessages();
+    }
+    else if (data.type === 'add_tour_chat') {
+        openTournamentChat(data.name);
+    }
+    else if (data.type == 'returnPing') {
+        var divData = document.querySelectorAll('div[friend-pseudo]');
+        divData.forEach(function (div) {
+            var id = div.getAttribute('friend-pseudo');
+            if (id == data.pseudo) {
+                div.removeChild(div.firstChild);
+                var statut_text = $('<i style="color: green;">(online)</i>');
+                div.append(statut_text[0]);
+            }
+        });
+    }
+    else if (data.type == 'sendPing') {
+        websocket.send(
+            JSON.stringify({
+                action: 'returnPing',
+                from_pseudo: data.from_pseudo,
+                to_pseudo: data.to_pseudo
+            })
+        );
     }
 };
 
-function openChat(pseudo) {
+function openTournamentChat(pseudo) {
+    var chatDiv = document.createElement('div');
+    chatDiv.id = 'chat-box-' + chatCounter;
+    chatDiv.id = pseudo;
+    chatDiv.className = 'chat-box';
+    chatDiv.style.left = 20 * chatCounter + 'vh';
+    var toggleDiv = document.createElement('div');
+    toggleDiv.className = 'chat-box-toggle';
 
+    var titleP = document.createElement('p');
+    titleP.textContent = 'Tournament: ' + pseudo;
+    titleP.style.fontSize = '14px';
+    toggleDiv.appendChild(titleP);
+    chatDiv.appendChild(toggleDiv);
+
+    var contentDiv = document.createElement('div');
+    contentDiv.id = 'chat-box-content';
+    contentDiv.className = 'chat-box-content';
+    var chatP = document.createElement('p');
+    chatP.textContent = pseudo;
+    contentDiv.appendChild(chatP);
+
+    var formHTML = `
+        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <input type="hidden" name="type" value="sendChat">
+        <input type="hidden" name="id_to" value="${pseudo}">
+        <input type="hidden" name="tournament" value="True">
+        <input type="hidden" name="csrfmiddlewaretoken" value="">
+        <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
+        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div id="error-form" class="error-form"></div>
+        </form>
+    `;
+    contentDiv.innerHTML = formHTML;
+    chatDiv.appendChild(contentDiv);
+
+    toggleDiv.addEventListener('click', function () {
+        chatDiv.classList.toggle('chat-box-open');
+        contentDiv.scrollTop = contentDiv.scrollHeight;
+    });
+    document.body.appendChild(chatDiv);
+    chatCounter++;
+}
+
+function openChat(pseudo) {
     if (chatCounter >= 5) {
         alert("You have already 5 chat box !");
         return;
     }
-
     var chatDiv = document.createElement('div');
     chatDiv.id = 'chat-box-' + chatCounter;
     chatDiv.id = pseudo;
@@ -55,8 +124,8 @@ function openChat(pseudo) {
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="csrfmiddlewaretoken" value="">
-        <input type="text" id="content" name="content" required>
-        <div class="hide"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)">Login</button></div>
+        <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
+        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -65,7 +134,6 @@ function openChat(pseudo) {
 
     toggleDiv.addEventListener('click', function () {
         chatDiv.classList.toggle('chat-box-open');
-        getMessages(); //Delete this later to setInterval
         contentDiv.scrollTop = contentDiv.scrollHeight;
     });
     closeIcon.addEventListener('click', function (event) {
@@ -102,6 +170,9 @@ function loadFriends() {
                             getMessages();
                         }
                     });
+                    var statut = $('<div class="clickable-row name" style="font-size: 14px;" friend-pseudo="' + friend.pseudo + '"></div>');
+                    var statut_text = $('<i style="color: red;">(offline)</i>');
+                    statut.append(statut_text[0]);
                     var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
                     BlockRow.click(function (event) {
                         blockFriend(friend.pseudo, false);
@@ -111,9 +182,16 @@ function loadFriends() {
                         deleteFriend(friend.pseudo);
                     });
                     friendDiv.append(clickableRow[0]);
+                    friendDiv.append(statut[0]);
                     friendDiv.append(BlockRow[0]);
                     friendDiv.append(deleteRow[0]);
                     friendsContainer.append(friendDiv);
+                    websocket.send(
+                        JSON.stringify({
+                            action: 'getStatut',
+                            pseudo: friend.pseudo
+                        })
+                    );
                 });
             }
             token = data.csrf_token;
@@ -175,9 +253,6 @@ function deleteFriend(pseudo) {
         contentType: false,
         data: formData,
         success: function (data) {
-            if (data.success) {
-                console.log('friend deleted');
-            }
             loadFriends();
             token = data.csrf_token;
         },
@@ -223,6 +298,7 @@ function getMessages() {
         headers: { 'X-CSRFToken': token },
         success: function (data) {
             var messages = data.messages;
+            var messages_tour = data.message_tour;
  
             var chatBoxContents = document.querySelectorAll('.chat-box-content');
             chatBoxContents.forEach(function (chatBoxContent) {
@@ -239,7 +315,28 @@ function getMessages() {
                     if (!chatBoxContent)
                         return;
                     var messageElement = document.createElement('p');
-                    
+                    messageElement.style.color = "black";
+                    messageElement.style.fontSize = "16px";
+                    messageElement.style.textAlign = "left";
+
+                    var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
+                    messageElement.innerHTML = from + message.content;
+
+                    chatBoxContent.appendChild(messageElement);
+                    chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
+                });
+                messages_tour.forEach(function (message) {
+                    var chatDiv = document.getElementById(message.pseudo_to);
+                    if (!chatDiv)
+                        return;
+                    var chatBoxContent = chatDiv.querySelector('.chat-box-content');
+                    if (!chatBoxContent)
+                        return;
+                    var messageElement = document.createElement('p');
+                    messageElement.style.color = "black";
+                    messageElement.style.fontSize = "16px";
+                    messageElement.style.textAlign = "left";
+
                     var from = message.pseudo_from === message.me ? '<b>Moi : </b>' : '<b>' + message.pseudo_from + ' : </b>';
                     messageElement.innerHTML = from + message.content;
 
