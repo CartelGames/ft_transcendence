@@ -482,7 +482,6 @@ function updateGameState(p1, p2){
   pseudo2 = p2;
 }
 
-
 //neon effect
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.25, 0.5);
 const composer = new EffectComposer(renderer);
