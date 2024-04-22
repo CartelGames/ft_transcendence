@@ -364,9 +364,10 @@ tbody td img {
   padding: 10px;
   border-radius: 2%;
   background-color: #fff;
-  min-width: 50%;
+  max-width: 75%;
   min-height: 50%;
   font-family: "cyberFont";
+  flex-wrap: wrap;
 }
 
 .user-profile-card {
