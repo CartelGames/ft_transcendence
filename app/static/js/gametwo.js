@@ -9,6 +9,11 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+
+ws.onopen = function(event) {
+    console.log("WebSocket for Tron connected !"); 
+};
 
 //SETUP
 let game_id = "";
@@ -21,13 +26,8 @@ let loader = new FontLoader();
 const username = await getPseudo();
 let id = (await getPseudo()).id;
 let pseudo, pseudo2;
-function sending(input)
-{
-    ws.send(JSON.stringify({
-        type: 'input',
-        input: input,
-    }));
-}
+let ended = false;
+let play = false;
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
@@ -193,13 +193,18 @@ zoneMesh.rotateX(1.57);
 scene.add(zoneMesh);
 
 function playerGameStarted(event) {
-  if (isPaused) {
+  startAnimation();
+  scene.remove(zoneMesh);
+  scene.remove(scoreGrp);
+  // Hide the "Start Game" button
+  menu.remove(textMenu);
+  /*if (isPaused) {
     // Start the game
     isPaused = !isPaused;
     scene.remove(zoneMesh, scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
-  }
+  }*/
 }
 
 function onMouseClick(event) {
@@ -215,12 +220,16 @@ function onMouseClick(event) {
 
   // Check if the "Start Game" button was clicked
   if (intersects.length > 0 && isPaused) {
-    // Start the game
+    ws.send(JSON.stringify({
+      type: 'game_start',
+      game_id: game_id
+    }));
+    /*// Start the game
     startAnimation();
     scene.remove(zoneMesh);
     scene.remove(scoreGrp);
     // Hide the "Start Game" button
-    menu.remove(textMenu);
+    menu.remove(textMenu);*/
   }
 }
 document.addEventListener('mousedown', onMouseClick);
@@ -272,7 +281,6 @@ createPlayer();
 pseudo = username.pseudo;
 pseudo2 = username.pseudo;
 async function printPseudo(){
-  console.log(pseudo2);
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';
   if (pseudo2.length > 8)
@@ -305,7 +313,7 @@ async function printPseudo(){
 }
 printPseudo();
 
-function rotateBikesGame(bike, key) {
+function rotateBikesGame(bike, key, x, y) {
   let targetRotation = 0;
 
   if (key === 'up') {
@@ -329,55 +337,60 @@ function rotateBikesGame(bike, key) {
     z: bike.rotation.z + rotationDifference,
     ease: 'power2.out',
   });
+  sending(x, y, bike.rotation.z + rotationDifference);
 }
 
 //movements (cant go backwards into your own trail, as thats cheating)
 //TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
 window.addEventListener('keydown', function (event) {
+  if (!play || ended)
+    return;
   if (event.key === 'p')
     togglePause();
-  if (event.key === 'w')
-    if (bikeOneDir.y != -1){
-      rotateBikesGame(bikeOne, 'up');
-      bikeOneDir = {x:0, y:1};
-    }
-  if (event.key === 's')
-    if (bikeOneDir.y != 1){
-      rotateBikesGame(bikeOne, 'down');
-      bikeOneDir = {x:0, y:-1};
-    }
-  if (event.key === 'a')
-    if (bikeOneDir.x != 1){
-      rotateBikesGame(bikeOne, 'left');
-      bikeOneDir = {x:-1, y:0};
-    }
-  if (event.key === 'd')
-    if (bikeOneDir.x != -1){
-      rotateBikesGame(bikeOne, 'right');
-      bikeOneDir = {x:1, y:0};
-    }
-
-
-  if (event.key === 'ArrowUp')
-    if (bikeTwoDir.y != -1){
-      rotateBikesGame(bikeTwo, 'up');
-      bikeTwoDir = {x:0, y:1};
-    }
-  if (event.key === 'ArrowDown')
-    if (bikeTwoDir.y != 1){
-      rotateBikesGame(bikeTwo, 'down');
-      bikeTwoDir = {x:0, y:-1};
-    }
-  if (event.key === 'ArrowLeft')
-    if (bikeTwoDir.x != 1){
-      rotateBikesGame(bikeTwo, 'left');
-      bikeTwoDir = {x:-1, y:0};
-    }
-  if (event.key === 'ArrowRight')
-    if (bikeTwoDir.x != -1){
-      rotateBikesGame(bikeTwo, 'right');
-      bikeTwoDir = {x:1, y:0};
-    }
+  if (playerPos === 0) {
+    if (event.key === 'w' || event.key === 'ArrowUp')
+      if (bikeOneDir.y != -1){
+        rotateBikesGame(bikeOne, 'up', 0, 1);
+        bikeOneDir = {x:0, y:1};
+      }
+    if (event.key === 's' || event.key === 'ArrowDown')
+      if (bikeOneDir.y != 1){
+        rotateBikesGame(bikeOne, 'down', 0, -1);
+        bikeOneDir = {x:0, y:-1};
+      }
+    if (event.key === 'a' || event.key === 'ArrowLeft')
+      if (bikeOneDir.x != 1){
+        rotateBikesGame(bikeOne, 'left', -1, 0);
+        bikeOneDir = {x:-1, y:0};
+      }
+    if (event.key === 'd' || event.key === 'ArrowRight')
+      if (bikeOneDir.x != -1){
+        rotateBikesGame(bikeOne, 'right', 1, 0);
+        bikeOneDir = {x:1, y:0};
+      }
+  }
+  else {
+    if (event.key === 'w' || event.key === 'ArrowUp')
+      if (bikeTwoDir.y != -1){
+        rotateBikesGame(bikeTwo, 'up', 0, 1);
+        bikeTwoDir = {x:0, y:1};
+      }
+    if (event.key === 'w' || event.key === 'ArrowDown')
+      if (bikeTwoDir.y != 1){
+        rotateBikesGame(bikeTwo, 'down', 0, -1);
+        bikeTwoDir = {x:0, y:-1};
+      }
+    if (event.key === 'w' || event.key === 'ArrowLeft')
+      if (bikeTwoDir.x != 1){
+        rotateBikesGame(bikeTwo, 'left', -1, 0);
+        bikeTwoDir = {x:-1, y:0};
+      }
+    if (event.key === 'w' || event.key === 'ArrowRight')
+      if (bikeTwoDir.x != -1){
+        rotateBikesGame(bikeTwo, 'right', 1, 0);
+        bikeTwoDir = {x:1, y:0};
+      }
+  }
 });
 
 function togglePause() {
@@ -424,12 +437,30 @@ function updated(){
   if (playerOneCollided || playerOneSuicided){
     console.log("playerone collided");
     isPaused = 1;
+    ended = true;
+    if (playerPos == 0) {
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: 0,
+        score2: 1,
+      }));
+    }
     winAnimation(bikeTwo);
   }
   if (playerTwoCollided || playerTwoSuicided)
   {
     console.log("playetwo collided");
     isPaused = 1;
+    ended = true;
+    if (playerPos == 0) {
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: 1,
+        score2: 0,
+      }));
+    }
     winAnimation(bikeOne);
   }
 }
@@ -473,7 +504,6 @@ function printWinMsg(player){
 }
 
 function updateGameState(p1, p2){
-  console.log(p1, p2);
   if (username.pseudo === p1)
     playerPos = 0;
   else
@@ -593,20 +623,55 @@ function checkSuicide(player, trail, trailCreationTimes, currentTime) {
 }
 
 //GAME DONE
-const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
-
-ws.onopen = function(event) {
-    console.log("Coucou la zone"); 
-    
-};
 
 ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
-  console.log(data)
-  if (data.type === 'message'){
-    console.log('pouet');
+  if (data.type === 'msg') {
+    $('#Msg').text('Message: ' + data.message);
+  }
+  else if (data.type === 'game_start'){
+    playerGameStarted();
+  }
+  else if (data.type === 'game_info'){
+    play = data.play;
+  }
+  else if (data.type === 'game_send_tron') {
+      if (data.player_pos === playerPos)
+        return ;
+      if (data.player_pos === 0) {
+        gsap.to(bikeOne.rotation, {
+          duration: 0.5,
+          z: data.move,
+          ease: 'power2.out',
+        });
+        bikeOneDir.x = data.rotationX;
+        bikeOneDir.y = data.rotationY;
+        // bikeOne.rotation.z = data.move;
+      }
+      else {
+        gsap.to(bikeTwo.rotation, {
+          duration: 0.5,
+          z: data.move,
+          ease: 'power2.out',
+        });
+        bikeTwoDir.x = data.rotationX;
+        bikeTwoDir.y = data.rotationY;
+        // bikeTwo.rotation.z = data.move;
+      }
   }
 };
+
+function sending(rotationX, rotationY, move)
+{
+  ws.send(JSON.stringify({
+    type: 'input_tron',
+    game_id: game_id,
+    player_pos: playerPos,
+    rotationX: rotationX,
+    rotationY: rotationY,
+    move: move,
+  }));
+}
 
 ws.onclose = function(event) {
     console.log("WebSocket closed!");
@@ -614,13 +679,14 @@ ws.onclose = function(event) {
 
 export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
-  console.log("id de la game : " + game_id);
   updateGameState(p1, p2);
-  ws.send(JSON.stringify({
-    type: 'game_info',
-    game_id: game_id,
-    player_id: id
-  }));
+  setTimeout(function () {
+    ws.send(JSON.stringify({
+      type: 'game_info',
+      game_id: game_id,
+      player_id: id
+    }));
+  }, 250);
   // reload la partie avec le game_id
   // fonction appelé via queue.js pour lancer des nouvelles games
 }

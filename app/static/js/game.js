@@ -26,7 +26,6 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
-      console.log()
       play = data.play;
       resetGame()
     }
@@ -734,7 +733,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      let winText = pseudo2 + "'S TEAM WIN"
+      let winText = pseudo2 + " WIN"
       console.log(winText)
       const geometry3 = new TextGeometry( winText, {
         font: cyberfont,

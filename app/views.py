@@ -70,13 +70,14 @@ def UserSendChat(request):
     if request.method == 'POST' and request.POST.get('type') == 'sendChat':
         id_to = request.POST.get('id_to', None)
         content = request.POST.get('content', None)
+        print(id_to + ' ' + content)
         if content and id_to:
             tournament = request.POST.get('tournament', None)
             if tournament:
                 try:
                     tour = get_object_or_404(Tournaments, name=id_to)
                 except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo !', 'csrf_token': get_token(request)})
                 new_message = MessageTournaments.objects.create(
                     id_from=request.user.id,
                     id_to=tour.id,

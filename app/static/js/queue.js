@@ -36,7 +36,6 @@ function launchGame(data, num) {
         import('/static/js/gametwovtwo.js?ver=${Math.random()}')
         .then(module => {
             const { reloadGame } = module;
-            console.log('GAME ID 2V2 ' + data.game_id)
             reloadGame(data.game_id, data);
         })
         .catch(error => {
