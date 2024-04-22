@@ -36,9 +36,9 @@ const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
 camera.position.set(0, -20, 5) //initial camera position, once game starts, make it travel to final position using gsap
-camera.lookAt(0, 0, 5);
-const controls = new OrbitControls( camera, renderer.domElement );
-controls.update();
+camera.lookAt(0, 10, 1);
+//const controls = new OrbitControls( camera, renderer.domElement );
+//controls.update();
 //camera.position.z = 50; //camera final position
 
 renderer.setPixelRatio(canvas.width/canvas.height);
@@ -287,12 +287,12 @@ async function printPseudo(){
     pseudo2 = pseudo2.substr(0,7) + '.';
   ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
-      const geometry = new TextGeometry( pseudo, {
+      const geometry = new TextGeometry( pseudo2, {
         font: cyberfont,
         size: 2,
         height: 1,
       } );
-      const geometry2 = new TextGeometry( pseudo2, {
+      const geometry2 = new TextGeometry( pseudo, {
         font: cyberfont,
         size: 2,
         height: 1,
@@ -341,7 +341,6 @@ function rotateBikesGame(bike, key, x, y) {
 }
 
 //movements (cant go backwards into your own trail, as thats cheating)
-//TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
 window.addEventListener('keydown', function (event) {
   if (!play || ended)
     return;
@@ -480,9 +479,9 @@ function winAnimation(player){
 function printWinMsg(player){
   let name;
   if (player == bikeTwo)
-    name = pseudo;
+    name = pseudo2;
   else
-    name = pseudo2; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
+    name = pseudo; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
   ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
     let winText = name + " WINS"
