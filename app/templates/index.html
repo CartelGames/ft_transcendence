@@ -13,7 +13,14 @@
 	<link href="https://fonts.googleapis.com/css2?family=Honk&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	<link rel="stylesheet" href="{% static 'css/sass/style.css' %}" />
-	<script src="{% static 'js/script.js' %}" defer></script>
+	
+    
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@3">
+
+<link href="{% static 'css/sass/bootstrap/bootstrap.css' %}" rel="stylesheet">
+
+<meta name="theme-color" content="#712cf9"><script src="{% static 'js/script.js' %}" defer></script>
 	<script src="{% static 'js/chat.js' %}" defer></script>
 	<title>Transcendence Pong 42</title>
 </head>
@@ -41,6 +48,11 @@
 	<!-- index -->
 	<div id="index" class="block">
 		<h1>Welcome to our Transcendence !</h1>
+		<div>
+			{% block home %}
+				{% include 'home.html'%}
+			{% endblock %}
+		</div>
 	</div>
 
 	<!-- game -->
@@ -264,5 +276,5 @@
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 		<!-- <script type="module" src="{% static 'js/game.js' %}"></script> -->
 		<script type="module" src="{% static 'js/queue.js' %}"></script>
-</body>
+	</body>
 </html>

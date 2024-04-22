@@ -258,9 +258,9 @@ function printStats(user) {
         $('#user-pseudo').text(user.pseudo);
         $('#user-email').text(user.email);
         $('#user-img').attr('src', user.img);
-        $('#user-stats-tournament').append(statsTournament);
-        $('#user-stats-local').append(statsLocal);
-        $('#user-stats-online').append(statsOnline);
+        $('#user-stats-tournament').empty().append(statsTournament);
+        $('#user-stats-local').empty().append(statsLocal);
+        $('#user-stats-online').empty().append(statsOnline);
         document.getElementById('profil-card').addEventListener( "click", () => {
             document.getElementById('profil-card').classList.toggle('profil-open');   
             document.getElementById('profil-card').style.display = 'none';
