@@ -172,6 +172,21 @@ function checkURL() {
 
 function loadStats() {
     $.ajax({
+        type: 'PUT',
+        url: '/loadStats/',
+        headers: { 'X-CSRFToken': token },
+        success: function (data) {
+            getStats();
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des joueurs.');
+        }
+    });
+}
+
+function getStats() {
+    $.ajax({
         type: 'GET',
         url: '/getStats/',
         headers: { 'X-CSRFToken': token },

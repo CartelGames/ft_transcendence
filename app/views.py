@@ -1,3 +1,4 @@
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import LoginForm, SignupForm, ProfilImgForm
 from django.contrib.auth.models import AnonymousUser
@@ -304,6 +305,31 @@ def GetBlockedFriends(request):
             return JsonResponse({'success': False, 'friends': 'User not found', 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
+
+def LoadStats(request):
+    if request.method == 'PUT':
+        new_Stats = UserProfil.objects.all()
+        for usr in new_Stats:
+            games_played = Game.objects.filter((Q(player1=usr.id) | Q(player2=usr.id) | Q(player3=usr.id) | Q(player4=usr.id)) & Q(ended=True)).count()
+            usr.nb_games = games_played
+            winned_games = Game.objects.filter(winner=usr.id).count()
+            if games_played != 0:
+                usr.mmr =  winned_games / games_played * 100
+            usr.save()
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('user_id')
+            games_played = data.get('games_played')
+
+            user = UserProfil.objects.get(id=user_id)
+            user.nb_games += games_played
+            user.save()
+
+            return JsonResponse({'success': True, 'message': 'Number of games updated successfully.', 'csrf_token': get_token(request)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e), 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method.', 'csrf_token': get_token(request)})
 
 def GetStats(request):
     if request.method == 'GET':

@@ -21,6 +21,7 @@ urlpatterns = [
     path('getFriends/', views.GetFriends, name='getFriends'),
     path('getBlockedFriends/', views.GetBlockedFriends, name='getBlockedFriends'),
     path('getStats/', views.GetStats, name='getStats'),
+    path('loadStats/', views.LoadStats, name='loadStats'),
     path('getTournamentList/', views.GetTournamentList, name='getTournamentList'),
     path('getTournamentInfo/', views.GetTournamentInfo, name='getTournamentInfo'),
 ]
