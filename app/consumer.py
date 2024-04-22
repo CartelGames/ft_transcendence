@@ -450,7 +450,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         tx_hash = web3.eth.send_raw_transaction(signed_txn.rawTransaction)
 
                         tx_receipt = web3.eth.wait_for_transaction_receipt(tx_hash)
-                        print("Transaction envoyée. Hash de transaction:", tx_hash.hex())
+                        print("Hash de transaction: ", tx_hash.hex())
 
                         if tournament.phase != 0:
                             update_win = await database_sync_to_async(TournamentsGame.objects.filter)(tournament_id=tournament.tournament_id, phase=(tournament.phase - 1), state=0)
