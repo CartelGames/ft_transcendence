@@ -388,6 +388,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                 game.score1 = int(text_data_json['score1'])
                 game.score2 = int(text_data_json['score2'])
                 game.ended = True
+                await sync_to_async(game.save)()
                 if int(text_data_json['score1']) > int(text_data_json['score2']):
                     game.winner = game.player1
                     if game.game_type == 0:
@@ -431,7 +432,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                                 "type": "function"
                             }
                         ]
-                        contract = web3.eth.contract(address='0xd3Ba8D2B3Ee9C0768be93F0b101456d790e2d232', abi=contract_abi)
+                        contract = web3.eth.contract(address='0x9844d06acCb68a1fc303103e8193493C7BCA2d0F', abi=contract_abi)
                         account_address = '0x41a112483a5428e5d694aB56073874A8CB94b550'
                         private_key = 'ADD_PRIVATE'
                         tournamentID = tournament.tournament_id

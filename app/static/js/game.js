@@ -499,12 +499,14 @@ function updated() {
       ended = true;
       var BackButt = document.getElementById('BackMenu')
       BackButt.style.display = 'block';
-      ws.send(JSON.stringify({
-        type: 'game_ended',
-        game_id: game_id,
-        score1: score[0],
-        score2: score[1],
-      }));
+      if (playerPos == 0) {
+        ws.send(JSON.stringify({
+          type: 'game_ended',
+          game_id: game_id,
+          score1: score[0],
+          score2: score[1],
+        }));
+      }
       return ;
     }
     else
@@ -520,12 +522,14 @@ function updated() {
       ended = true;
       var BackButt = document.getElementById('BackMenu')
       BackButt.style.display = 'block';
-      ws.send(JSON.stringify({
-        type: 'game_ended',
-        game_id: game_id,
-        score1: score[0],
-        score2: score[1],
-      }));
+      if (playerPos == 0) {
+        ws.send(JSON.stringify({
+          type: 'game_ended',
+          game_id: game_id,
+          score1: score[0],
+          score2: score[1],
+        }));
+      }
       return ;
     }
     else
