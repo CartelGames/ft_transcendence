@@ -151,6 +151,21 @@ class MyQueueConsumer(AsyncWebsocketConsumer):
                 user_mmr = self.user.mmr
                 print(self.user.pseudo + " - " + str(user_mmr) + " MMR")
                 self.type = data["num"]
+                for queue_item in self.queue1v1:
+                    if queue_item[2] == self.user.pseudo:
+                        self.queue1v1.remove(queue_item)
+                        await self.send(text_data=json.dumps({'type': 'msg', 'message': 'Your account is already in a queue !'}))
+                        return
+                for queue_item in self.queue2v2:
+                    if queue_item[2] == self.user.pseudo:
+                        self.queue2v2.remove(queue_item)
+                        await self.send(text_data=json.dumps({'type': 'msg', 'message': 'Your account is already in a queue !'}))
+                        return
+                for queue_item in self.queueTron:
+                    if queue_item[2] == self.user.pseudo:
+                        self.queueTron.remove(queue_item)
+                        await self.send(text_data=json.dumps({'type': 'msg', 'message': 'Your account is already in a queue !'}))
+                        return  
                 if self.type == 0:
                     self.queue1v1.append((self.channel_name, user_mmr, self.user.pseudo))
                     await self.send(text_data=json.dumps({'type': 'msg', 'message': 'You have joined the Pong matchmaking 1v1 queue !'}))
