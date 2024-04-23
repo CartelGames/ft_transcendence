@@ -212,7 +212,8 @@
 				<input type="file" id="profil-img" name="profil_img" style="display: none;" accept="image/*">
 				<div id="error-form" class="error-form"></div>
 			</form>
-			<form id="newPseudoForm" enctype="multipart/form-data" action="{% url 'newPseudo' %}" method="post">
+			<div class ="butt"><button type="button" onclick="showNewPseudo()">Change Pseudo</button></div>
+			<form class="newPseudo" id="newPseudoForm" enctype="multipart/form-data" action="{% url 'newPseudo' %}" method="post">
 				<label for="pseudo change">New pseudo:</label>
 				<input type="hidden" name="type" value="newPseudo">
 				<input type="text" id="pseudo" name="pseudo" required>
