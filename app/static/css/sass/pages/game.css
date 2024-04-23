@@ -1,0 +1,11 @@
+#ChooseGame {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+}
+#ChooseGame h2 {
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 0 0;
+}/*# sourceMappingURL=game.css.map */
