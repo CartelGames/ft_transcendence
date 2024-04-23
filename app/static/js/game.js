@@ -26,7 +26,6 @@ ws.onmessage = function(event) {
       updateGameInput(data.player_pos, data.input_value);
     }
     else if (data.type === 'game_info'){
-      console.log()
       play = data.play;
       resetGame()
     }
@@ -500,12 +499,14 @@ function updated() {
       ended = true;
       var BackButt = document.getElementById('BackMenu')
       BackButt.style.display = 'block';
-      ws.send(JSON.stringify({
-        type: 'game_ended',
-        game_id: game_id,
-        score1: score[0],
-        score2: score[1],
-      }));
+      if (playerPos == 0) {
+        ws.send(JSON.stringify({
+          type: 'game_ended',
+          game_id: game_id,
+          score1: score[0],
+          score2: score[1],
+        }));
+      }
       return ;
     }
     else
@@ -521,12 +522,14 @@ function updated() {
       ended = true;
       var BackButt = document.getElementById('BackMenu')
       BackButt.style.display = 'block';
-      ws.send(JSON.stringify({
-        type: 'game_ended',
-        game_id: game_id,
-        score1: score[0],
-        score2: score[1],
-      }));
+      if (playerPos == 0) {
+        ws.send(JSON.stringify({
+          type: 'game_ended',
+          game_id: game_id,
+          score1: score[0],
+          score2: score[1],
+        }));
+      }
       return ;
     }
     else
@@ -734,7 +737,7 @@ function rWin(){
         size: 3,
         height: 1,
       } );
-      let winText = pseudo2 + "'S TEAM WIN"
+      let winText = pseudo2 + " WIN"
       console.log(winText)
       const geometry3 = new TextGeometry( winText, {
         font: cyberfont,
