@@ -357,7 +357,7 @@ tbody td img {
   flex-direction: column;
 }
 
-.card {
+.carddd {
   display: flex;
   flex-direction: row;
   justify-content: space-around;
@@ -367,12 +367,13 @@ tbody td img {
   background-color: #fff;
   max-width: 75%;
   max-height: 30rem;
-  font-family: "cyberFont";
+  font-family: "PublicPixel";
+  font-size: 1.5rem;
   flex-wrap: wrap;
   overflow-y: scroll;
   color: #000120;
 }
-.card ul li {
+.carddd ul li {
   list-style: none;
   margin: 10px;
 }
@@ -408,8 +409,8 @@ tbody td img {
      object-fit: cover;
   margin: 1rem;
   border-radius: 50%;
-  height: 7rem;
-  width: 7rem;
+  height: 10rem;
+  width: 10rem;
 }
 
 .user-profile-card-body {
@@ -427,9 +428,102 @@ tbody td img {
 }
 
 .user-profile-card-description {
-  color: #666;
   font-size: 14px;
   margin: 8px 0 0;
+}
+
+.user-profile-card {
+  width: 300px;
+  border-radius: 10px;
+  box-shadow: 0px 10px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  font-family: "NationalCartoon", sans-serif;
+}
+
+.user-profile-card .card-title {
+  background-color: #f4f4f4;
+  color: #333;
+  margin: 0;
+  padding: 10px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.user-profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.user-profile-card-title {
+  color: #333;
+  margin: 0;
+}
+
+.user-profile-card-image {
+  width: 10rem;
+  height: 10rem;
+  border-radius: 50%;
+}
+
+.user-profile-card-body {
+  padding: 5px;
+}
+
+.user-profile-card-username {
+  margin: 0;
+}
+
+.user-profile-card-description {
+  color: #999;
+}
+
+.user-stats {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px;
+}
+.user-stats h4, .user-stats .h4 {
+  font-size: 1.7rem;
+  font-family: "neo-latina";
+  margin: 10px auto;
+}
+
+.user-stats-tournaments, .user-stats-online {
+  width: 45%;
+}
+
+.user-stats-tournament-details, .user-stats-online-details {
+  background-color: #f4f4f4;
+  display: flex;
+  flex-wrap: nowrap;
+  font-size: 1rem;
+  padding: 0;
+  margin: 0;
+  border-radius: 5px;
+}
+
+#ChooseGame {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+  align-items: center;
+}
+#ChooseGame h2, #ChooseGame .h2 {
+  width: 100%;
+  text-align: center;
+  margin: 10px 0 0 0;
+}
+
+.home {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 50rem;
 }
 
 .error-form {
@@ -4578,11 +4672,15 @@ textarea.form-control-lg {
   position: relative;
   display: flex;
   flex-direction: column;
+  flex-wrap: nowrap;
   min-width: 0;
   word-wrap: break-word;
   background-color: #fff;
   background-clip: border-box;
   border: 1px solid rgba(0, 0, 0, 0.125);
+  overflow-y: scroll;
+  font-size: 1.5rem;
+  font-style: "PublicPixel";
   border-radius: 0.25rem;
 }
 .card > hr {
@@ -6045,6 +6143,7 @@ textarea.form-control-lg {
 
 .carousel {
   position: relative;
+  width: 100%;
 }
 
 .carousel.pointer-event {
@@ -6055,6 +6154,7 @@ textarea.form-control-lg {
   position: relative;
   width: 100%;
   overflow: hidden;
+  height: 20rem;
 }
 .carousel-inner::after {
   display: block;
@@ -6067,6 +6167,7 @@ textarea.form-control-lg {
   display: none;
   float: left;
   width: 100%;
+  height: 100%;
   margin-right: -100%;
   backface-visibility: hidden;
   transition: transform 0.6s ease-in-out;

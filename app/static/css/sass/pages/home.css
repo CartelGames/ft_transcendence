@@ -1,1 +1,9 @@
-/*# sourceMappingURL=home.css.map */
+.home {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  min-height: 50rem;
+}/*# sourceMappingURL=home.css.map */

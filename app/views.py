@@ -325,7 +325,7 @@ def LoadStats(request):
 
 def GetStats(request):
     if request.method == 'GET':
-        new_Stats = UserProfil.objects.all()
+        new_Stats = UserProfil.objects.all().order_by('-mmr')
         tour_Stats = Tournaments.objects.all()
         game_Stats = Game.objects.all()
         users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(ended=True)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True) & Q(game_type = 0)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(ended=True)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True) & Q(game_type = 0)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
