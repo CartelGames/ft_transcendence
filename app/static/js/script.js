@@ -56,6 +56,10 @@ function sendForm(id, event) {
                     getMessages();
                     return;
                 }
+                else if (formData.get('type') == 'createTour') {
+                    openTournamentChat(formData.get('tourName'));
+                    getMessages();
+                }
                 if (errorForm)
                     errorForm.innerHTML = response.errors;
                 if (response.goto) {
