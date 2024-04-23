@@ -563,8 +563,8 @@ function trails(){
     const curve = new THREE.CatmullRomCurve3(cleanPositionsOne.map(p => new THREE.Vector3(p.x, p.y, p.z)));
     const curve2 = new THREE.CatmullRomCurve3(cleanPositionsTwo.map(p => new THREE.Vector3(p.x, p.y, p.z)));
 
-    const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
-    const geometry2 = new THREE.TubeGeometry(curve2, 64, 0.5, 8, false);
+    const geometry = new THREE.TubeGeometry(curve, cleanPositionsOne.length * 3, 0.5, 8, false);
+    const geometry2 = new THREE.TubeGeometry(curve2, cleanPositionsTwo.length * 3, 0.5, 8, false);
     geometry.name = 'trailOne';
     geometry2.name = 'trailTwo';
     trailOne = new THREE.Mesh(geometry, trailMaterial1);
@@ -573,7 +573,6 @@ function trails(){
     scene.add(trailOne, trailTwo);
   }
 }
-let logging = 0;
 
 function checkCollision(player, trail){
   let posXY;
@@ -591,13 +590,9 @@ function checkCollision(player, trail){
     const x = positions[i].x;
     const y = positions[i].y;
     const distance = posXY.distanceTo(new THREE.Vector2(x,y));
-    if (logging %60 == 0)
-      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
-    logging++;
-    if (distance < 1.5){
-      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
+
+    if (distance < 1.5)
       return true; // if speed goes up, this goes up too or the check wont work
-    }
   }
   if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
       player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
@@ -677,7 +672,7 @@ export function reloadGame(set_game_id, p1, p2) {
 }
 
 function animate() {
-    requestAnimationFrame(animate);
+  setTimeout( function() { requestAnimationFrame( animate ); }, 1000 / 30 );
     if (!isPaused){
       updated();
     }
