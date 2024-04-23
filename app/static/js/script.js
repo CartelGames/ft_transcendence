@@ -177,6 +177,21 @@ function checkURL() {
 
 function loadStats() {
     $.ajax({
+        type: 'PUT',
+        url: '/loadStats/',
+        headers: { 'X-CSRFToken': token },
+        success: function (data) {
+            getStats();
+            token = data.csrf_token;
+        },
+        error: function (error) {
+            console.log('Erreur lors de la récupération des joueurs.');
+        }
+    });
+}
+
+function getStats() {
+    $.ajax({
         type: 'GET',
         url: '/getStats/',
         headers: { 'X-CSRFToken': token },
@@ -202,6 +217,24 @@ function printStats(user) {
     var list = document.createElement('tr');
     list.className = 'users-list';
     list.onclick = function () {
+    var statsTournament = document.createElement('ul');       
+        var attr = document.createElement('li');
+        attr.className = 'nb_game';
+        attr.textContent = 'Nombre de Participation en tournois: ' + user.TournamentPlayed;
+        statsTournament.appendChild(attr);
+        var attr2 = document.createElement('li');
+        attr2.className = 'game_win';
+        attr2.textContent = 'Nombre de Tournois Remportés: ' + user.TournamentWin;
+        statsTournament.appendChild(attr2);
+    var statsOnline = document.createElement('ul');
+        var attr = document.createElement('li');
+        attr.className = 'nb_game';
+        attr.textContent = 'Nombre de Participation en Parties Online: ' + user.gamesLocalPlayed;
+        statsOnline.appendChild(attr);
+        var attr2 = document.createElement('li');
+        attr2.className = 'game_win';
+        attr2.textContent = 'Nombre de Parties Remportées: ' + user.gamesLocalWin;
+        statsOnline.appendChild(attr2);
         document.getElementById('profil-card').style.display = 'flex';
         document.getElementById('profile').style.display = 'inline-flex';
         document.getElementById('profil-card').classList.toggle('profil-open');   
@@ -209,6 +242,8 @@ function printStats(user) {
         $('#user-pseudo').text(user.pseudo);
         $('#user-email').text(user.email);
         $('#user-img').attr('src', user.img);
+        $('#user-stats-tournament').empty().append(statsTournament);
+        $('#user-stats-online').empty().append(statsOnline);
         document.getElementById('profil-card').addEventListener( "click", () => {
             document.getElementById('profil-card').classList.toggle('profil-open');   
             document.getElementById('profil-card').style.display = 'none';
