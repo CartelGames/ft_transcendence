@@ -21,7 +21,6 @@ websocket.onmessage = function(event) {
 };
 
 function launchGame(data, num) {
-    console.log(num);
     if (num === 0) {
         import('/static/js/game.js?ver=${Math.random()}')
         .then(module => {
@@ -36,7 +35,6 @@ function launchGame(data, num) {
         import('/static/js/gametwovtwo.js?ver=${Math.random()}')
         .then(module => {
             const { reloadGame } = module;
-            console.log('GAME ID 2V2 ' + data.game_id)
             reloadGame(data.game_id, data);
         })
         .catch(error => {

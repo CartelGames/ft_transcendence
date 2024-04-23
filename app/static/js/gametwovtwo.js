@@ -9,6 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 let game_id = "";
 let playerPos = 0;
 let ended = false;
+let play = false;
 
 const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
 const username = await getPseudo();
@@ -28,14 +29,14 @@ ws.onmessage = function(event) {
       play = data.play;
       resetGame()
     }
-    else if (data.type === 'ball' && playerPos == 1){
+    else if (data.type === 'ball'){
       ball.position.x = data.ball_posx,
       ball.position.y = data.ball_posy,
       ballDirection.x = data.ball_dirx;
       ballDirection.y = data.ball_diry;
       ballSpeed = data.ball_speed;
     }
-    else if (data.type === 'powerupgenerate' && playerPos == 1){
+    else if (data.type === 'powerupgenerate'){
       receivePowerUp(data.poweruptype, data.poweruppos);
     }
     else if (data.type === 'game_start'){
@@ -44,8 +45,6 @@ ws.onmessage = function(event) {
     else if(data.type === 'pause' && playerPos != data.player){
       togglePause()
     }
-    else if (data.type === 'msg')
-      $('#Msg').text('Message: ' + data.message);
   }
   if (data.type === 'msg')
     $('#Msg').text('Message: ' + data.message);
@@ -69,8 +68,6 @@ export function reloadGame(set_game_id, data) {
 
 function updateGameState(p1, p2, p3, p4)
 {
-  console.log(username.pseudo);
-  console.log(p1 + ' ' + p2 + ' ' + p3 + ' ' + p4)
   switch(username.pseudo){
     case p1:
       playerPos = 0;
@@ -85,7 +82,7 @@ function updateGameState(p1, p2, p3, p4)
       playerPos = 3;
       break;
   }
-  console.log(playerPos);
+  console.log("ma pos : " + playerPos);
   pseudo = p1;
   pseudo2 = p2;
   pseudo3 = p3;
@@ -95,7 +92,6 @@ function updateGameState(p1, p2, p3, p4)
 
 function updateGameInput(input_pos, input_value)
 {
-  console.log(input_pos);
   if (playerPos === input_pos)
     return;
   switch(input_pos){
@@ -108,7 +104,7 @@ function updateGameInput(input_pos, input_value)
     case 2:
       playerThree.position.y = input_value;
       break;
-    case 0:
+    case 3:
       playerFour.position.y = input_value;
       break;
   }
@@ -549,7 +545,6 @@ function updated() {
     if (score[1] == 2) {
       rWin();
       ended = true;
-      console.log('send');
       ws.send(JSON.stringify({
         type: 'game_ended',
         game_id: game_id,
@@ -697,6 +692,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
         movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerOne.position.y
       }));
@@ -712,6 +708,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
         movePong(playerTwo, playerTwo.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerTwo.position.y
       }));
@@ -727,6 +724,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
         movePong(playerThree, playerThree.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerThree.position.y
       }));
@@ -742,6 +740,7 @@ if (ball.position.x < playerFour.position.x + 1 &&
         movePong(playerFour, playerFour.position.y - (4 - LBoardSpeedMalus));
       ws.send(JSON.stringify({
         type: 'input',
+        game_id: game_id,
         player_pos: playerPos,
         input_value: playerFour.position.y
       }));
@@ -774,7 +773,6 @@ let pseudo3 = username.pseudo;
 let pseudo4 = username.pseudo;
 
 async function printPseudo(){
-  console.log(pseudo2);
   if (pseudo.length > 8)
     pseudo = pseudo.substr(0,7) + '.';
   if (pseudo2.length > 8)
@@ -845,7 +843,6 @@ function rWin(){
         height: 1,
       } );
       let winText = pseudo2 + "'S TEAM WIN"
-      console.log(winText)
       const geometry3 = new TextGeometry( winText, {
         font: cyberfont,
         size: 3,
@@ -884,7 +881,6 @@ function lWin(){
       height: 1,
     } );
     let winText = pseudo + "'S TEAM WIN"
-    console.log(winText)
     const geometry3 = new TextGeometry(winText, {
       font: cyberfont,
       size: 3,

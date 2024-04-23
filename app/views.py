@@ -1,5 +1,6 @@
+from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import LoginForm, SignupForm, ProfilImgForm
+from .forms import LoginForm, SignupForm, ProfilImgForm, newPseudoForm
 from django.contrib.auth.models import AnonymousUser
 from .models import UserProfil, Message, Game, Tournaments, TournamentsGame, MessageTournaments
 from django.http import JsonResponse, Http404
@@ -28,6 +29,20 @@ def UserLogin(request):
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
+def newPseudo(request):
+    if request.method == 'POST' and request.POST.get('type') == 'newPseudo':
+        form = newPseudoForm(data=request.POST)
+        if form.is_valid():
+            pseudo = form.cleaned_data['pseudo']
+            request.user.change_pseudo(pseudo)
+            return JsonResponse({'success': True, 'errors': '<p>Your pseudo has been changed !</p>', 'goto': '#index', 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'errors': 'Invalid request.', 'goto': '#index', 'csrf_token': get_token(request)})
+    else:
+        error = form.errors()
+        print(error)
+        return JsonResponse({'success': False, 'errors': 'Invalid request.', 'goto': '#index', 'csrf_token': get_token(request)})
+
 def UserSignup(request):
     if request.method == 'POST' and request.POST.get('type') == 'signup':
         form = SignupForm(data=request.POST)
@@ -55,6 +70,7 @@ def UserLogout(request):
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
 def UserProfilImg(request):
+    print(request)
     if request.method == 'POST' and request.POST.get('type') == 'profilImg':
         form = ProfilImgForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -70,13 +86,14 @@ def UserSendChat(request):
     if request.method == 'POST' and request.POST.get('type') == 'sendChat':
         id_to = request.POST.get('id_to', None)
         content = request.POST.get('content', None)
+        print(id_to + ' ' + content)
         if content and id_to:
             tournament = request.POST.get('tournament', None)
             if tournament:
                 try:
                     tour = get_object_or_404(Tournaments, name=id_to)
                 except Http404 as e:
-                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': False, 'errors': 'Invalid pseudo !', 'csrf_token': get_token(request)})
                 new_message = MessageTournaments.objects.create(
                     id_from=request.user.id,
                     id_to=tour.id,
@@ -105,6 +122,7 @@ def UserSendChat(request):
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
 def UserAddFriend(request):
+    print(request)
     if request.method == 'POST' and request.POST.get('type') == 'addFriend':
         if isinstance(request.user, AnonymousUser):
             return JsonResponse({'success': False, 'csrf_token': get_token(request)})
@@ -305,10 +323,29 @@ def GetBlockedFriends(request):
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
+def LoadStats(request):
+    if request.method == 'PUT':
+        new_Stats = UserProfil.objects.all()
+        try:
+          for usr in new_Stats:
+            games_played = Game.objects.filter((Q(player1=usr.id) | Q(player2=usr.id) | Q(player3=usr.id) | Q(player4=usr.id)) & Q(ended=True)).count()
+            usr.nb_games = games_played
+            winned_games = Game.objects.filter(winner=usr.id).count()
+            if games_played != 0:
+                usr.mmr =  winned_games / games_played * 100
+            usr.save()
+            return JsonResponse({'success': True, 'message': 'Number of games updated successfully.', 'csrf_token': get_token(request)})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e), 'csrf_token': get_token(request)})
+    else:
+        return JsonResponse({'success': False, 'message': 'Invalid request method.', 'csrf_token': get_token(request)})
+
 def GetStats(request):
     if request.method == 'GET':
-        new_Stats = UserProfil.objects.all()
-        users_list = [{'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        new_Stats = UserProfil.objects.all().order_by('-mmr')
+        tour_Stats = Tournaments.objects.all()
+        game_Stats = Game.objects.all()
+        users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(state=2)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True) & Q(game_type = 0)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(state=2)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True) & Q(game_type = 0)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
