@@ -64,18 +64,6 @@
   }
 }
 
-body {
-  margin: 0;
-  font-family: var(--bs-font-sans-serif);
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.5;
-  color: #212529;
-  background-color: #fff;
-  -webkit-text-size-adjust: 100%;
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-}
-
 hr {
   margin: 1rem 0;
   color: inherit;
@@ -9811,11 +9799,20 @@ textarea.form-control-lg {
 body {
   font-size: 62.5%;
   width: 100%;
+  min-height: 50rem;
   margin: 0;
   padding: 0;
-  background-color: purple;
+  background-image: linear-gradient(to bottom, rgba(159, 83, 236, 0.5), rgba(0, 0, 255, 0.5)), url("../../css/img/outrun-neon-dark-background-purple.png");
   color: black;
   z-index: -1;
+  margin: 0;
+  font-family: var(--bs-font-sans-serif);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
 
 a:link,
@@ -10017,7 +10014,7 @@ header .header-items ul li a::after {
   margin-right: 5px;
   color: #f14949;
   font-weight: 700;
-  font-size: 35px;
+  font-size: 1rem;
 }
 
 .chat-box.chat-box-open {
@@ -10380,12 +10377,9 @@ input {
   align-items: center;
   justify-content: center;
 }
-.butt button {
-  border-radius: 10px;
-}
 
 button {
-  background-color: #a5a5a5;
+  background-color: #4caf50;
   color: white;
   padding: 10px 15px;
   border: none;
@@ -10395,7 +10389,7 @@ button {
 }
 
 button:hover {
-  background-color: #686868;
+  background-color: #45a049;
 }
 
 button2 {
