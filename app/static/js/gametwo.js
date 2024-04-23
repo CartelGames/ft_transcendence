@@ -36,9 +36,9 @@ const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
 camera.position.set(0, -20, 5) //initial camera position, once game starts, make it travel to final position using gsap
-camera.lookAt(0, 0, 5);
-const controls = new OrbitControls( camera, renderer.domElement );
-controls.update();
+camera.lookAt(0, 10, 1);
+//const controls = new OrbitControls( camera, renderer.domElement );
+//controls.update();
 //camera.position.z = 50; //camera final position
 
 renderer.setPixelRatio(canvas.width/canvas.height);
@@ -265,12 +265,24 @@ new GLTFLoader().load( '/static/models/gltf/tronbike.glb', function ( gltf ) {
 
 
 function createPlayer(){
-    const bike = new THREE.CapsuleGeometry(1,1,4,8);
-    const material = new THREE.MeshStandardMaterial( {color: 0xffffff});
+    const bike = new THREE.CapsuleGeometry(1,0.5,4,8);
+    const material = new THREE.MeshStandardMaterial( {color: 0xffffff, transparent:true, opacity: 0.0});
+    const collisionMeshOne = new THREE.Mesh(bike, material);
+    const collisionMeshTwo = new THREE.Mesh(bike, material);
+    collisionMeshOne.position.set(-1.5,0,1);
+    collisionMeshOne.rotateZ(1.57);
+    collisionMeshOne.name = 'collisionCapsule';
+    bikeOne.add(collisionMeshOne);
+    bikeOne.name = 'bikeOne';
+    bikeTwo.name = 'bikeTwo';
     //bikeOne = new THREE.Mesh(bike, material);
     scene.add(bikeOne);
     bikeOne.position.set(-10, -10, 0);
     bikeOne.rotateZ(1.57);
+    collisionMeshTwo.position.set(-1.5,0,1);
+    collisionMeshTwo.rotateZ(1.57);
+    collisionMeshTwo.name = 'collisionCapsule';
+    bikeTwo.add(collisionMeshTwo);
     //bikeTwo = new THREE.Mesh(bike, material);
     scene.add(bikeTwo);
     bikeTwo.position.set(10, -10, 0);
@@ -287,12 +299,12 @@ async function printPseudo(){
     pseudo2 = pseudo2.substr(0,7) + '.';
   ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
-      const geometry = new TextGeometry( pseudo, {
+      const geometry = new TextGeometry( pseudo2, {
         font: cyberfont,
         size: 2,
         height: 1,
       } );
-      const geometry2 = new TextGeometry( pseudo2, {
+      const geometry2 = new TextGeometry( pseudo, {
         font: cyberfont,
         size: 2,
         height: 1,
@@ -341,7 +353,6 @@ function rotateBikesGame(bike, key, x, y) {
 }
 
 //movements (cant go backwards into your own trail, as thats cheating)
-//TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
 window.addEventListener('keydown', function (event) {
   if (!play || ended)
     return;
@@ -375,17 +386,17 @@ window.addEventListener('keydown', function (event) {
         rotateBikesGame(bikeTwo, 'up', 0, 1);
         bikeTwoDir = {x:0, y:1};
       }
-    if (event.key === 'w' || event.key === 'ArrowDown')
+    if (event.key === 's' || event.key === 'ArrowDown')
       if (bikeTwoDir.y != 1){
         rotateBikesGame(bikeTwo, 'down', 0, -1);
         bikeTwoDir = {x:0, y:-1};
       }
-    if (event.key === 'w' || event.key === 'ArrowLeft')
+    if (event.key === 'a' || event.key === 'ArrowLeft')
       if (bikeTwoDir.x != 1){
         rotateBikesGame(bikeTwo, 'left', -1, 0);
         bikeTwoDir = {x:-1, y:0};
       }
-    if (event.key === 'w' || event.key === 'ArrowRight')
+    if (event.key === 'd' || event.key === 'ArrowRight')
       if (bikeTwoDir.x != -1){
         rotateBikesGame(bikeTwo, 'right', 1, 0);
         bikeTwoDir = {x:1, y:0};
@@ -422,20 +433,18 @@ function updated(){
   bufferTwo.push(currentTime);
   if ((!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne))) {
     positionsOne.push(newPosOne);
-    
   }
   if ((!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo))) {
     positionsTwo.push(newPosTwo);
-    
   }
   trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);
-  const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);
+  const playerOneSuicided = checkCollision(bikeOne, trailOne);
+  const playerTwoSuicided = checkCollision(bikeTwo, trailTwo);
   if (playerOneCollided || playerOneSuicided){
-    console.log("playerone collided");
+    //console.log("playerone collided");
     isPaused = 1;
     ended = true;
     if (playerPos == 0) {
@@ -450,7 +459,7 @@ function updated(){
   }
   if (playerTwoCollided || playerTwoSuicided)
   {
-    console.log("playetwo collided");
+    //console.log("playetwo collided");
     isPaused = 1;
     ended = true;
     if (playerPos == 0) {
@@ -480,13 +489,13 @@ function winAnimation(player){
 function printWinMsg(player){
   let name;
   if (player == bikeTwo)
-    name = pseudo;
+    name = pseudo2;
   else
-    name = pseudo2; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
+    name = pseudo; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
   ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
     const cyberfont = loader.parse(json);
     let winText = name + " WINS"
-    console.log(winText)
+    //console.log(winText)
     const geometry3 = new TextGeometry(winText, {
       font: cyberfont,
       size: 0.5,
@@ -511,7 +520,6 @@ function updateGameState(p1, p2){
   pseudo = p1;
   pseudo2 = p2;
 }
-
 
 //neon effect
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.25, 0.5);
@@ -555,73 +563,47 @@ function trails(){
 
     const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
     const geometry2 = new THREE.TubeGeometry(curve2, 64, 0.5, 8, false);
-
+    geometry.name = 'trailOne';
+    geometry2.name = 'trailTwo';
     trailOne = new THREE.Mesh(geometry, trailMaterial1);
     trailTwo = new THREE.Mesh(geometry2, trailMaterial2);
-
+    
     scene.add(trailOne, trailTwo);
   }
 }
+let logging = 0;
 
-//if trailOne intersects with bikeTwo => bikeOne wins etc...
 function checkCollision(player, trail){
+  let posXY;
   if (!trail) return false;
-
-  const points = trail.geometry.attributes.position.array;
-
-  // Check the distance between the player and each point on the trail
-  for (let i = 0; i < points.length; i += 3) {
-    const x = points[i];
-    const y = points[i + 1];
-    const z = points[i + 2];
-
-    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-
-    if (distance < 1.5) return true; // if speed goes up, this goes up too or the check wont work
-  }
-  if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
-      player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
-    return true;
-  }
-  return false;
-}
-
-function checkSuicide(player, trail, trailCreationTimes, currentTime) {
-  if (!trail) return false;
-
-  const points = trail.geometry.attributes.position.array;
-  //console.log(points);
-  //console.log(trailCreationTimes.length);
-
-  // Ignore trail segments created within the last 2000 milliseconds (2 seconds)
-  const trailCreationCutoff = currentTime - 1000;
-
-  // Check the distance between the player and each point on the trail
-  for (let i = 0; i < points.length; i += 3) {
-    const x = points[i];
-    const y = points[i + 1];
-    const z = points[i + 2];
-    //console.log(player, i, trailCreationTimes[i/3] - currentTime)
-
-    // Check if the trail segment was created before the cutoff time
-    if (trailCreationTimes[i / 3] < trailCreationCutoff){
-      const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-      // if (player === bikeOne)
-      //   console.log('distance:', distance);
-      if (distance < 1.5) return true;
+  let positions;
+  if (trail.geometry.name === 'trailOne')
+    positions = positionsOne;
+  else 
+    positions = positionsTwo;
+  if (player.name === 'bikeOne')
+    posXY = new THREE.Vector2(player.position.x + (bikeOneDir.x * 1.6), player.position.y + (bikeOneDir.y * 1.6));
+  else
+    posXY = new THREE.Vector2(player.position.x + (bikeTwoDir.x * 1.6), player.position.y + (bikeTwoDir.y * 1.6));
+  for (let i = 0; i < positions.length; i++){
+    const x = positions[i].x;
+    const y = positions[i].y;
+    const distance = posXY.distanceTo(new THREE.Vector2(x,y));
+    if (logging %60 == 0)
+      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
+    logging++;
+    if (distance < 1.5){
+      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
+      return true; // if speed goes up, this goes up too or the check wont work
     }
-    else
-      return false;
   }
-
-  // Check if the player is outside the canvas bounds
   if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
       player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
     return true;
   }
-
   return false;
 }
+
 
 //GAME DONE
 
