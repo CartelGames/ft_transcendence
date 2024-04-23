@@ -51,6 +51,7 @@ class UserProfil(AbstractUser):
 
     def change_pseudo(self, new_pseudo):
         self.pseudo = new_pseudo
+        self.save()
         
 class Message(models.Model):
     id = models.AutoField(primary_key=True, unique=True)

@@ -501,6 +501,8 @@ function printWinMsg(player){
       size: 0.5,
       height: 0.5,
     } );
+    var BackButt = document.getElementById('BackMenu')
+    BackButt.style.display = 'block';
     const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
     const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
     textMesh3.geometry.center();

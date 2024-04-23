@@ -34,7 +34,6 @@ def newPseudo(request):
         form = newPseudoForm(data=request.POST)
         if form.is_valid():
             pseudo = form.cleaned_data['pseudo']
-            form.save()
             request.user.change_pseudo(pseudo)
             return JsonResponse({'success': True, 'errors': '<p>Your pseudo has been changed !</p>', 'goto': '#index', 'csrf_token': get_token(request)})
         else:
@@ -346,7 +345,7 @@ def GetStats(request):
         new_Stats = UserProfil.objects.all().order_by('-mmr')
         tour_Stats = Tournaments.objects.all()
         game_Stats = Game.objects.all()
-        users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(ended=True)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True) & Q(game_type = 0)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(ended=True)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True) & Q(game_type = 0)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(state=2)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True) & Q(game_type = 0)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(state=2)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True) & Q(game_type = 0)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})

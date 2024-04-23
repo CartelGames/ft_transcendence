@@ -486,20 +486,22 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         else:
                             if tour:
                                 tour.state = 2
-                                await sync_to_async(tour.save)()
                             clear_tour = await database_sync_to_async(UserProfil.objects.filter)(tournament=tournament.tournament_id)
                             if await sync_to_async(clear_tour.exists)():
                                 async for clear_user in clear_tour:
                                     clear_user.tournament = 0
                                     await sync_to_async(clear_user.save)()
                             if int(text_data_json['score1']) > int(text_data_json['score2']):
+                                tour.winner = p1.id
                                 await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p1.pseudo + ' won the tournament !'})
                                 await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
                                         content='And the winner of this tournament is ' + p1.pseudo + ', congratulation !')
                             else:
+                                tour.winner = p2.id
                                 await self.channel_layer.group_send(self.room_name,{'type': 'msg','message': p2.pseudo + ' won the tournament !'})
                                 await sync_to_async(MessageTournaments.objects.create)(id_from='0', id_to=tour.id, pseudo_from='Server', pseudo_to=tour.name,
                                         content='And the winner of this tournament is ' + p2.pseudo + ', congratulation !')
+                            await sync_to_async(tour.save)()
 
                         players = await database_sync_to_async(list)(tour.players.all())
                         for player in players:
