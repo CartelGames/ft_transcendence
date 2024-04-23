@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import LoginForm, SignupForm, ProfilImgForm
+from .forms import LoginForm, SignupForm, ProfilImgForm, newPseudoForm
 from django.contrib.auth.models import AnonymousUser
 from .models import UserProfil, Message, Game, Tournaments, TournamentsGame, MessageTournaments
 from django.http import JsonResponse, Http404
@@ -28,6 +28,21 @@ def UserLogin(request):
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
+def newPseudo(request):
+    if request.method == 'POST' and request.POST.get('type') == 'newPseudo':
+        form = newPseudoForm(data=request.POST)
+        if form.is_valid():
+            pseudo = form.cleaned_data['pseudo']
+            form.save()
+            request.user.change_pseudo(pseudo)
+            return JsonResponse({'success': True, 'errors': '<p>Your pseudo has been changed !</p>', 'goto': '#index', 'csrf_token': get_token(request)})
+        else:
+            return JsonResponse({'success': False, 'errors': 'Invalid request.', 'goto': '#index', 'csrf_token': get_token(request)})
+    else:
+        error = form.errors()
+        print(error)
+        return JsonResponse({'success': False, 'errors': 'Invalid request.', 'goto': '#index', 'csrf_token': get_token(request)})
+
 def UserSignup(request):
     if request.method == 'POST' and request.POST.get('type') == 'signup':
         form = SignupForm(data=request.POST)
@@ -55,6 +70,7 @@ def UserLogout(request):
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
 def UserProfilImg(request):
+    print(request)
     if request.method == 'POST' and request.POST.get('type') == 'profilImg':
         form = ProfilImgForm(request.POST, request.FILES, instance=request.user)
         if form.is_valid():
@@ -106,6 +122,7 @@ def UserSendChat(request):
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})
 
 def UserAddFriend(request):
+    print(request)
     if request.method == 'POST' and request.POST.get('type') == 'addFriend':
         if isinstance(request.user, AnonymousUser):
             return JsonResponse({'success': False, 'csrf_token': get_token(request)})

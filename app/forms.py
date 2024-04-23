@@ -21,3 +21,8 @@ class ProfilImgForm(forms.ModelForm):
     class Meta:
         model = UserProfil
         fields = ['profil_img']
+
+class newPseudoForm(forms.ModelForm):
+    class Meta:
+        model = UserProfil
+        fields = ['pseudo']
