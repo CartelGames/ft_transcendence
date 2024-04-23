@@ -10,6 +10,7 @@ urlpatterns = [
     path('signup/', views.UserSignup, name='signup'),
     path('logout/', views.UserLogout, name='logout'),
     path('profilImg/', views.UserProfilImg, name='profilImg'),
+    path('newPseudo/', views.newPseudo, name="newPseudo"),
     path('sendChat/', views.UserSendChat, name='sendChat'),
     path('addFriend/', views.UserAddFriend, name='addFriend'),
     path('blockFriend/', views.UserBlockFriend, name='blockFriend'),

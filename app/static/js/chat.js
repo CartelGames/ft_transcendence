@@ -22,6 +22,7 @@ websocket.onmessage = function(event) {
     }
     else if (data.type === 'add_tour_chat') {
         openTournamentChat(data.name);
+        getMessages();
     }
     else if (data.type == 'returnPing') {
         var divData = document.querySelectorAll('div[friend-pseudo]');
@@ -43,7 +44,57 @@ websocket.onmessage = function(event) {
             })
         );
     }
+    else if (data.type == 'sendInvitation') {
+        newInvitation(data.pseudo, data.channel)
+    }
+    else if (data.type === 'game_start') {
+        window.location.href = "#games";
+        displayDiv('ChooseGame', 'BackMenu');
+        import('/static/js/game.js?ver=${Math.random()}')
+        .then(module => {
+            const { reloadGame } = module;
+            reloadGame(data.game_id, data.p1_pseudo, data.p2_pseudo);
+        })
+        .catch(error => {
+            console.error('Une erreur s\'est produite lors du chargement de game.js : ', error);
+        });
+        console.log(data.message);
+        $('#Msg').text('Message: ' + data.message);
+    }
 };
+
+function newInvitation(from, channel) {
+    var invDiv = document.createElement('div');
+    invDiv.className = 'invitation-box';
+    var friendDiv = document.createElement('div');
+    friendDiv.className = 'friends-list';
+    var TextRow = $('<div class="clickable-row name" data-pseudo="' + from + '">' + from + ' want to fight you !</div>');
+    var acceptRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + from + '"><span class="close-icon">✅</span></div>');
+    acceptRow.click(function (event) {
+        websocket.send(
+            JSON.stringify({
+                action: 'acceptInvitation',
+                to_pseudo: from,
+                channel: channel
+            })
+        );
+        event.stopPropagation();
+        var parent = invDiv.parentElement;
+        parent.removeChild(invDiv);
+    });
+    var refuseRow = $('<div class="clickable-row" title="Delete this friend" data-pseudo="' + from + '"><span class="close-icon">❌</span></div>');
+    refuseRow.click(function (event) {
+        event.stopPropagation();
+        var parent = invDiv.parentElement;
+        parent.removeChild(invDiv);
+    });
+
+    friendDiv.append(TextRow[0]);
+    friendDiv.append(acceptRow[0]);
+    friendDiv.append(refuseRow[0]);
+    invDiv.append(friendDiv);
+    document.body.appendChild(invDiv);
+}
 
 function openTournamentChat(pseudo) {
     var chatDiv = document.createElement('div');
@@ -68,13 +119,12 @@ function openTournamentChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <form id="${pseudo + chatCounter}" enctype="multipart/form-data" action="/sendChat/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
         <input type="hidden" name="tournament" value="True">
-        <input type="hidden" name="csrfmiddlewaretoken" value="">
         <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
-        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div style="display: none;"><button type="submit" onclick="sendForm('${pseudo + chatCounter}', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -120,12 +170,11 @@ function openChat(pseudo) {
     contentDiv.appendChild(chatP);
 
     var formHTML = `
-        <form id="sendChatForm" enctype="multipart/form-data" action="/sendChat/" method="post">
+        <form id="${pseudo + chatCounter}" enctype="multipart/form-data" action="/sendChat/" method="post">
         <input type="hidden" name="type" value="sendChat">
         <input type="hidden" name="id_to" value="${pseudo}">
-        <input type="hidden" name="csrfmiddlewaretoken" value="">
         <input type="text" id="content" name="content" style="display: block; position: absolute; bottom: 0; left: 0; margin-bottom: 1px;" required>
-        <div style="display: none;"><button type="submit" onclick="sendForm('sendChatForm', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
+        <div style="display: none;"><button type="submit" onclick="sendForm('${pseudo + chatCounter}', event); clearInput(this)" alt="fck tes css alex">Login</button></div>
         <div id="error-form" class="error-form"></div>
         </form>
     `;
@@ -172,17 +221,28 @@ function loadFriends() {
                     });
                     var statut = $('<div class="clickable-row name" style="font-size: 14px;" friend-pseudo="' + friend.pseudo + '"></div>');
                     var statut_text = $('<i style="color: red;">(offline)</i>');
+                    
                     statut.append(statut_text[0]);
-                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
+                    var FightRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">⚔️</span></div>');
+                    FightRow.click(function (event) {
+                        websocket.send(
+                            JSON.stringify({
+                                action: 'versusInvitation',
+                                pseudo: friend.pseudo
+                            })
+                        );
+                    });
+                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">🔒</span></div>');
                     BlockRow.click(function (event) {
                         blockFriend(friend.pseudo, false);
                     });
-                    var deleteRow = $('<div class="clickable-row" title="Delete this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">×</span></div>');
+                    var deleteRow = $('<div class="clickable-row" title="Delete this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">❌</span></div>');
                     deleteRow.click(function (event) {
                         deleteFriend(friend.pseudo);
                     });
                     friendDiv.append(clickableRow[0]);
                     friendDiv.append(statut[0]);
+                    friendDiv.append(FightRow[0]);
                     friendDiv.append(BlockRow[0]);
                     friendDiv.append(deleteRow[0]);
                     friendsContainer.append(friendDiv);
@@ -216,13 +276,8 @@ function loadBlockedFriends() {
                     var friendDiv =$('<div class="friends-list"></div>');
                     var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
                     clickableRow.click(function () {
-                        // var chatDiv = document.getElementById(friend.pseudo);
-                        // if (!chatDiv) {
-                        //     openChat(friend.pseudo);
-                        //     getMessages();
-                        // }
                     });
-                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">o</span></div>');
+                    var BlockRow = $('<div class="clickable-row" title="Block this friend" data-pseudo="' + friend.pseudo + '"><span class="close-icon">🔓</span></div>');
                     BlockRow.click(function (event) {
                         blockFriend(friend.pseudo, true);
                     });
@@ -299,7 +354,6 @@ function getMessages() {
         success: function (data) {
             var messages = data.messages;
             var messages_tour = data.message_tour;
- 
             var chatBoxContents = document.querySelectorAll('.chat-box-content');
             chatBoxContents.forEach(function (chatBoxContent) {
                 var paragraphs = chatBoxContent.querySelectorAll('p');
@@ -325,6 +379,8 @@ function getMessages() {
                     chatBoxContent.appendChild(messageElement);
                     chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
                 });
+            });
+            if (messages_tour) {
                 messages_tour.forEach(function (message) {
                     var chatDiv = document.getElementById(message.pseudo_to);
                     if (!chatDiv)
@@ -343,7 +399,7 @@ function getMessages() {
                     chatBoxContent.appendChild(messageElement);
                     chatBoxContent.scrollTop = chatBoxContent.scrollHeight;
                 });
-            });
+            }
             token = data.csrf_token;
         },
         error: function (error) {

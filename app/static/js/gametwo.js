@@ -9,24 +9,25 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
+const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+
+ws.onopen = function(event) {
+    console.log("WebSocket for Tron connected !"); 
+};
 
 //SETUP
 let game_id = "";
 let playerPos = 0;
 let isPaused = 1;
-let ttfloader;
+let ttfloader = new TTFLoader();
+const scoreGrp = new THREE.Group();
 const clock = new THREE.Clock();
 let loader = new FontLoader();
 const username = await getPseudo();
 let id = (await getPseudo()).id;
 let pseudo, pseudo2;
-function sending(input)
-{
-    ws.send(JSON.stringify({
-        type: 'input',
-        input: input,
-    }));
-}
+let ended = false;
+let play = false;
 
 const scene = new THREE.Scene();
 const canvas = document.getElementById("game");
@@ -35,9 +36,9 @@ const renderer = new THREE.WebGLRenderer({
     canvas: document.querySelector('#game'),
 });
 camera.position.set(0, -20, 5) //initial camera position, once game starts, make it travel to final position using gsap
-camera.lookAt(0, 0, 5);
-const controls = new OrbitControls( camera, renderer.domElement );
-controls.update();
+camera.lookAt(0, 10, 1);
+//const controls = new OrbitControls( camera, renderer.domElement );
+//controls.update();
 //camera.position.z = 50; //camera final position
 
 renderer.setPixelRatio(canvas.width/canvas.height);
@@ -192,13 +193,18 @@ zoneMesh.rotateX(1.57);
 scene.add(zoneMesh);
 
 function playerGameStarted(event) {
-  if (isPaused) {
+  startAnimation();
+  scene.remove(zoneMesh);
+  scene.remove(scoreGrp);
+  // Hide the "Start Game" button
+  menu.remove(textMenu);
+  /*if (isPaused) {
     // Start the game
     isPaused = !isPaused;
-    scene.remove(zoneMesh);
+    scene.remove(zoneMesh, scoreGrp);
     // Hide the "Start Game" button
     menu.remove(textMenu);
-  }
+  }*/
 }
 
 function onMouseClick(event) {
@@ -214,11 +220,16 @@ function onMouseClick(event) {
 
   // Check if the "Start Game" button was clicked
   if (intersects.length > 0 && isPaused) {
-    // Start the game
+    ws.send(JSON.stringify({
+      type: 'game_start',
+      game_id: game_id
+    }));
+    /*// Start the game
     startAnimation();
     scene.remove(zoneMesh);
+    scene.remove(scoreGrp);
     // Hide the "Start Game" button
-    menu.remove(textMenu);
+    menu.remove(textMenu);*/
   }
 }
 document.addEventListener('mousedown', onMouseClick);
@@ -254,12 +265,24 @@ new GLTFLoader().load( '/static/models/gltf/tronbike.glb', function ( gltf ) {
 
 
 function createPlayer(){
-    const bike = new THREE.CapsuleGeometry(1,1,4,8);
-    const material = new THREE.MeshStandardMaterial( {color: 0xffffff});
+    const bike = new THREE.CapsuleGeometry(1,0.5,4,8);
+    const material = new THREE.MeshStandardMaterial( {color: 0xffffff, transparent:true, opacity: 0.0});
+    const collisionMeshOne = new THREE.Mesh(bike, material);
+    const collisionMeshTwo = new THREE.Mesh(bike, material);
+    collisionMeshOne.position.set(-1.5,0,1);
+    collisionMeshOne.rotateZ(1.57);
+    collisionMeshOne.name = 'collisionCapsule';
+    bikeOne.add(collisionMeshOne);
+    bikeOne.name = 'bikeOne';
+    bikeTwo.name = 'bikeTwo';
     //bikeOne = new THREE.Mesh(bike, material);
     scene.add(bikeOne);
     bikeOne.position.set(-10, -10, 0);
     bikeOne.rotateZ(1.57);
+    collisionMeshTwo.position.set(-1.5,0,1);
+    collisionMeshTwo.rotateZ(1.57);
+    collisionMeshTwo.name = 'collisionCapsule';
+    bikeTwo.add(collisionMeshTwo);
     //bikeTwo = new THREE.Mesh(bike, material);
     scene.add(bikeTwo);
     bikeTwo.position.set(10, -10, 0);
@@ -267,8 +290,42 @@ function createPlayer(){
 }
 createPlayer();
 
+pseudo = username.pseudo;
+pseudo2 = username.pseudo;
+async function printPseudo(){
+  if (pseudo.length > 8)
+    pseudo = pseudo.substr(0,7) + '.';
+  if (pseudo2.length > 8)
+    pseudo2 = pseudo2.substr(0,7) + '.';
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+      const geometry = new TextGeometry( pseudo2, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const geometry2 = new TextGeometry( pseudo, {
+        font: cyberfont,
+        size: 2,
+        height: 1,
+      } );
+      const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+      const textMesh = new THREE.Mesh(geometry, textMaterial);
+      textMesh.geometry.center();
+      textMesh.position.set(25, 15, 10);
+      textMesh.rotateX(1.57);
+      const textMesh2 = new THREE.Mesh(geometry2, textMaterial);
+      textMesh2.geometry.center();
+      textMesh2.position.set(-25, 15, 10);
+      textMesh2.rotateX(1.57);
+      scoreGrp.clear();
+      scoreGrp.add(textMesh, textMesh2);
+      scene.add(scoreGrp);
+  });
+}
+printPseudo();
 
-function rotateBikesGame(bike, key) {
+function rotateBikesGame(bike, key, x, y) {
   let targetRotation = 0;
 
   if (key === 'up') {
@@ -292,55 +349,59 @@ function rotateBikesGame(bike, key) {
     z: bike.rotation.z + rotationDifference,
     ease: 'power2.out',
   });
+  sending(x, y, bike.rotation.z + rotationDifference);
 }
 
 //movements (cant go backwards into your own trail, as thats cheating)
-//TO DO, FAIRE LES MOVEMENTS DANS LE BON SENS AVEC GSAP ET FAIRE LES NEONS TRAILS ET UN BACKGROUDN NEON STYLAX
 window.addEventListener('keydown', function (event) {
+  if (!play || ended)
+    return;
   if (event.key === 'p')
     togglePause();
-  if (event.key === 'w')
-    if (bikeOneDir.y != -1){
-      rotateBikesGame(bikeOne, 'up');
-      bikeOneDir = {x:0, y:1};
-    }
-  if (event.key === 's')
-    if (bikeOneDir.y != 1){
-      rotateBikesGame(bikeOne, 'down');
-      bikeOneDir = {x:0, y:-1};
-    }
-  if (event.key === 'a')
-    if (bikeOneDir.x != 1){
-      rotateBikesGame(bikeOne, 'left');
-      bikeOneDir = {x:-1, y:0};
-    }
-  if (event.key === 'd')
-    if (bikeOneDir.x != -1){
-      rotateBikesGame(bikeOne, 'right');
-      bikeOneDir = {x:1, y:0};
-    }
-
-
-  if (event.key === 'ArrowUp')
-    if (bikeTwoDir.y != -1){
-      rotateBikesGame(bikeTwo, 'up');
-      bikeTwoDir = {x:0, y:1};
-    }
-  if (event.key === 'ArrowDown')
-    if (bikeTwoDir.y != 1){
-      rotateBikesGame(bikeTwo, 'down');
-      bikeTwoDir = {x:0, y:-1};
-    }
-  if (event.key === 'ArrowLeft')
-    if (bikeTwoDir.x != 1){
-      rotateBikesGame(bikeTwo, 'left');
-      bikeTwoDir = {x:-1, y:0};
-    }
-  if (event.key === 'ArrowRight')
-    if (bikeTwoDir.x != -1){
-      rotateBikesGame(bikeTwo, 'right');
-      bikeTwoDir = {x:1, y:0};
-    }
+  if (playerPos === 0) {
+    if (event.key === 'w' || event.key === 'ArrowUp')
+      if (bikeOneDir.y != -1){
+        rotateBikesGame(bikeOne, 'up', 0, 1);
+        bikeOneDir = {x:0, y:1};
+      }
+    if (event.key === 's' || event.key === 'ArrowDown')
+      if (bikeOneDir.y != 1){
+        rotateBikesGame(bikeOne, 'down', 0, -1);
+        bikeOneDir = {x:0, y:-1};
+      }
+    if (event.key === 'a' || event.key === 'ArrowLeft')
+      if (bikeOneDir.x != 1){
+        rotateBikesGame(bikeOne, 'left', -1, 0);
+        bikeOneDir = {x:-1, y:0};
+      }
+    if (event.key === 'd' || event.key === 'ArrowRight')
+      if (bikeOneDir.x != -1){
+        rotateBikesGame(bikeOne, 'right', 1, 0);
+        bikeOneDir = {x:1, y:0};
+      }
+  }
+  else {
+    if (event.key === 'w' || event.key === 'ArrowUp')
+      if (bikeTwoDir.y != -1){
+        rotateBikesGame(bikeTwo, 'up', 0, 1);
+        bikeTwoDir = {x:0, y:1};
+      }
+    if (event.key === 's' || event.key === 'ArrowDown')
+      if (bikeTwoDir.y != 1){
+        rotateBikesGame(bikeTwo, 'down', 0, -1);
+        bikeTwoDir = {x:0, y:-1};
+      }
+    if (event.key === 'a' || event.key === 'ArrowLeft')
+      if (bikeTwoDir.x != 1){
+        rotateBikesGame(bikeTwo, 'left', -1, 0);
+        bikeTwoDir = {x:-1, y:0};
+      }
+    if (event.key === 'd' || event.key === 'ArrowRight')
+      if (bikeTwoDir.x != -1){
+        rotateBikesGame(bikeTwo, 'right', 1, 0);
+        bikeTwoDir = {x:1, y:0};
+      }
+  }
 });
 
 function togglePause() {
@@ -368,34 +429,92 @@ function updated(){
   const newPosOne = new THREE.Vector3(bikeOne.position.x, bikeOne.position.y, bikeOne.position.z);
   const newPosTwo = new THREE.Vector3(bikeTwo.position.x, bikeTwo.position.y, bikeTwo.position.z);
   const currentTime = Date.now();
-
+  bufferOne.push(currentTime);
+  bufferTwo.push(currentTime);
   if ((!positionsOne.length || !positionsOne[positionsOne.length - 1].equals(newPosOne))) {
     positionsOne.push(newPosOne);
-    bufferOne.push(currentTime);
   }
   if ((!positionsTwo.length || !positionsTwo[positionsTwo.length - 1].equals(newPosTwo))) {
     positionsTwo.push(newPosTwo);
-    bufferTwo.push(currentTime);
   }
   trails();
 
   const playerOneCollided = checkCollision(bikeOne, trailTwo);
   const playerTwoCollided = checkCollision(bikeTwo, trailOne);
-  //const playerOneSuicided = checkSuicide(bikeOne, trailOne, bufferOne, currentTime);|| playerOneSuicided
-  //const playerTwoSuicided = checkSuicide(bikeTwo, trailTwo, bufferTwo, currentTime);|| playerTwoSuicided
-  if (playerOneCollided ){
-    console.log("playerone collided");
+  const playerOneSuicided = checkCollision(bikeOne, trailOne);
+  const playerTwoSuicided = checkCollision(bikeTwo, trailTwo);
+  if (playerOneCollided || playerOneSuicided){
+    //console.log("playerone collided");
     isPaused = 1;
+    ended = true;
+    if (playerPos == 0) {
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: 0,
+        score2: 1,
+      }));
+    }
+    winAnimation(bikeTwo);
   }
-  if (playerTwoCollided )
+  if (playerTwoCollided || playerTwoSuicided)
   {
-    console.log("playetwo collided");
+    //console.log("playetwo collided");
     isPaused = 1;
+    ended = true;
+    if (playerPos == 0) {
+      ws.send(JSON.stringify({
+        type: 'game_ended',
+        game_id: game_id,
+        score1: 1,
+        score2: 0,
+      }));
+    }
+    winAnimation(bikeOne);
   }
 }
 
+function winAnimation(player){
+  gsap.to(camera.position, {
+    duration: 1,
+    x: player.position.x,
+    y: player.position.y - 5,
+    z: player.position.z + 5,
+    ease: 'power2.out',
+  });
+  camera.lookAt(0, 50, 5);
+  printWinMsg(player);
+}
+
+function printWinMsg(player){
+  let name;
+  if (player == bikeTwo)
+    name = pseudo2;
+  else
+    name = pseudo; //why l'inverse hmm. probablement un bug au dessus dans les pseudo=username.pseudo;
+  ttfloader.load('static/css/fonts/cyberFont.ttf', (json) => {
+    const cyberfont = loader.parse(json);
+    let winText = name + " WINS"
+    //console.log(winText)
+    const geometry3 = new TextGeometry(winText, {
+      font: cyberfont,
+      size: 0.5,
+      height: 0.5,
+    } );
+    var BackButt = document.getElementById('BackMenu')
+    BackButt.style.display = 'block';
+    const textMaterial = new THREE.MeshStandardMaterial({ color: 0x921B92 });
+    const textMesh3 = new THREE.Mesh(geometry3, textMaterial);
+    textMesh3.geometry.center();
+    textMesh3.rotateX(1);
+    textMesh3.position.set(player.position.x, player.position.y + 1, player.position.z + 3);
+    scoreGrp.clear();
+    scoreGrp.add(textMesh3);
+    scene.add(scoreGrp);
+  });
+}
+
 function updateGameState(p1, p2){
-  console.log(p1, p2);
   if (username.pseudo === p1)
     playerPos = 0;
   else
@@ -403,7 +522,6 @@ function updateGameState(p1, p2){
   pseudo = p1;
   pseudo2 = p2;
 }
-
 
 //neon effect
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.25, 0.5);
@@ -447,29 +565,39 @@ function trails(){
 
     const geometry = new THREE.TubeGeometry(curve, 64, 0.5, 8, false);
     const geometry2 = new THREE.TubeGeometry(curve2, 64, 0.5, 8, false);
-
+    geometry.name = 'trailOne';
+    geometry2.name = 'trailTwo';
     trailOne = new THREE.Mesh(geometry, trailMaterial1);
     trailTwo = new THREE.Mesh(geometry2, trailMaterial2);
-
+    
     scene.add(trailOne, trailTwo);
   }
 }
+let logging = 0;
 
-//if trailOne intersects with bikeTwo => bikeOne wins etc...
 function checkCollision(player, trail){
+  let posXY;
   if (!trail) return false;
-
-  const points = trail.geometry.attributes.position.array;
-
-  // Check the distance between the player and each point on the trail
-  for (let i = 0; i < points.length; i += 3) {
-    const x = points[i];
-    const y = points[i + 1];
-    const z = points[i + 2];
-
-    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-
-    if (distance < 1.5) return true; // if speed goes up, this goes up too or the check wont work
+  let positions;
+  if (trail.geometry.name === 'trailOne')
+    positions = positionsOne;
+  else 
+    positions = positionsTwo;
+  if (player.name === 'bikeOne')
+    posXY = new THREE.Vector2(player.position.x + (bikeOneDir.x * 1.6), player.position.y + (bikeOneDir.y * 1.6));
+  else
+    posXY = new THREE.Vector2(player.position.x + (bikeTwoDir.x * 1.6), player.position.y + (bikeTwoDir.y * 1.6));
+  for (let i = 0; i < positions.length; i++){
+    const x = positions[i].x;
+    const y = positions[i].y;
+    const distance = posXY.distanceTo(new THREE.Vector2(x,y));
+    if (logging %60 == 0)
+      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
+    logging++;
+    if (distance < 1.5){
+      //console.log(player.name, 'i:', i, 'posXY:',posXY, 'positions.x:',positions[i].x, 'positions.y', positions[i].y, 'distance',distance);
+      return true; // if speed goes up, this goes up too or the check wont work
+    }
   }
   if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
       player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
@@ -478,66 +606,72 @@ function checkCollision(player, trail){
   return false;
 }
 
-function checkSuicide(player, trail, trailCreationTimes, currentTime) {
-  if (!trail) return false;
-
-  const points = trail.geometry.attributes.position.array;
-
-  // Ignore trail segments created within the last 2000 milliseconds (2 seconds)
-  const trailCreationCutoff = currentTime - 2000;
-
-  // Check the distance between the player and each point on the trail
-  for (let i = 0; i < points.length; i += 3) {
-    const x = points[i];
-    const y = points[i + 1];
-    const z = points[i + 2];
-
-    // Check if the trail segment was created before the cutoff time
-    if (trailCreationTimes[i / 3] > trailCreationCutoff) continue;
-
-    const distance = player.position.distanceTo(new THREE.Vector3(x, y, z));
-
-    if (distance < 1) return true;
-  }
-
-  // Check if the player is outside the canvas bounds
-  if (player.position.x < canvasBounds.left || player.position.x > canvasBounds.right ||
-      player.position.y < canvasBounds.bottom || player.position.y > canvasBounds.top) {
-    return true;
-  }
-
-  return false;
-}
 
 //GAME DONE
-const ws = new WebSocket("ws://" + window.location.host + "/ws/gametwo/");
-
-ws.onopen = function(event) {
-    console.log("Coucou la zone"); 
-    
-};
 
 ws.onmessage = function(event) {
   const data = JSON.parse(event.data);
-  console.log(data)
-  if (data.type === 'message'){
-    console.log('pouet');
+  if (data.type === 'msg') {
+    $('#Msg').text('Message: ' + data.message);
+  }
+  else if (data.type === 'game_start'){
+    playerGameStarted();
+  }
+  else if (data.type === 'game_info'){
+    play = data.play;
+  }
+  else if (data.type === 'game_send_tron') {
+      if (data.player_pos === playerPos)
+        return ;
+      if (data.player_pos === 0) {
+        gsap.to(bikeOne.rotation, {
+          duration: 0.5,
+          z: data.move,
+          ease: 'power2.out',
+        });
+        bikeOneDir.x = data.rotationX;
+        bikeOneDir.y = data.rotationY;
+        // bikeOne.rotation.z = data.move;
+      }
+      else {
+        gsap.to(bikeTwo.rotation, {
+          duration: 0.5,
+          z: data.move,
+          ease: 'power2.out',
+        });
+        bikeTwoDir.x = data.rotationX;
+        bikeTwoDir.y = data.rotationY;
+        // bikeTwo.rotation.z = data.move;
+      }
   }
 };
+
+function sending(rotationX, rotationY, move)
+{
+  ws.send(JSON.stringify({
+    type: 'input_tron',
+    game_id: game_id,
+    player_pos: playerPos,
+    rotationX: rotationX,
+    rotationY: rotationY,
+    move: move,
+  }));
+}
 
 ws.onclose = function(event) {
     console.log("WebSocket closed!");
 };
 
-export function reloadGame2(set_game_id, p1, p2) {
+export function reloadGame(set_game_id, p1, p2) {
   game_id = set_game_id;
-  console.log("id de la game : " + game_id);
   updateGameState(p1, p2);
-  ws.send(JSON.stringify({
-    type: 'game_info',
-    game_id: game_id,
-    player_id: id
-  }));
+  setTimeout(function () {
+    ws.send(JSON.stringify({
+      type: 'game_info',
+      game_id: game_id,
+      player_id: id
+    }));
+  }, 250);
   // reload la partie avec le game_id
   // fonction appelé via queue.js pour lancer des nouvelles games
 }

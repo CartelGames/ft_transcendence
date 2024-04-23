@@ -51,16 +51,17 @@
 			{% endblock %}
 		</div>
 	</div>
-
+<!-- import('/static/js/gametwo.js?ver=${Math.random()}'); -->
 	<!-- game -->
 	<div id="games" class="block">
 		{% if user.is_authenticated %}
 		<div class="game">
-			<h1>All Games :</h1>
 			<div id="ChooseGame">
+				<h1>All Games</h1>
 				<h2>Pong</h2>
+				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local-1v1.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local 1v1</button></div>
 				<div id="Local" class="butt"><button type="button" onclick="import('/static/js/game-local.js?ver=${Math.random()}'); displayDiv('ChooseGame', 'BackMenu');">Local vs IA</button></div>
-				<div id="JoinQueue" class="butt"><button type="button">1 v 1</button></div>
+				<div id="JoinQueue" class="butt"><button type="button">1 v 1 [RANKED]</button></div>
 				<div id="2v2" class="butt"><button type="button">2 v 2</button></div>
 				<div id="Tournament" class="butt"><button type="button" onclick="displayDiv('ChooseGame', 'ChooseTour');">Tournament</button></div>
 				<h2>Tron</h2>
@@ -210,6 +211,12 @@
 				</label>
 				<input type="file" id="profil-img" name="profil_img" style="display: none;" accept="image/*">
 				<div id="error-form" class="error-form"></div>
+			</form>
+			<form id="newPseudoForm" enctype="multipart/form-data" action="{% url 'newPseudo' %}" method="post">
+				<label for="pseudo change">New pseudo:</label>
+				<input type="hidden" name="type" value="newPseudo">
+				<input type="text" id="pseudo" name="pseudo" required>
+				<div class="butt"><button type="submit" onclick="sendForm('newPseudoForm', event)">Pseudo</button></div>
 			</form>
 			<p id="username"></p>
 			<p id="pseudo"></p>

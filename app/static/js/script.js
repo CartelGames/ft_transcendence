@@ -49,11 +49,16 @@ function sendForm(id, event) {
                     websocket.send(
                         JSON.stringify({
                             action: 'sendChat',
+                            tournament: formData.get('tournament'),
                             pseudo: formData.get('id_to')
                         })
                     );
                     getMessages();
                     return;
+                }
+                else if (formData.get('type') == 'createTour') {
+                    openTournamentChat(formData.get('tourName'));
+                    getMessages();
                 }
                 if (errorForm)
                     errorForm.innerHTML = response.errors;
