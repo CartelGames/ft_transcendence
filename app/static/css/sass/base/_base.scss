@@ -1,11 +1,13 @@
 body {
     font-size: 62.5%;
     width: 100%;
+    min-height: 50rem;
     margin: 0;
     padding: 0;
-    background-color: purple;
+    background-image: $background-body;
     color: black;
     z-index: -1;
+    margin: 0; // 1
 }
 
 a:link,
