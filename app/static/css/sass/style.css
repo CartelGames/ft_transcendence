@@ -500,9 +500,17 @@ tbody td img {
   display: flex;
   flex-wrap: nowrap;
   font-size: 1rem;
-  padding: 0;
+  padding: 1rem;
   margin: 0;
   border-radius: 5px;
+}
+.user-stats-tournament-details ul, .user-stats-online-details ul {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.user-stats-tournament-details ul li, .user-stats-online-details ul li {
+  text-align: justify;
 }
 
 #ChooseGame {
