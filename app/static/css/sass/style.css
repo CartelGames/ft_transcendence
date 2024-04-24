@@ -621,6 +621,10 @@ button2:hover {
   background-color: #a04545;
 }
 
+.newPseudo {
+  display: none;
+}
+
 .profil-img {
   display: flex;
   align-items: center;

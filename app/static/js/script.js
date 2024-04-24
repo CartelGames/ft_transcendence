@@ -34,6 +34,11 @@ function showDiv(divId) {
     }
 }
 
+function showNewPseudo(){
+    var div = document.querySelector('.newPseudo');
+    div.style.display = 'block';
+}
+
 function sendForm(id, event) {
     var form = document.getElementById(id);
     var formData = new FormData(form);
