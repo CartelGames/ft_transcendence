@@ -237,7 +237,7 @@ document.addEventListener('mousedown', onMouseClick);
 //SETUP DONE
 
 //Player objects setup
-const bikeSpeed = 0.35; // if you want to up this speed, update the distance check in checkCollisions
+const bikeSpeed = 0.60; // if you want to up this speed, update the distance check in checkCollisions
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
 let bikeOne = new THREE.Group(); //player1
@@ -671,11 +671,15 @@ export function reloadGame(set_game_id, p1, p2) {
   // fonction appelé via queue.js pour lancer des nouvelles games
 }
 
+// const stats = new Stats();
+// document.getElementById("game").appendChild(stats.dom);
+
 function animate() {
   setTimeout( function() { requestAnimationFrame( animate ); }, 1000 / 30 );
     if (!isPaused){
       updated();
     }
+    //stats.update();
     composer.render();
     shaderMaterial.uniforms.time.value += 0.005;
     shaderMaterial.uniforms.cameraPosition.value.copy(camera.position);
