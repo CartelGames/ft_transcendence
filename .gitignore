@@ -8,3 +8,4 @@ djang/__pycache__/
 app/migrations/__pycache__/
 app/migrations/
 data/
+djang/.env
