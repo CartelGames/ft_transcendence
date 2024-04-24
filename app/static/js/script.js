@@ -35,8 +35,21 @@ function showDiv(divId) {
 }
 
 function showNewPseudo(){
+    var BtnDiv = document.getElementById('change');
+    BtnDiv.style.display = 'none';
+    var BtnHideDiv = document.getElementById('hide');
+    BtnHideDiv.style.display = 'flex';
     var div = document.querySelector('.newPseudo');
     div.style.display = 'block';
+}
+
+function hideNewPseudo(){
+    var BtnDiv = document.getElementById('change');
+    BtnDiv.style.display = 'flex';
+    var BtnHideDiv = document.getElementById('hide');
+    BtnHideDiv.style.display = 'none';
+    var div = document.querySelector('.newPseudo');
+    div.style.display = 'none';
 }
 
 function sendForm(id, event) {
@@ -95,7 +108,7 @@ function loadProfileData() {
         headers: { 'X-CSRFToken': token },
         success: function (data) {
             $('#username').text('Username: ' + data.username);
-            $('#pseudo').text('Pseudo: ' + data.pseudo);
+            $('#nickname').text('Nickname: ' + data.pseudo);
             $('#email').text('Email: ' + data.email);
             $('#img').attr('src', data.img);
             token = data.csrf_token;
