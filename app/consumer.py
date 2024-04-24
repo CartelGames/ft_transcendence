@@ -207,7 +207,7 @@ class MyQueueConsumer(AsyncWebsocketConsumer):
             for y in range(i + 1, len(self.queue1v1)):
                 p1_channel, p1_mmr, p1_pseudo = self.queue1v1[i]
                 p2_channel, p2_mmr, p2_pseudo = self.queue1v1[y]
-                if abs(p1_mmr - p2_mmr) <= 20:
+                if abs(p1_mmr - p2_mmr) <= 20000:
                     player1M = await UserProfil.objects.aget(pseudo=p1_pseudo)
                     player2M = await UserProfil.objects.aget(pseudo=p2_pseudo)
 
