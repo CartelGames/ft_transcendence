@@ -2,7 +2,7 @@
 
 let chatCounter = 0;
 
-const wsEndpoint = 'ws://' + window.location.host + '/ws/chat/';
+const wsEndpoint = 'wss://' + window.location.host + '/wss/chat/';
 const websocket = new WebSocket(wsEndpoint);
 
 websocket.onopen = () => {

@@ -1,4 +1,4 @@
-const wsEndpoint = 'ws://' + window.location.host + '/ws/queue/';
+const wsEndpoint = 'wss://' + window.location.host + '/wss/queue/';
 const websocket = new WebSocket(wsEndpoint);
 
 websocket.onopen = () => {

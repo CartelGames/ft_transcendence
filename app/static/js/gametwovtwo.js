@@ -11,7 +11,7 @@ let playerPos = 0;
 let ended = false;
 let play = false;
 
-const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+const ws = new WebSocket("wss://" + window.location.host + "/wss/game/");
 const username = await getPseudo();
 ws.onopen = function(event) {
   ws.send(JSON.stringify({

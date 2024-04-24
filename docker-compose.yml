@@ -18,18 +18,32 @@ services:
 
   web:
     build: .
-    command: sh -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "python manage.py collectstatic --noinput && python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - .:/code
+      - static_volume:/var/www/static
     ports:
       - "8000:8000"
 
     depends_on:
       - db
 
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - static_volume:/var/www/static
+    depends_on:
+      - web
+
 volumes:
   postgres_data:
-  
+  static_volume:
+
   # nginx:
   #   image: nginx
   #   ports:

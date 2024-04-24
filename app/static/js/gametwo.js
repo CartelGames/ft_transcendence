@@ -9,7 +9,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
-const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+const ws = new WebSocket("wss://" + window.location.host + "/wss/game/");
 
 ws.onopen = function(event) {
     console.log("WebSocket for Tron connected !"); 
