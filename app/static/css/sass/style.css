@@ -607,6 +607,11 @@ tbody td img {
   min-height: 50rem;
 }
 
+#marketing {
+  color: #000120;
+  font-family: "NationalCartoon", sans-serif;
+}
+
 .error-form {
   margin-top: 20px;
   font-weight: 500;
