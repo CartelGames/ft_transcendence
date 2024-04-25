@@ -626,9 +626,9 @@ function updated() {
   // -----------------------------------------------------------------------------
 
   //Moves the boards
-  if (keyState[87] || keyState[40])
+  if (keyState[87])
     movePong(playerOne, playerOne.position.y + (4 - LBoardSpeedMalus));
-  if (keyState[83] || keyState[40])
+  if (keyState[83])
     movePong(playerOne, playerOne.position.y - (4 - LBoardSpeedMalus));
   if (keyState[38])
     movePong(playerTwo, playerTwo.position.y + (4 - RBoardSpeedMalus));
