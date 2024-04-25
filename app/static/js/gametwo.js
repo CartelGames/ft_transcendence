@@ -237,7 +237,7 @@ document.addEventListener('mousedown', onMouseClick);
 //SETUP DONE
 
 //Player objects setup
-const bikeSpeed = 0.60; // if you want to up this speed, update the distance check in checkCollisions
+const bikeSpeed = 0.35; // if you want to up this speed, update the distance check in checkCollisions
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
 let bikeOne = new THREE.Group(); //player1
