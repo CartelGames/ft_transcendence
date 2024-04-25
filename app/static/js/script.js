@@ -305,17 +305,6 @@ document.addEventListener('DOMContentLoaded', function () {
     showDiv(defaultDivId);
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    var chat = document.getElementById('chat');
-    var chatToggle = document.getElementById('chat-toggle');
-    if (chat && chatToggle) {
-        chatToggle.addEventListener('click', function () {
-            chat.classList.toggle('chat-open');
-            loadFriends()
-        });
-    }
-});
-
 document.getElementById('profil-img').addEventListener('change', function (event) {
     sendForm('profilImg', event)
 });
@@ -331,8 +320,3 @@ function displayDiv(hide, show) {
     if (((hide === 'friend') && (show === 'blocked-friends')) || ((show === 'friend') && (hide === 'blocked-friends')))
         $('#error-block').empty();
 }
-
-window.onload = function() {
-    loadFriends();
-    loadBlockedFriends();
-};

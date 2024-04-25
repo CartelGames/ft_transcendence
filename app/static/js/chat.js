@@ -411,3 +411,19 @@ function getMessages() {
         }
     });
 }
+
+document.addEventListener('DOMContentLoaded', function () {
+    var chat = document.getElementById('chat');
+    var chatToggle = document.getElementById('chat-toggle');
+    if (chat && chatToggle) {
+        chatToggle.addEventListener('click', function () {
+            chat.classList.toggle('chat-open');
+            loadFriends()
+        });
+    }
+});
+
+window.onload = function() {
+    loadFriends();
+    loadBlockedFriends();
+};

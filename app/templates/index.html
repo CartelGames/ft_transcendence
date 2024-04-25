@@ -14,10 +14,10 @@
 	<link href="https://fonts.googleapis.com/css2?family=Honk&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{% static 'css/style.css' %}" />
 	<link rel="stylesheet" href="{% static 'css/sass/style.css' %}" />
-
-
-<meta name="theme-color" content="#712cf9"><script src="{% static 'js/script.js' %}" defer></script>
+	<meta name="theme-color" content="#712cf9"><script src="{% static 'js/script.js' %}" defer></script>
+	{% if user.is_authenticated %}
 	<script src="{% static 'js/chat.js' %}" defer></script>
+	{% endif %}
 	<title>CartelGames</title>
 </head>
 <body>
@@ -263,6 +263,8 @@
 
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 		<!-- <script type="module" src="{% static 'js/game.js' %}"></script> -->
+		{% if user.is_authenticated %}
 		<script type="module" src="{% static 'js/queue.js' %}"></script>
+		{% endif %}
 	</body>
 </html>
