@@ -156,7 +156,7 @@ def UserBlockFriend(request):
         if request.user.friends.filter(id=friend.id).exists() or request.user.blocked_friends.filter(id=friend.id).exists():
                 if request.POST.get('block') == 'true':
                     request.user.switch_blocked_friend(friend, True)
-                    return JsonResponse({'success': True, 'errors': friend.pseudo + ' this firend is now blocked', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': True, 'errors': friend.pseudo + ' this friend is now blocked', 'csrf_token': get_token(request)})
                 else:
                     blocked_relationship = request.user.blocked_friends.through.objects.filter(from_userprofil=request.user, to_userprofil=friend)
                     if blocked_relationship.first().id % 2 == 0:
