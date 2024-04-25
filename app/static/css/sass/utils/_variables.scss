@@ -56,9 +56,5 @@ $fifth-font: 'PublicPixel';
 
 // VARIABLES LAYOUT
 $header-height: 1rem;
-$background-body:  linear-gradient(
-    to bottom,
-    rgba(159, 83, 236, 0.5),
-    rgba(0, 0, 255, 0.5)
-  ), url("../../css/img/outrun-neon-dark-background-purple.png");
+$background-body: url("../../css/img/outrun-neon-dark-background-purple.png");
 

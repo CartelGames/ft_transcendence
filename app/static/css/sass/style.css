@@ -24,7 +24,8 @@ body {
   min-height: 50rem;
   margin: 0;
   padding: 0;
-  background-image: linear-gradient(to bottom, rgba(159, 83, 236, 0.5), rgba(0, 0, 255, 0.5)), url("../../css/img/outrun-neon-dark-background-purple.png");
+  background-image: url("../../css/img/outrun-neon-dark-background-purple.png");
+  background-attachment: fixed;
   color: black;
   z-index: -1;
   margin: 0;
@@ -606,10 +607,9 @@ tbody td img {
   width: 100%;
   min-height: 50rem;
 }
-
-#marketing {
-  color: #000120;
-  font-family: "NationalCartoon", sans-serif;
+.home #marketing {
+  color: white;
+  font-family: "neo-latina";
 }
 
 .error-form {
