@@ -9,7 +9,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 
-const ws = new WebSocket("ws://" + window.location.host + "/ws/game/");
+const ws = new WebSocket("wss://" + window.location.host + "/wss/game/");
 
 ws.onopen = function(event) {
     console.log("WebSocket for Tron connected !"); 
@@ -237,7 +237,7 @@ document.addEventListener('mousedown', onMouseClick);
 //SETUP DONE
 
 //Player objects setup
-const bikeSpeed = 0.60; // if you want to up this speed, update the distance check in checkCollisions
+const bikeSpeed = 0.35; // if you want to up this speed, update the distance check in checkCollisions
 let bikeOneDir = {x: 1, y:0};
 let bikeTwoDir = {x:-1, y:0};
 let bikeOne = new THREE.Group(); //player1

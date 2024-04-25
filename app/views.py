@@ -156,13 +156,13 @@ def UserBlockFriend(request):
         if request.user.friends.filter(id=friend.id).exists() or request.user.blocked_friends.filter(id=friend.id).exists():
                 if request.POST.get('block') == 'true':
                     request.user.switch_blocked_friend(friend, True)
-                    return JsonResponse({'success': True, 'errors': '<p>This friend is now blocked</p>', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': True, 'errors': friend.pseudo + ' this friend is now blocked', 'csrf_token': get_token(request)})
                 else:
                     blocked_relationship = request.user.blocked_friends.through.objects.filter(from_userprofil=request.user, to_userprofil=friend)
                     if blocked_relationship.first().id % 2 == 0:
                         return JsonResponse({'success': False, 'errors': 'You can\'t unblock someone you didn\'t block yourself', 'csrf_token': get_token(request)})
                     request.user.switch_blocked_friend(friend, False)
-                    return JsonResponse({'success': False, 'errors': '<p>This friend is now unblocked</p>', 'csrf_token': get_token(request)})
+                    return JsonResponse({'success': False, 'errors': friend.pseudo + ' this friend is now unblocked', 'csrf_token': get_token(request)})
         else:
                 return JsonResponse({'success': False, 'errors': 'This friend doesn\'t exist', 'csrf_token': get_token(request)})
     else:
@@ -332,11 +332,9 @@ def LoadStats(request):
                 usr.nb_games = games_played
                 winned_games = Game.objects.filter(winner=usr.id).count()
                 if games_played != 0:
-                    usr.mmr =  winned_games / games_played * 100
-                else:
-                    usr.mmr = 0
+                    usr.winRate =  winned_games / games_played * 100
                 usr.save()
-            return JsonResponse({'success': True, 'message': 'Number of games updated successfully.', 'csrf_token': get_token(request)})
+            return JsonResponse({'success': True, 'message': 'Number of games and winRate updated successfully.', 'csrf_token': get_token(request)})
         except Exception as e:
             return JsonResponse({'success': False, 'message': str(e), 'csrf_token': get_token(request)})
     else:
@@ -344,10 +342,10 @@ def LoadStats(request):
 
 def GetStats(request):
     if request.method == 'GET':
-        new_Stats = UserProfil.objects.all().order_by('-mmr')
+        new_Stats = UserProfil.objects.all().order_by('-winRate')
         tour_Stats = Tournaments.objects.all()
         game_Stats = Game.objects.all()
-        users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(state=2)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(state=2)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.mmr} for usr in new_Stats]
+        users_list = [{'TournamentWin': tour_Stats.filter(Q(winner=usr.id) & Q(state=2)).count(), 'gamesLocalWin': game_Stats.filter(Q(winner=usr.id) & Q(ended=True)).count(), 'TournamentPlayed': tour_Stats.filter(Q(players=usr) & Q(state=2)).count(), 'gamesLocalPlayed': game_Stats.filter((Q(player1=usr.id) | Q(player2=usr.id)) & Q(ended=True)).count(), 'id': usr.id, 'email': usr.email, 'username': usr.username, 'pseudo': usr.pseudo, 'img': usr.profil_img.url, 'nb_game': usr.nb_games, 'mmr': usr.winRate} for usr in new_Stats]
         return JsonResponse({'success': True,  'users': users_list, 'csrf_token': get_token(request)})
     else:
         return JsonResponse({'success': False, 'errors': "Invalid request.", 'csrf_token': get_token(request)})

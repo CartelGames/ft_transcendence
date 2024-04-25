@@ -488,7 +488,7 @@ function predictFinalPos(predictedNextPos, predictedNextDir) {
 
   return predictedFinalPos;
 }
-
+let scorelimit = 5;
 scoring();
 function updated() {
   checkPowerUp();
@@ -502,7 +502,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 2)
+    if (score[1] == scorelimit)
       rWin();
     else
       scoring();
@@ -512,7 +512,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 2)
+    if (score[0] == scorelimit)
       lWin();
     else
       scoring();

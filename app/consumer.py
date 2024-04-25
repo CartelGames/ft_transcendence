@@ -5,7 +5,7 @@ from asgiref.sync import async_to_sync, sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from channels.db import database_sync_to_async
 from web3 import Web3
-import json, asyncio
+import json, asyncio, os
 
 class MyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -449,7 +449,7 @@ class MyGameConsumer(AsyncWebsocketConsumer):
                         ]
                         contract = web3.eth.contract(address='0x9844d06acCb68a1fc303103e8193493C7BCA2d0F', abi=contract_abi)
                         account_address = '0x41a112483a5428e5d694aB56073874A8CB94b550'
-                        private_key = 'ADD_PRIVATE'
+                        private_key = os.getenv('BLOCKCHAIN_KEY')
                         tournamentID = tournament.tournament_id
                         player1 = game.player1
                         player2 = game.player2

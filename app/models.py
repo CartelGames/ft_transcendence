@@ -9,6 +9,7 @@ class UserProfil(AbstractUser):
     profil_img = models.ImageField(upload_to='profil/', default="base.webp")
     is_active = models.BooleanField(default=True)
     nb_games = models.IntegerField(null=True, default=0)
+    winRate = models.IntegerField(null=True, default=0)
     mmr = models.IntegerField(null=True, default=0)
     tournament = models.IntegerField(null=True, default=0)
     friends = models.ManyToManyField('self', blank=True)
