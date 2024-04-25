@@ -480,7 +480,7 @@ function onKeyDown(event) {
 function onKeyUp(event) {
   keyState[event.keyCode] = false; 
 }
-
+let scorelimit = 5;
 scoring();
 function updated() {
   checkPowerUp();
@@ -494,7 +494,7 @@ function updated() {
     ball.position.set(0,0,0);
     ballDirection = {x: -1, y: 1}
     score[1]++;
-    if (score[1] == 2) {
+    if (score[1] == scorelimit) {
       rWin();
       ended = true;
       var BackButt = document.getElementById('BackMenu')
@@ -517,7 +517,7 @@ function updated() {
     ballSpeed = 0.2;
     ball.position.set(0,0,0);
     score[0]++;
-    if (score[0] == 2) {
+    if (score[0] == scorelimit) {
       lWin();
       ended = true;
       var BackButt = document.getElementById('BackMenu')
