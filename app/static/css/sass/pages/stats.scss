@@ -21,6 +21,9 @@ td {
 
 tbody {
 	background: url('../../images/neon.jpg');
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-position: center center;
 }
 
 thead {
