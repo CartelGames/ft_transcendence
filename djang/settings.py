@@ -25,7 +25,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 DEBUG = True
 
 ALLOWED_HOSTS = ['0.0.0.0', 'localhost']
-CSRF_TRUSTED_ORIGINS = ['https://localhost', 'http://localhost', 'wss://localhost']
+CSRF_TRUSTED_ORIGINS = ['https://localhost:4430', 'http://localhost', 'wss://localhost']
 # Application definition
 
 INSTALLED_APPS = [

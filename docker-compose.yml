@@ -10,11 +10,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
 
-  adminer:
-    image: adminer
-    ports:
-      - "8080:8080"
-    restart: always
+  # adminer:
+  #   image: adminer
+  #   ports:
+  #     - "8080:8080"
+  #   restart: always
 
   web:
     build: .
@@ -33,8 +33,8 @@ services:
       context: .
       dockerfile: Dockerfile.nginx
     ports:
-      - "80:80"
-      - "443:443"
+      - "8060:8060"
+      - "4430:4430"
     volumes:
       - static_volume:/var/www/static
     depends_on:

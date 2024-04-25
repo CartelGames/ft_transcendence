@@ -196,8 +196,8 @@
 			<div id="change" class ="butt"><button type="button" onclick="showNewPseudo()">Change my nickname</button></div>
 			<div id="hide" class ="butt" style="display:none;"><button2 type="button" onclick="hideNewPseudo()">back</button2></div>
 			<div style="background-color: rgba(255, 228, 196, 0.315); border-radius: 25px;">
-			<form class="newPseudo" id="newPseudoForm" enctype="multipart/form-data" action="{% url 'newPseudo' %}" method="post">
-				<label for="pseudo change">New pseudo:</label>
+			<form class="newPseudo" id="newPseudoForm" enctype="multipart/form-data" style="display: none;" action="{% url 'newPseudo' %}" method="post">
+				<label for="pseudo change">New nickname:</label>
 				<input type="hidden" name="type" value="newPseudo">
 				<input type="text" id="pseudo" name="pseudo" required>
 				<div class="butt"><button type="submit" onclick="sendForm('newPseudoForm', event)">Change</button></div>
