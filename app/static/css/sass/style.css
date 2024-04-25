@@ -35,13 +35,14 @@ a:visited,
 a {
   text-decoration: none;
   cursor: pointer;
+  font-size: 2.5rem;
 }
 
 a,
 p {
   margin: 0;
   padding: 0;
-  font-size: 2.5rem;
+  font-size: 1.7rem;
   text-align: center;
 }
 
@@ -147,23 +148,29 @@ header .header-items ul li a::after {
   position: fixed;
   bottom: 0;
   right: 0;
-  width: 30vh;
-  max-height: 10vh;
+  width: 17rem;
+  max-height: 50%;
   color: #fff;
   cursor: pointer;
-  overflow: hidden;
+  overflow: scroll;
   transition: max-height 0.4s;
+  font-size: 1.2rem;
+  justify-content: flex-start;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
 }
 
 #chat-toggle {
   padding: 5px;
   text-align: center;
   background-color: #000120;
+  width: 100%;
 }
 
 #chat.chat-open {
-  height: 30vh;
-  max-height: 30vh;
+  height: 20rem;
+  max-height: 20rem;
   background-color: #ffffff;
 }
 
@@ -172,37 +179,41 @@ header .header-items ul li a::after {
 }
 #chat-content p, #chat-content label {
   font-weight: 600;
-  margin-top: 20px;
+  margin: 0;
   text-align: center;
   color: #000000;
+  font-size: 1.5rem;
 }
 #chat-content .clickable-row {
   margin-bottom: 5px;
   font-size: 20px;
 }
 #chat-content input {
-  margin-bottom: 0px;
+  margin: 0px 1rem;
+  text-align: center;
+  width: calc(100% - 2rem);
 }
 #chat-content .butt {
   margin-top: 5px;
 }
 #chat-content .butt.friend {
   position: absolute;
-  bottom: 0;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
 }
 
 #chat.chat-open #chat-content {
   display: block;
+  width: 100%;
 }
 
 .chat-box {
   position: fixed;
   bottom: 0;
   left: 0;
-  width: 20vh;
-  max-height: 10vh;
+  width: 10rem;
+  max-height: 3rem;
   color: #fff;
   overflow: hidden;
   cursor: pointer;
@@ -233,8 +244,7 @@ header .header-items ul li a::after {
 }
 
 .chat-box.chat-box-open {
-  height: 30vh;
-  max-height: 30vh;
+  max-height: 20rem;
   background-color: #ffffff;
 }
 
@@ -246,16 +256,20 @@ header .header-items ul li a::after {
   display: block;
   overflow-y: auto;
   overflow-x: hidden;
-  max-height: 65%;
+  max-height: 17rem;
   max-width: 100%;
   white-space: normal;
+  overflow-wrap: break-word;
+  padding: 1rem auto;
 }
 
 .list-friends {
   display: inline-block;
   color: #000000;
-  font-size: 24px;
+  font-size: 1.7rem;
   width: 49%;
+  margin: 0;
+  padding: auto;
   text-align: center;
   box-sizing: border-box;
 }
@@ -266,16 +280,74 @@ header .header-items ul li a::after {
 }
 
 .friends-list {
+  margin-top: 5px;
   display: flex;
   justify-content: center;
 }
 .friends-list span {
   color: #f14949;
   font-weight: 700;
-  font-size: 25px;
+  font-size: 1.5rem;
 }
 .friends-list .name {
   margin-right: 20px;
+}
+
+.loader {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  animation: rotate 1s linear infinite;
+  display: block;
+  position: absolute;
+  right: 8rem;
+  top: 8rem;
+  animation-delay: 2s;
+  animation-fill-mode: both;
+  cursor: wait;
+}
+
+.loader::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0px;
+  border-radius: 50%;
+  border: 5px solid purple;
+  animation: prixClipFix 2s linear infinite;
+  animation-delay: 2s;
+  animation-iteration-count: 3;
+}
+
+@keyframes rotate {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes prixClipFix {
+  0% {
+    -webkit-clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0);
+            clip-path: polygon(50% 50%, 0 0, 0 0, 0 0, 0 0, 0 0);
+  }
+  25% {
+    -webkit-clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0);
+            clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 0, 100% 0, 100% 0);
+  }
+  50% {
+    -webkit-clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%);
+            clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 100% 100%, 100% 100%);
+  }
+  75% {
+    -webkit-clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
+            clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 100%);
+  }
+  100% {
+    -webkit-clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
+            clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
+  }
+}
+p a.btn {
+  font-size: 1.2rem;
 }
 
 /* CSS de la page stats */
@@ -627,10 +699,6 @@ button2 {
 
 button2:hover {
   background-color: #a04545;
-}
-
-.newPseudo {
-  display: none;
 }
 
 .profil-img {

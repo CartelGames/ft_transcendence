@@ -327,7 +327,9 @@ function displayDiv(hide, show) {
     
     var showDiv = document.getElementById(show);
     if (showDiv)
-    showDiv.style.display = 'block';
+        showDiv.style.display = 'block';
+    if (((hide === 'friend') && (show === 'blocked-friends')) || ((show === 'friend') && (hide === 'blocked-friends')))
+        $('#error-block').empty();
 }
 
 window.onload = function() {
