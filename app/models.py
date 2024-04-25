@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 
 class UserProfil(AbstractUser):
     email = models.EmailField(unique=True)
+    username = models.CharField(max_length=13, unique=True)
     pseudo = models.CharField(max_length=13, unique=True)
     profil_img = models.ImageField(upload_to='profil/', default="base.webp")
     is_active = models.BooleanField(default=True)
