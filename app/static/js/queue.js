@@ -253,7 +253,7 @@ function getTournamentList() {
                             chatCounter--;
                             var chatBoxes = document.getElementsByClassName('chat-box');
                             for (var i = 0; i < chatBoxes.length; i++) {
-                                chatBoxes[i].style.left = 20 * i + 'vh';
+                                chatBoxes[i].style.left = 10 * i + 'rem';
                             }
                         });
                     friendDiv.append(clickableRow[0]);

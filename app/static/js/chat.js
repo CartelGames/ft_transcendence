@@ -101,7 +101,7 @@ function openTournamentChat(pseudo) {
     chatDiv.id = 'chat-box-' + chatCounter;
     chatDiv.id = pseudo;
     chatDiv.className = 'chat-box';
-    chatDiv.style.left = 20 * chatCounter + 'vh';
+    chatDiv.style.left = 10 * chatCounter + 'rem';
     var toggleDiv = document.createElement('div');
     toggleDiv.className = 'chat-box-toggle';
 
@@ -148,7 +148,7 @@ function openChat(pseudo) {
     chatDiv.id = 'chat-box-' + chatCounter;
     chatDiv.id = pseudo;
     chatDiv.className = 'chat-box';
-    chatDiv.style.left = 20 * chatCounter + 'vh';
+    chatDiv.style.left = 10 * chatCounter + 'rem';
     var toggleDiv = document.createElement('div');
     toggleDiv.className = 'chat-box-toggle';
 
@@ -192,7 +192,7 @@ function openChat(pseudo) {
         chatCounter--;
         var chatBoxes = document.getElementsByClassName('chat-box');
         for (var i = 0; i < chatBoxes.length; i++) {
-            chatBoxes[i].style.left = 20 * i + 'vh';
+            chatBoxes[i].style.left = 10 * i + 'rem';
         }
     });
     document.body.appendChild(chatDiv);
@@ -200,6 +200,7 @@ function openChat(pseudo) {
 }
 
 function loadFriends() {
+    displayDiv('loader', 'error-block');
     $.ajax({
         type: 'GET',
         url: '/getFriends/',
@@ -211,7 +212,7 @@ function loadFriends() {
                 friendsContainer.empty();
                 friendsList.forEach(function (friend) {
                     var friendDiv =$('<div class="friends-list"></div>');
-                    var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '">' + friend.pseudo + '</div>');
+                    var clickableRow = $('<div class="clickable-row name" data-pseudo="' + friend.pseudo + '"><p>' + friend.pseudo + '</p></div>');
                     clickableRow.click(function () {
                         var chatDiv = document.getElementById(friend.pseudo);
                         if (!chatDiv) {
@@ -263,6 +264,7 @@ function loadFriends() {
 }
 
 function loadBlockedFriends() {
+    displayDiv('loader', 'error-block');
     $.ajax({
         type: 'GET',
         url: '/getBlockedFriends/',
@@ -318,6 +320,7 @@ function deleteFriend(pseudo) {
 }
 
 function blockFriend(pseudo, unblock) {
+    displayDiv('eror-block', 'loader');
     var formData = new FormData();
     formData.append('type', 'blockFriend');
     formData.append('block', (unblock ? 'false' : 'true'));
@@ -331,10 +334,11 @@ function blockFriend(pseudo, unblock) {
         contentType: false,
         data: formData,
         success: function (data) {
-            if (data.success)
+            if (data.success) {
                 $('#error-block').text(data.errors);
-            else
+            } else {
                 $('#error-block').text(data.errors);
+            }
             console.log(data.errors)
             loadFriends();
             loadBlockedFriends();

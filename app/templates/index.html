@@ -218,16 +218,15 @@
 		</div>
 		<div id="chat-content" class="chat-content">
 			<div id="main-friends">
+				<a class="list-friends active" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
+				<a class="list-friends" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
+				<span id="loader" class="loader"></span>
+				<p id="error-block"></p>
 				<div id="friend">
-					<a class="list-friends active" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
-					<a class="list-friends" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
-					<p id="friends"></p>
+					<div id="friends"></div>
 					<div class="butt friend"><button type="submit" onclick="displayDiv('main-friends', 'add-friend')">Add a friend</button></div>
 				</div>
 				<div id="blocked-friends" style="display: none;">
-					<a class="list-friends" onclick="displayDiv('blocked-friends', 'friend')">Friends</a>
-					<a class="list-friends active" onclick="displayDiv('friend', 'blocked-friends')">Blocked</a>
-					<p id="error-block"></p>
 					<p id="blocked-friend"></p>
 				</div>
 			</div>
