@@ -605,6 +605,8 @@ tbody td img {
   align-items: center;
   width: 100%;
   min-height: 50rem;
+  color: white;
+  font-family: "NationalCartoon", sans-serif;
 }
 
 .error-form {
